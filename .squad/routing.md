@@ -48,33 +48,3 @@ Active when `orgMode: true` in `.squad/config.json`. When disabled, all routing 
 
 | Department | Lead | Members | Domain Keywords |
 |------------|------|---------|-----------------|
-| Analysis & Research | Danny | Rusty, Linus | architecture, analysis, investigate, research, structure, flows, tooling, dependencies |
-| Game Design | Basher | Basher, Livingston | gameplay, game design, level design, controls, balance, feel, HUD, retro, arcade, UX |
-
-### Escalation Routing
-
-| Trigger | Route To | Action |
-|---------|----------|--------|
-| Member blocked | Danny | Advise, unblock, or re-route within Analysis & Research |
-| Cross-department conflict | Involved leads | Run one alignment round, then parallel fan-out |
-| Authority exceeded | Squad | Coordinator decides at org scope |
-| Shared service change | Squad + Shared Service | Align with Scribe or Ralph before changing org-wide automation |
-
-### Cross-Department Work
-
-When work touches multiple departments:
-1. The coordinator matches all relevant departments from `.squad/org/structure.json`.
-2. Members from each matched department are spawned in parallel.
-3. Leads are only spawned when conventions conflict or an escalation rule triggers.
-4. `squad:{member}` remains the assignment trigger. `dept:{department}` labels are routing metadata only.
-
-## Work Type → Agent
-
-| Work Type | Primary | Secondary |
-|-----------|---------|----------|
-| architecture, decisions | Danny | — |
-| repo mapping, flows | Rusty | — |
-| tooling, dependencies | Linus | — |
-| app surfaces, usage | Basher | — |
-| gameplay feel, controls, level concepts | Basher | Danny |
-| level layouts, pacing, encounter flow | Livingston | Basher |

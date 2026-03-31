@@ -1,9 +1,4 @@
 {
   "version": 2,
-  "orgMode": true,
-  "orgConfig": {
-    "structurePath": ".squad/org/structure.json",
-    "escalationBehavior": "advisory",
-    "crossDeptStrategy": "parallel-fanout"
-  }
+  "orgMode": false
 }
