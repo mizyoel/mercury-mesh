@@ -48,7 +48,8 @@ Active when `orgMode: true` in `.squad/config.json`. When disabled, all routing 
 
 | Department | Lead | Members | Domain Keywords |
 |------------|------|---------|-----------------|
-| Analysis & Research | Danny | Rusty, Linus, Basher | architecture, analysis, investigate, research, design, structure, flows, tooling, dependencies, UX |
+| Analysis & Research | Danny | Rusty, Linus | architecture, analysis, investigate, research, structure, flows, tooling, dependencies |
+| Game Design | Basher | Basher, Livingston | gameplay, game design, level design, controls, balance, feel, HUD, retro, arcade, UX |
 
 ### Escalation Routing
 
@@ -75,3 +76,5 @@ When work touches multiple departments:
 | repo mapping, flows | Rusty | — |
 | tooling, dependencies | Linus | — |
 | app surfaces, usage | Basher | — |
+| gameplay feel, controls, level concepts | Basher | Danny |
+| level layouts, pacing, encounter flow | Livingston | Basher |

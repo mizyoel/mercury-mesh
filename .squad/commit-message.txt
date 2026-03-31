@@ -1,0 +1,9 @@
+Scribe: Log 8-bit game sprint, merge decisions
+
+- Orchestration logs: Created `.squad/orchestration-log/` entries for Danny, Basher, Linus, Rusty
+- Session log: `.squad/log/2026-03-31T07-8bit-game.md` documents sprint outcome
+- Decision merge: All 5 inbox files consolidated into `.squad/decisions.md`; inbox cleared
+- Cross-agent sync: Danny, Basher, Linus history.md updated with session learnings
+- Status: Pixel Climber architecture approved; Pixel Panic implementation shipped; org hierarchy rollout validated
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>

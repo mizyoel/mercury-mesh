@@ -13,14 +13,12 @@
       "lead": "danny",
       "members": [
         "rusty",
-        "linus",
-        "basher"
+        "linus"
       ],
       "domain": [
         "architecture",
         "codebase analysis",
-        "systems analysis",
-        "ux investigation"
+        "systems analysis"
       ],
       "routingKeywords": [
         "analyze",
@@ -28,12 +26,10 @@
         "investigate",
         "research",
         "architecture",
-        "design",
         "structure",
         "flows",
         "tooling",
-        "dependencies",
-        "ux"
+        "dependencies"
       ],
       "authority": {
         "canRoute": true,
@@ -43,6 +39,45 @@
           "local architecture",
           "tool selection",
           "investigation methodology"
+        ]
+      }
+    },
+    {
+      "id": "game-design",
+      "name": "Game Design",
+      "lead": "basher",
+      "members": [
+        "basher",
+        "livingston"
+      ],
+      "domain": [
+        "game design",
+        "gameplay feel",
+        "level concepts",
+        "player experience",
+        "hud and presentation"
+      ],
+      "routingKeywords": [
+        "gameplay",
+        "game design",
+        "level design",
+        "controls",
+        "balance",
+        "difficulty",
+        "feel",
+        "hud",
+        "retro",
+        "arcade",
+        "ux"
+      ],
+      "authority": {
+        "canRoute": true,
+        "canApprove": true,
+        "canEscalate": true,
+        "scopedDecisions": [
+          "gameplay direction",
+          "player-facing mechanics",
+          "hud and presentation"
         ]
       }
     }

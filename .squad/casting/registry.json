@@ -32,7 +32,16 @@
       "persistent_name": "Basher",
       "universe": "Ocean's Eleven",
       "status": "active",
-      "department": "analysis",
+      "department": "game-design",
+      "hierarchyRole": "lead",
+      "authorityLevel": 2
+    },
+    "livingston": {
+      "created_at": "2026-03-31T05:12:38.554Z",
+      "persistent_name": "Livingston",
+      "universe": "Ocean's Eleven",
+      "status": "active",
+      "department": "game-design",
       "hierarchyRole": "member",
       "authorityLevel": 1
     },

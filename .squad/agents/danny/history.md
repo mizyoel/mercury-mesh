@@ -10,6 +10,23 @@
 
 <!-- Append learnings below -->
 
+### 2026-03-31: Pixel Panic shipped, README audit & update
+
+- **Mismatch found:** README documented "Pixel Climber" (vertical platformer), but shipped game is "Pixel Panic" (dodge-swarm arcade survival).
+- **Architecture verified:** Single-file `game.js` (379 lines) works well for small scoped games; combined bootstrap + update + render + state management in one readable module.
+- **Pattern confirmed:** Time-delta variable-timestep is the right call for v1; simpler than fixed-timestep accumulator, no meaningful loss for arcade-style gameplay.
+- **Documentation updated:** README now accurately describes Pixel Panic's core loop (survive vs enemies, no win condition, 3-life lives), controls, state model, file layout, and design trade-offs.
+- **Decision:** Monolithic game.js is a deliberate v1 choice; no architectural change needed unless codebase exceeds ~500 lines or feature scope expands significantly.
+
+### 2026-03-31: 8-bit browser game architecture
+
+- **Architecture decision:** Use a static browser game with plain HTML/CSS/JS and Canvas 2D; no build pipeline or external runtime dependencies in v1.
+- **Chosen format:** `Pixel Climber`, a short vertical arcade platformer with a fixed authored tower, title/run/win/loss screens, and restart-only loop.
+- **Pattern:** Smallest solid split is five modules: `src/main.js` (boot + loop), `src/game.js` (state + rules), `src/render.js` (draw only), `src/input.js` (keyboard snapshot), `src/level-data.js` (constants + layout).
+- **Non-negotiables:** 320x240 internal resolution, 60 Hz fixed-timestep simulation, one source of truth for state, no audio/assets/procedural generation for first pass.
+- **User preference:** Scope should stay tight and safe by default; optimize for an implementation Linus can finish quickly in an otherwise-empty repo.
+- **Key file paths:** `README.md`, `.squad/decisions/inbox/danny-8bit-game-architecture.md`
+
 ### 2026-03-31: Org Hierarchy Architecture Review
 
 - **Key decision:** CEO IS the coordinator in hierarchical mode, not a separate agent. A separate CEO creates a spawn-chicken-egg problem (nothing can spawn the coordinator) and doubles routing latency. The coordinator already routes, delegates, and decides — it just needs new routing logic behind a feature flag.
@@ -36,3 +53,12 @@
 - **Rusty verified:** Filesystem state complete; org hierarchy rollout confirmed additive and backward-compatible
 - **Critical restart note:** `.github/agents/squad.agent.md` updated; coordinator behavior changes require restart
 - **Status:** orgMode remains false (safe default); ready for staged rollout when enabled
+
+### 2026-03-31: 8-bit game sprint complete
+
+- **Outcome:** Pixel Climber architecture finalized (Canvas 2D, 5-module vanilla JS, 320x240, 60 Hz fixed-timestep)
+- **Basher design:** Vertical platformer with 25-floor tower, 2-3 min play time, limited palette
+- **Linus implementation:** Shipped as Pixel Panic (working game: index.html, styles.css, game.js)
+- **Rusty validation:** Org hierarchy metadata integration verified; assignments align with department routing
+- **Decision log:** All 5 decisions merged into `.squad/decisions.md`; inbox cleared
+- **Deliverables:** Game fully playable in browser, no build step required
