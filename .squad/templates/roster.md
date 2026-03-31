@@ -10,14 +10,14 @@
 
 ## Members
 
-| Name | Role | Charter | Status |
-|------|------|---------|--------|
-| {Name} | {Role} | `.squad/agents/{name}/charter.md` | ✅ Active |
-| {Name} | {Role} | `.squad/agents/{name}/charter.md` | ✅ Active |
-| {Name} | {Role} | `.squad/agents/{name}/charter.md` | ✅ Active |
-| {Name} | {Role} | `.squad/agents/{name}/charter.md` | ✅ Active |
-| Scribe | Session Logger | `.squad/agents/scribe/charter.md` | 📋 Silent |
-| Ralph | Work Monitor | — | 🔄 Monitor |
+| Name | Role | Department | Charter | Status |
+|------|------|------------|---------|--------|
+| {Name} | {Role} | {Department} | `.squad/agents/{name}/charter.md` | ✅ Active |
+| {Name} | {Role} | {Department} | `.squad/agents/{name}/charter.md` | ✅ Active |
+| {Name} | {Role} | {Department} | `.squad/agents/{name}/charter.md` | ✅ Active |
+| {Name} | {Role} | {Department} | `.squad/agents/{name}/charter.md` | ✅ Active |
+| Scribe | Session Logger | Shared Services | `.squad/agents/scribe/charter.md` | 📋 Silent |
+| Ralph | Work Monitor | Shared Services | `.squad/agents/ralph/charter.md` | 🔄 Monitor |
 
 ## Coding Agent
 

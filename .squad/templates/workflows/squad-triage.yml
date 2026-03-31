@@ -98,6 +98,107 @@ jobs:
               routingContent = fs.readFileSync(routingFile, 'utf8');
             }
 
+            let orgConfig = null;
+            let orgStructure = null;
+            try {
+              if (fs.existsSync('.squad/config.json')) {
+                orgConfig = JSON.parse(fs.readFileSync('.squad/config.json', 'utf8'));
+              }
+            } catch (err) {
+              core.warning(`Could not parse .squad/config.json: ${err.message}`);
+            }
+            try {
+              if (fs.existsSync('.squad/org/structure.json')) {
+                orgStructure = JSON.parse(fs.readFileSync('.squad/org/structure.json', 'utf8'));
+              }
+            } catch (err) {
+              core.warning(`Could not parse .squad/org/structure.json: ${err.message}`);
+            }
+
+            const normalize = (value = '') => value.toLowerCase().replace(/[^\w@-]+/g, ' ').trim();
+            const memberKey = (value = '') => normalize(value);
+            const memberByName = new Map(members.map(member => [memberKey(member.name), member]));
+            const memberDepartment = new Map();
+            const orgModeEnabled = !!(orgConfig && orgConfig.orgMode && orgStructure && Array.isArray(orgStructure.departments));
+            const departments = orgModeEnabled ? orgStructure.departments : [];
+
+            for (const dept of departments) {
+              const allNames = [...(dept.members || []), dept.lead].filter(Boolean);
+              for (const name of allNames) {
+                memberDepartment.set(memberKey(String(name)), dept);
+              }
+            }
+
+            const scoreMemberForIssue = (member, text) => {
+              const role = member.role.toLowerCase();
+              let score = 0;
+
+              if ((role.includes('lead') || role.includes('architect')) &&
+                  (text.includes('architecture') || text.includes('design') || text.includes('structure') || text.includes('trade-off'))) {
+                score += 4;
+              }
+              if ((role.includes('codebase') || role.includes('analyst')) &&
+                  (text.includes('analysis') || text.includes('analyze') || text.includes('flow') || text.includes('trace') || text.includes('codebase'))) {
+                score += 3;
+              }
+              if (role.includes('systems') &&
+                  (text.includes('system') || text.includes('tooling') || text.includes('dependency') || text.includes('workflow') || text.includes('config'))) {
+                score += 3;
+              }
+              if ((role.includes('ux') || role.includes('ui')) &&
+                  (text.includes('ux') || text.includes('ui') || text.includes('design') || text.includes('usability') || text.includes('surface'))) {
+                score += 3;
+              }
+              if ((role.includes('frontend') || role.includes('ui')) &&
+                  (text.includes('frontend') || text.includes('css') || text.includes('layout') || text.includes('component'))) {
+                score += 3;
+              }
+              if ((role.includes('backend') || role.includes('api') || role.includes('server')) &&
+                  (text.includes('backend') || text.includes('api') || text.includes('database') || text.includes('endpoint') || text.includes('auth'))) {
+                score += 3;
+              }
+              if ((role.includes('test') || role.includes('qa') || role.includes('quality')) &&
+                  (text.includes('test') || text.includes('bug') || text.includes('fix') || text.includes('coverage'))) {
+                score += 3;
+              }
+
+              return score;
+            };
+
+            const findBestDepartmentMatch = (text) => {
+              let bestDept = null;
+              let bestScore = 0;
+              for (const dept of departments) {
+                const keywords = [...(dept.domain || []), ...(dept.routingKeywords || [])]
+                  .map(keyword => String(keyword).toLowerCase())
+                  .filter(Boolean);
+                const matched = keywords.filter(keyword => text.includes(keyword));
+                if (matched.length > bestScore) {
+                  bestDept = dept;
+                  bestScore = matched.length;
+                }
+              }
+              return bestScore > 0 ? bestDept : null;
+            };
+
+            const findBestMemberInDepartment = (dept, text) => {
+              const deptNames = new Set([...(dept.members || []), dept.lead].filter(Boolean).map(name => memberKey(String(name))));
+              const deptMembers = members.filter(member => deptNames.has(memberKey(member.name)));
+              let bestMember = null;
+              let bestScore = -1;
+
+              for (const member of deptMembers) {
+                const score = scoreMemberForIssue(member, text);
+                if (score > bestScore) {
+                  bestMember = member;
+                  bestScore = score;
+                }
+              }
+
+              if (bestMember) return bestMember;
+              return memberByName.get(memberKey(String(dept.lead))) || deptMembers[0] || null;
+            };
+
             // Find the Lead
             const lead = members.find(m =>
               m.role.toLowerCase().includes('lead') ||
@@ -119,6 +220,7 @@ jobs:
             const issueText = `${issue.title}\n${issue.body || ''}`.toLowerCase();
 
             let assignedMember = null;
+            let assignedDepartment = null;
             let triageReason = '';
             let copilotTier = null;
 
@@ -182,6 +284,17 @@ jobs:
               }
             }
 
+            if (!assignedMember && orgModeEnabled) {
+              const matchedDepartment = findBestDepartmentMatch(issueText);
+              if (matchedDepartment) {
+                assignedDepartment = matchedDepartment;
+                assignedMember = findBestMemberInDepartment(matchedDepartment, issueText);
+                if (assignedMember) {
+                  triageReason = `Hierarchy match — routed via ${matchedDepartment.name}`;
+                }
+              }
+            }
+
             // Default to Lead if no routing match
             if (!assignedMember) {
               assignedMember = lead;
@@ -189,14 +302,21 @@ jobs:
             }
 
             const isCopilot = assignedMember.name === '@copilot';
+            if (!assignedDepartment && !isCopilot && orgModeEnabled) {
+              assignedDepartment = memberDepartment.get(memberKey(assignedMember.name)) || null;
+            }
             const assignLabel = isCopilot ? 'squad:copilot' : `squad:${assignedMember.name.toLowerCase()}`;
+            const labelsToAdd = [assignLabel];
+            if (assignedDepartment && assignedDepartment.id) {
+              labelsToAdd.push(`dept:${String(assignedDepartment.id).toLowerCase()}`);
+            }
 
             // Add the member-specific label
             await github.rest.issues.addLabels({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issue.number,
-              labels: [assignLabel]
+              labels: labelsToAdd
             });
 
             // Apply default triage verdict
@@ -237,6 +357,7 @@ jobs:
               '',
               `**Issue:** #${issue.number} — ${issue.title}`,
               `**Assigned to:** ${assignedMember.name} (${assignedMember.role})`,
+              assignedDepartment ? `**Department:** ${assignedDepartment.name}` : '',
               `**Reason:** ${triageReason}`,
               copilotTier === 'needs-review' ? `\n⚠️ **PR review recommended** — a squad member should review @copilot's work on this one.` : '',
               copilotNote,
@@ -247,7 +368,7 @@ jobs:
               memberList,
               hasCopilot ? `- **@copilot** (Coding Agent) → label: \`squad:copilot\`` : '',
               '',
-              `> To reassign, remove the current \`squad:*\` label and add the correct one.`,
+              `> To reassign, remove the current \`squad:*\` label and add the correct one. Keep any \`dept:*\` labels as metadata unless the routing changes.`,
             ].filter(Boolean).join('\n');
 
             await github.rest.issues.createComment({

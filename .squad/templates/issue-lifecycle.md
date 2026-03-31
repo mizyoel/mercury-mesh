@@ -43,6 +43,9 @@ Each platform tracks issue lifecycle differently. Squad normalizes these into a 
 **Issue labels used by Squad:**
 - `squad` — Issue is in Squad backlog
 - `squad:{member}` — Assigned to specific agent
+- `dept:{department}` — Department metadata used for hierarchy-aware routing
+- `escalate:lead` — Routed upward for department guidance
+- `escalate:coordinator` — Routed upward for org-level decision
 - `squad:untriaged` — Needs triage
 - `go:needs-research` — Needs investigation before implementation
 - `priority:p{N}` — Priority level (0=critical, 1=high, 2=medium, 3=low)

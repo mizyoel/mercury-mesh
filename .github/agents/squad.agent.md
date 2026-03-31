@@ -99,6 +99,18 @@ The `union` merge driver keeps all lines from both sides, which is correct for a
 
 **On every session start:** Run `git config user.name` to identify the current user, and **resolve the team root** (see Worktree Awareness). Store the team root — all `.squad/` paths must be resolved relative to it. Pass the team root into every spawn prompt as `TEAM_ROOT` and the current user's name into every agent spawn prompt and Scribe log so the team always knows who requested the work. Check `.squad/identity/now.md` if it exists — it tells you what the team was last focused on. Update it if the focus has shifted.
 
+### Org Mode Detection
+
+After resolving the team root on session start:
+1. Read `.squad/config.json`.
+2. If `version >= 2` and `orgMode === true`:
+   - Read `.squad/org/structure.json`.
+   - Cache department, lead, member, and escalation mappings.
+   - Use hierarchical routing rules in addition to the flat routing table.
+3. If `orgMode` is missing or false:
+   - Stay in flat mode.
+   - Ignore `.squad/org/` files unless the user is explicitly editing them.
+
 **⚡ Context caching:** After the first message in a session, `team.md`, `routing.md`, and `registry.json` are already in your context. Do NOT re-read them on subsequent messages — you already have the roster, routing rules, and cast names. Only re-read if the user explicitly modifies the team (adds/removes members, changes routing).
 
 **Session catch-up (lazy — not on every start):** Do NOT scan logs on every session start. Only provide a catch-up summary when:
@@ -146,7 +158,7 @@ For each squad member with assigned issues, note them in the session context. Wh
 
 **Proactive issue pickup:** If a user starts a session and there are open `squad:{member}` issues, mention them: *"Hey {user}, {AgentName} has an open issue — #42: Fix auth endpoint timeout. Want them to pick it up?"*
 
-**Issue triage routing:** When a new issue gets the `squad` label (via the sync-squad-labels workflow), the Lead triages it — reading the issue, analyzing it, assigning the correct `squad:{member}` label(s), and commenting with triage notes. The Lead can also reassign by swapping labels.
+**Issue triage routing:** When a new issue gets the `squad` label (via the sync-squad-labels workflow), the Lead triages it — reading the issue, analyzing it, assigning the correct `squad:{member}` label(s), and commenting with triage notes. The Lead can also reassign by swapping labels. In org mode, `dept:{department}` labels are additive routing metadata only; they never replace `squad:{member}` as the execution trigger.
 
 **⚡ Read `.squad/team.md` (roster), `.squad/routing.md` (routing), and `.squad/casting/registry.json` (persistent names) as parallel tool calls in a single turn. Do NOT read these sequentially.**
 
@@ -248,6 +260,28 @@ The routing table determines **WHO** handles work. After routing, use Response M
 
 **Skill-aware routing:** Before spawning, check `.squad/skills/` for skills relevant to the task domain. If a matching skill exists, add to the spawn prompt: `Relevant skill: .squad/skills/{name}/SKILL.md — read before starting.` This makes earned knowledge an input to routing, not passive documentation.
 
+### Hierarchical Routing (Org Mode)
+
+Active only when `orgMode: true` in `.squad/config.json`.
+
+| Signal | Action |
+|--------|--------|
+| Names a specific agent | Spawn that agent directly; skip department routing |
+| Work maps to one department | Read `.squad/org/structure.json`, identify the department, then spawn the best-fit member directly |
+| Work maps to multiple departments | Parallel fan-out to members from all matched departments |
+| Agent is blocked or authority is exceeded | Escalate to the relevant department lead, then to the coordinator if still unresolved |
+| Cross-department conflict | Spawn involved leads for one alignment round, then continue |
+| Org-level decision | Coordinator decides directly |
+
+**Key principle:** Department leads are routing metadata, not mandatory hops. The coordinator routes directly to members unless escalation or cross-department alignment is needed.
+
+**Routing algorithm:**
+1. Parse the request for agent names, work-type keywords, issue labels, file paths, and department signals.
+2. Match signals against `departments[].routingKeywords` and `departments[].domain` in `.squad/org/structure.json`.
+3. If exactly one department matches, choose the best-fit member from that department using `.squad/routing.md`.
+4. If multiple departments match, fan out to each relevant department in parallel.
+5. If no department matches, fall back to flat routing.
+
 ### Consult Mode Detection
 
 When a user addresses a personal agent by name:
@@ -320,10 +354,21 @@ prompt: |
   TEAM ROOT: {team_root}
   WORKTREE_PATH: {worktree_path}
   WORKTREE_MODE: {true|false}
+  DEPARTMENT: {department_id or "shared" or "n/a"}
+  AUTHORITY_LEVEL: {0-3}
+  ESCALATION_PATH: {lead_name or "Squad"} → coordinator
+  ORG_MODE: {true|false}
   **Requested by:** {current user name}
   
   {% if WORKTREE_MODE %}
   **WORKTREE:** Working in `{WORKTREE_PATH}`. All operations relative to this path. Do NOT switch branches.
+  {% endif %}
+
+  {% if ORG_MODE %}
+  **HIERARCHY:** You are in department "{department_name}" led by {lead_name}.
+  - For domain questions within your department, the lead can advise.
+  - For cross-department concerns, escalate via your decision inbox file.
+  - Your authority level is {authority_level}.
   {% endif %}
 
   TASK: {specific task description}
@@ -771,6 +816,10 @@ prompt: |
   
   WORKTREE_PATH: {worktree_path}
   WORKTREE_MODE: {true|false}
+  DEPARTMENT: {department_id or "shared" or "n/a"}
+  AUTHORITY_LEVEL: {0-3}
+  ESCALATION_PATH: {lead_name or "Squad"} → coordinator
+  ORG_MODE: {true|false}
   
   {% if WORKTREE_MODE %}
   **WORKTREE:** You are working in a dedicated worktree at `{WORKTREE_PATH}`.
@@ -778,6 +827,13 @@ prompt: |
   - Do NOT switch branches — the worktree IS your branch (`{branch_name}`)
   - Build and test in the worktree, not the main repo
   - Commit and push from the worktree
+  {% endif %}
+
+  {% if ORG_MODE %}
+  **HIERARCHY:** You are in department "{department_name}" led by {lead_name}.
+  - For domain questions within your department, the lead can advise.
+  - For cross-department concerns, escalate via your decision inbox file.
+  - Your authority level is {authority_level}.
   {% endif %}
   
   Read .squad/agents/{name}/history.md (your project knowledge).
@@ -859,9 +915,12 @@ prompt: |
 
   Tasks (in order):
   1. ORCHESTRATION LOG: Write .squad/orchestration-log/{timestamp}-{agent}.md per agent. Use ISO 8601 UTC timestamp.
+     - Include `department: {dept_id}` when known.
   2. SESSION LOG: Write .squad/log/{timestamp}-{topic}.md. Brief. Use ISO 8601 UTC timestamp.
   3. DECISION INBOX: Merge .squad/decisions/inbox/ → decisions.md, delete inbox files. Deduplicate.
+     - Preserve or add `**Scope:** org | team | dept:{name}` on merged decisions. Default to `org` when omitted.
   4. CROSS-AGENT: Append team updates to affected agents' history.md.
+  4a. ORG DASHBOARD: If `.squad/config.json` has `orgMode: true`, update `.squad/org/dashboard.md` to reflect department-visible state.
   5. DECISIONS ARCHIVE: If decisions.md exceeds ~20KB, archive entries older than 30 days to decisions-archive.md.
   6. GIT COMMIT: git add .squad/ && commit (write msg to temp file, use -F). Skip if nothing staged.
   7. HISTORY SUMMARIZATION: If any history.md >12KB, summarize old entries to ## Core Context.
@@ -898,6 +957,20 @@ If the user says "I need a designer" or "add someone for DevOps":
 6. Add routing entries to routing.md.
 7. Say: *"✅ {CastName} joined the team as {Role}."*
 
+If org mode is enabled, also:
+8. Add hierarchy fields to `.squad/casting/registry.json`.
+9. Add the member's department to `.squad/team.md`.
+10. Update `.squad/org/structure.json` membership.
+
+### Adding Departments
+
+If the user says "add a frontend department" or "make Danny lead analysis":
+1. Update `.squad/org/structure.json` with the department, lead, members, routing keywords, and authority.
+2. Update `.squad/team.md` so the Department column stays accurate.
+3. Update `.squad/routing.md` with the department routing and escalation rules.
+4. If members are newly created, also update `.squad/casting/registry.json` with hierarchy metadata.
+5. Remind the user that `orgMode` stays off until they are ready to go live.
+
 ### Removing Team Members
 
 If the user wants to remove someone:
@@ -930,6 +1003,9 @@ If the user wants to remove someone:
 | `.squad/ceremonies.md` | **Authoritative ceremony config.** Definitions, triggers, and participants for team ceremonies. | Squad (Coordinator) | Squad (Coordinator), Facilitator agent (read-only at ceremony time) |
 | `.squad/casting/policy.json` | **Authoritative casting config.** Universe allowlist and capacity. | Squad (Coordinator) | Squad (Coordinator) |
 | `.squad/casting/registry.json` | **Authoritative name registry.** Persistent agent-to-name mappings. | Squad (Coordinator) | Squad (Coordinator) |
+| `.squad/org/structure.json` | **Authoritative org hierarchy.** Departments, leads, shared services, escalation rules. | Squad (Coordinator) | Squad (Coordinator), workflows (read-only) |
+| `.squad/org/migration.md` | **Operational checklist.** Rollout and rollback status for org mode. | Squad (Coordinator) | All agents |
+| `.squad/org/dashboard.md` | **Derived org view.** Department health, escalations, cross-department activity. | Scribe, Ralph | All agents |
 | `.squad/casting/history.json` | **Derived / append-only.** Universe usage history and assignment snapshots. | Squad (Coordinator) — append only | Squad (Coordinator) |
 | `.squad/agents/{name}/charter.md` | **Authoritative agent identity.** Per-agent role and boundaries. | Squad (Coordinator) at creation; agent may not self-modify | Squad (Coordinator) reads to inline at spawn; owning agent receives via prompt |
 | `.squad/agents/{name}/history.md` | **Derived / append-only.** Personal learnings. Never authoritative for enforcement. | Owning agent (append only), Scribe (cross-agent updates, summarization) | Owning agent only |
@@ -1207,6 +1283,15 @@ When Ralph reports status, use this format:
   🟡 In Progress:  3 issues assigned, 1 draft PR
   🟢 Ready:        1 PR approved, awaiting merge
   ✅ Done:         5 issues closed this session
+
+When org mode is enabled, Ralph groups by department:
+
+📊 Board Status (by department):
+  🏗️ Analysis & Research:
+    🔴 Untriaged: 1 issue
+    🟡 In Progress: 2 issues (Rusty, Linus)
+  📋 Shared Services:
+    ✅ All clear
 
 Next action: Triaging #42 — "Fix auth endpoint timeout"
 ```

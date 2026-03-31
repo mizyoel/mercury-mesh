@@ -70,11 +70,14 @@ jobs:
             
             for (const decision of results) {
               try {
+                const labels = Array.isArray(decision.labels) && decision.labels.length > 0
+                  ? decision.labels
+                  : [decision.label];
                 await github.rest.issues.addLabels({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: decision.issueNumber,
-                  labels: [decision.label]
+                  labels
                 });
                 
                 await github.rest.issues.createComment({
@@ -85,15 +88,16 @@ jobs:
                     '### 🔄 Ralph — Auto-Triage',
                     '',
                     `**Assigned to:** ${decision.assignTo}`,
+                    decision.departmentName ? `**Department:** ${decision.departmentName}` : '',
                     `**Reason:** ${decision.reason}`,
                     `**Source:** ${decision.source}`,
                     '',
                     '> Ralph auto-triaged this issue using routing rules.',
-                    '> To reassign, swap the `squad:*` label.'
+                    '> To reassign, swap the `squad:*` label. Keep any `dept:*` labels aligned with the new routing.'
                   ].join('\n')
                 });
                 
-                core.info(`Triaged #${decision.issueNumber} → ${decision.assignTo} (${decision.source})`);
+                  core.info(`Triaged #${decision.issueNumber} → ${decision.assignTo} (${decision.source}${decision.departmentId ? `, dept:${decision.departmentId}` : ''})`);
               } catch (e) {
                 core.warning(`Failed to triage #${decision.issueNumber}: ${e.message}`);
               }
@@ -158,9 +162,9 @@ jobs:
                     agent_assignment: {
                       target_repo: `${context.repo.owner}/${context.repo.repo}`,
                       base_branch: repoData.default_branch,
-                      custom_instructions: `Read .squad/team.md (or .ai-team/team.md) for team context and .squad/routing.md (or .ai-team/routing.md) for routing rules.`
-                    }
-                  });
+                       custom_instructions: `Read .squad/team.md (or .ai-team/team.md) for team context, .squad/routing.md (or .ai-team/routing.md) for routing rules, and if orgMode is enabled read .squad/org/structure.json for department context.`
+                     }
+                   });
                   core.info(`Assigned copilot-swe-agent[bot] to #${issue.number}`);
                 } catch (e) {
                   core.warning(`Failed to assign @copilot to #${issue.number}: ${e.message}`);

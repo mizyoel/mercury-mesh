@@ -39,6 +39,68 @@ jobs:
 
             const content = fs.readFileSync(teamFile, 'utf8');
             const lines = content.split('\n');
+            const members = [];
+            let inMembersTable = false;
+            for (const line of lines) {
+              if (line.match(/^##\s+(Members|Team Roster)/i)) {
+                inMembersTable = true;
+                continue;
+              }
+              if (inMembersTable && line.startsWith('## ')) {
+                break;
+              }
+              if (inMembersTable && line.startsWith('|') && !line.includes('---') && !line.includes('Name')) {
+                const cells = line.split('|').map(c => c.trim()).filter(Boolean);
+                if (cells.length >= 2) {
+                  members.push({
+                    name: cells[0],
+                    role: cells[1]
+                  });
+                }
+              }
+            }
+            const normalize = (value = '') => String(value).trim().toLowerCase();
+            const memberByName = new Map(members.map(member => [normalize(member.name), member]));
+
+            let orgConfig = null;
+            let orgStructure = null;
+            try {
+              if (fs.existsSync('.squad/config.json')) {
+                orgConfig = JSON.parse(fs.readFileSync('.squad/config.json', 'utf8'));
+              }
+            } catch (err) {
+              core.warning(`Could not parse .squad/config.json: ${err.message}`);
+            }
+            try {
+              if (fs.existsSync('.squad/org/structure.json')) {
+                orgStructure = JSON.parse(fs.readFileSync('.squad/org/structure.json', 'utf8'));
+              }
+            } catch (err) {
+              core.warning(`Could not parse .squad/org/structure.json: ${err.message}`);
+            }
+
+            const orgModeEnabled = !!(orgConfig && orgConfig.orgMode && orgStructure && Array.isArray(orgStructure.departments));
+            const findDepartmentForMember = (name) => {
+              if (!orgModeEnabled) return null;
+              const key = normalize(name);
+              return orgStructure.departments.find(dept =>
+                [dept.lead, ...(dept.members || [])]
+                  .filter(Boolean)
+                  .some(candidate => normalize(candidate) === key)
+              ) || null;
+            };
+            const issueLabels = Array.isArray(issue.labels)
+              ? issue.labels.map(item => typeof item === 'string' ? item : item && item.name).filter(Boolean)
+              : [];
+            const deptLabel = issueLabels.find(name => name.startsWith('dept:'));
+            let assignedDepartment = null;
+            if (deptLabel) {
+              const deptId = deptLabel.replace('dept:', '').toLowerCase();
+              assignedDepartment = orgModeEnabled
+                ? orgStructure.departments.find(dept => normalize(dept.id) === deptId) || null
+                : { id: deptId, name: deptId, lead: null };
+            }
+            const formatMemberName = (name) => memberByName.get(normalize(name))?.name || name;
 
             // Check if this is a coding agent assignment
             const isCopilotAssignment = memberName === 'copilot';
@@ -47,22 +109,9 @@ jobs:
             if (isCopilotAssignment) {
               assignedMember = { name: '@copilot', role: 'Coding Agent' };
             } else {
-              let inMembersTable = false;
-              for (const line of lines) {
-                if (line.match(/^##\s+(Members|Team Roster)/i)) {
-                  inMembersTable = true;
-                  continue;
-                }
-                if (inMembersTable && line.startsWith('## ')) {
-                  break;
-                }
-                if (inMembersTable && line.startsWith('|') && !line.includes('---') && !line.includes('Name')) {
-                  const cells = line.split('|').map(c => c.trim()).filter(Boolean);
-                  if (cells.length >= 2 && cells[0].toLowerCase() === memberName) {
-                    assignedMember = { name: cells[0], role: cells[1] };
-                    break;
-                  }
-                }
+              assignedMember = memberByName.get(memberName) || null;
+              if (!assignedDepartment && assignedMember) {
+                assignedDepartment = findDepartmentForMember(assignedMember.name);
               }
             }
 
@@ -78,12 +127,16 @@ jobs:
             }
 
             // Post assignment acknowledgment
+            const departmentLine = assignedDepartment
+              ? `**Department:** ${assignedDepartment.name}${assignedDepartment.lead ? ` (lead: ${formatMemberName(assignedDepartment.lead)})` : ''}`
+              : '';
             let comment;
             if (isCopilotAssignment) {
               comment = [
                 `### 🤖 Routed to @copilot (Coding Agent)`,
                 '',
                 `**Issue:** #${issue.number} — ${issue.title}`,
+                departmentLine,
                 '',
                 `@copilot has been assigned and will pick this up automatically.`,
                 '',
@@ -95,6 +148,7 @@ jobs:
                 `### 📋 Assigned to ${assignedMember.name} (${assignedMember.role})`,
                 '',
                 `**Issue:** #${issue.number} — ${issue.title}`,
+                departmentLine,
                 '',
                 `${assignedMember.name} will pick this up in the next Copilot session.`,
                 '',
@@ -123,6 +177,19 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const issue_number = context.payload.issue.number;
+            const issue = context.payload.issue;
+            const labels = Array.isArray(issue.labels)
+              ? issue.labels.map(item => typeof item === 'string' ? item : item && item.name).filter(Boolean)
+              : [];
+            const deptLabel = labels.find(name => name.startsWith('dept:'));
+            let customInstructions = 'Read .squad/team.md (or .ai-team/team.md) for team context and .squad/routing.md (or .ai-team/routing.md) for routing rules.';
+            if (deptLabel) {
+              const deptId = deptLabel.replace('dept:', '');
+              customInstructions += ` This issue is tagged to department "${deptId}".`;
+              if (fs.existsSync('.squad/org/structure.json')) {
+                customInstructions += ' Read .squad/org/structure.json for hierarchy context before starting.';
+              }
+            }
 
             // Get the default branch name (main, master, etc.)
             const { data: repoData } = await github.rest.repos.get({ owner, repo });
@@ -137,7 +204,7 @@ jobs:
                 agent_assignment: {
                   target_repo: `${owner}/${repo}`,
                   base_branch: baseBranch,
-                  custom_instructions: '',
+                  custom_instructions: customInstructions,
                   custom_agent: '',
                   model: ''
                 },

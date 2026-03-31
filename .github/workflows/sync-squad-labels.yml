@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '.squad/team.md'
+      - '.squad/org/structure.json'
       - '.ai-team/team.md'
   workflow_dispatch:
 
@@ -34,6 +35,15 @@ jobs:
 
             const content = fs.readFileSync(teamFile, 'utf8');
             const lines = content.split('\n');
+            let orgStructure = null;
+            const orgStructurePath = '.squad/org/structure.json';
+            if (fs.existsSync(orgStructurePath)) {
+              try {
+                orgStructure = JSON.parse(fs.readFileSync(orgStructurePath, 'utf8'));
+              } catch (err) {
+                core.warning(`Could not parse ${orgStructurePath}: ${err.message}`);
+              }
+            }
 
             // Parse the Members table for agent names
             const members = [];
@@ -66,6 +76,9 @@ jobs:
             const SQUAD_COLOR = '9B8FCC';
             const MEMBER_COLOR = '9B8FCC';
             const COPILOT_COLOR = '10b981';
+            const DEPT_COLOR = 'A2EEEF';
+            const ESCALATE_LEAD_COLOR = 'FBCA04';
+            const ESCALATE_COORDINATOR_COLOR = 'D93F0B';
 
             // Define go: and release: labels (static)
             const GO_LABELS = [
@@ -123,6 +136,22 @@ jobs:
                 color: COPILOT_COLOR,
                 description: 'Assigned to @copilot (Coding Agent) for autonomous work'
               });
+            }
+
+            if (orgStructure && Array.isArray(orgStructure.departments)) {
+              for (const dept of orgStructure.departments) {
+                if (!dept || !dept.id) continue;
+                labels.push({
+                  name: `dept:${String(dept.id).toLowerCase()}`,
+                  color: DEPT_COLOR,
+                  description: `Department: ${dept.name || dept.id} (lead: ${dept.lead || 'n/a'})`
+                });
+              }
+
+              labels.push(
+                { name: 'escalate:lead', color: ESCALATE_LEAD_COLOR, description: 'Escalated to department lead' },
+                { name: 'escalate:coordinator', color: ESCALATE_COORDINATOR_COLOR, description: 'Escalated to coordinator/org level' }
+              );
             }
 
             // Add go:, release:, type:, priority:, and high-signal labels

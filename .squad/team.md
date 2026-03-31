@@ -10,14 +10,14 @@
 
 ## Members
 
-| Name | Role | Charter | Status |
-|------|------|---------|--------|
-| Danny | Lead | `.squad/agents/danny/charter.md` | ✅ Active |
-| Rusty | Codebase Analyst | `.squad/agents/rusty/charter.md` | ✅ Active |
-| Linus | Systems Analyst | `.squad/agents/linus/charter.md` | ✅ Active |
-| Basher | UX Investigator | `.squad/agents/basher/charter.md` | ✅ Active |
-| Scribe | Session Logger | `.squad/agents/scribe/charter.md` | 📋 Silent |
-| Ralph | Work Monitor | `.squad/agents/ralph/charter.md` | 🔄 Monitor |
+| Name | Role | Department | Charter | Status |
+|------|------|------------|---------|--------|
+| Danny | Lead | Analysis & Research (Lead) | `.squad/agents/danny/charter.md` | ✅ Active |
+| Rusty | Codebase Analyst | Analysis & Research | `.squad/agents/rusty/charter.md` | ✅ Active |
+| Linus | Systems Analyst | Analysis & Research | `.squad/agents/linus/charter.md` | ✅ Active |
+| Basher | UX Investigator | Analysis & Research | `.squad/agents/basher/charter.md` | ✅ Active |
+| Scribe | Session Logger | Shared Services | `.squad/agents/scribe/charter.md` | 📋 Silent |
+| Ralph | Work Monitor | Shared Services | `.squad/agents/ralph/charter.md` | 🔄 Monitor |
 
 ## Project Context
 

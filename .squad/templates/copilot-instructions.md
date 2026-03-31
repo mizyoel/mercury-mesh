@@ -9,6 +9,7 @@ Before starting work on any issue:
 1. Read `.squad/team.md` for the team roster, member roles, and your capability profile.
 2. Read `.squad/routing.md` for work routing rules.
 3. If the issue has a `squad:{member}` label, read that member's charter at `.squad/agents/{member}/charter.md` to understand their domain expertise and coding style — work in their voice.
+4. If `.squad/config.json` has `orgMode: true`, read `.squad/org/structure.json`. Treat any `dept:{department}` labels as routing metadata only — `squad:{member}` remains the execution trigger.
 
 ## Capability Self-Check
 
@@ -34,6 +35,7 @@ Example: `squad/42-fix-login-validation`
 When opening a PR:
 - Reference the issue: `Closes #{issue-number}`
 - If the issue had a `squad:{member}` label, mention the member: `Working as {member} ({role})`
+- If the issue also had a `dept:{department}` label, mention the department in the PR context for reviewer clarity.
 - If this is a 🟡 needs-review task, add to the PR description: `⚠️ This task was flagged as "needs review" — please have a squad member review before merging.`
 - Follow any project conventions in `.squad/decisions.md`
 

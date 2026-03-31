@@ -110,6 +110,7 @@ function parseRoster(teamMd) {
 
   const nameIndex = findColumnIndex(table.headers, ['name']);
   const roleIndex = findColumnIndex(table.headers, ['role']);
+  const departmentIndex = findColumnIndex(table.headers, ['department']);
   if (nameIndex < 0 || roleIndex < 0) return [];
 
   const excluded = new Set(['scribe', 'ralph']);
@@ -124,6 +125,7 @@ function parseRoster(teamMd) {
     members.push({
       name,
       role,
+      department: departmentIndex >= 0 ? cleanCell(row[departmentIndex] || '') : '',
       label: `squad:${name.toLowerCase()}`,
     });
   }
@@ -131,7 +133,53 @@ function parseRoster(teamMd) {
   return members;
 }
 
-function triageIssue(issue, rules, modules, roster) {
+function loadOrgContext(squadDir) {
+  const configPath = path.join(squadDir, 'config.json');
+  if (!fs.existsSync(configPath)) {
+    return { enabled: false, departments: [], memberDepartment: new Map() };
+  }
+
+  let config = {};
+  try {
+    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  } catch {
+    return { enabled: false, departments: [], memberDepartment: new Map() };
+  }
+
+  const structurePath = path.join(
+    squadDir,
+    (config.orgConfig && config.orgConfig.structurePath
+      ? config.orgConfig.structurePath
+      : '.squad/org/structure.json'
+    ).replace(/^\.squad[\\/]/, 'org/'),
+  );
+
+  if (!config.orgMode || !fs.existsSync(structurePath)) {
+    return { enabled: false, departments: [], memberDepartment: new Map() };
+  }
+
+  let structure = {};
+  try {
+    structure = JSON.parse(fs.readFileSync(structurePath, 'utf8'));
+  } catch {
+    return { enabled: false, departments: [], memberDepartment: new Map() };
+  }
+
+  const memberDepartment = new Map();
+  const departments = Array.isArray(structure.departments) ? structure.departments : [];
+  for (const dept of departments) {
+    const deptId = cleanCell(dept.id || '').toLowerCase();
+    if (!deptId) continue;
+    const memberNames = new Set([...(dept.members || []), dept.lead].filter(Boolean).map((name) => normalizeName(name)));
+    for (const memberName of memberNames) {
+      memberDepartment.set(memberName, dept);
+    }
+  }
+
+  return { enabled: true, departments, memberDepartment };
+}
+
+function triageIssue(issue, rules, modules, roster, orgContext) {
   const issueText = `${issue.title}\n${issue.body || ''}`.toLowerCase();
   const normalizedIssueText = normalizeTextForPathMatch(issueText);
 
@@ -144,6 +192,7 @@ function triageIssue(issue, rules, modules, roster) {
         reason: `Matched module path "${bestModule.modulePath}" to primary owner "${bestModule.primary}"`,
         source: 'module-ownership',
         confidence: 'high',
+        ...decorateDecision(primaryMember, orgContext),
       };
     }
 
@@ -155,6 +204,7 @@ function triageIssue(issue, rules, modules, roster) {
           reason: `Matched module path "${bestModule.modulePath}" to secondary owner "${bestModule.secondary}"`,
           source: 'module-ownership',
           confidence: 'medium',
+          ...decorateDecision(secondaryMember, orgContext),
         };
       }
     }
@@ -169,7 +219,24 @@ function triageIssue(issue, rules, modules, roster) {
         reason: `Matched routing keyword(s): ${bestRule.matchedKeywords.join(', ')}`,
         source: 'routing-rule',
         confidence: bestRule.matchedKeywords.length >= 2 ? 'high' : 'medium',
+        ...decorateDecision(agent, orgContext),
       };
+    }
+  }
+
+  if (orgContext.enabled) {
+    const department = findBestDepartmentMatch(issueText, orgContext.departments);
+    if (department) {
+      const departmentMember = findBestMemberInDepartment(issueText, department, roster);
+      if (departmentMember) {
+        return {
+          agent: departmentMember,
+          reason: `Matched department "${department.name}" via hierarchy keywords`,
+          source: 'department-routing',
+          confidence: 'medium',
+          ...decorateDecision(departmentMember, orgContext),
+        };
+      }
     }
   }
 
@@ -180,6 +247,7 @@ function triageIssue(issue, rules, modules, roster) {
       reason: roleMatch.reason,
       source: 'role-keyword',
       confidence: 'medium',
+      ...decorateDecision(roleMatch.agent, orgContext),
     };
   }
 
@@ -191,6 +259,7 @@ function triageIssue(issue, rules, modules, roster) {
     reason: 'No module, routing, or role keyword match — routed to Lead/Architect',
     source: 'lead-fallback',
     confidence: 'low',
+    ...decorateDecision(lead, orgContext),
   };
 }
 
@@ -392,6 +461,77 @@ function findLeadFallback(roster) {
   );
 }
 
+function decorateDecision(member, orgContext) {
+  if (!orgContext.enabled || !member) return {};
+  const department = orgContext.memberDepartment.get(normalizeName(member.name));
+  if (!department || !department.id) return {};
+  return {
+    departmentId: cleanCell(department.id || '').toLowerCase(),
+    departmentName: cleanCell(department.name || ''),
+    deptLabel: `dept:${cleanCell(department.id || '').toLowerCase()}`,
+  };
+}
+
+function findBestDepartmentMatch(issueText, departments) {
+  let best = null;
+  let bestScore = 0;
+
+  for (const dept of departments || []) {
+    const keywords = [...(dept.domain || []), ...(dept.routingKeywords || [])]
+      .map((keyword) => cleanCell(keyword).toLowerCase())
+      .filter(Boolean);
+    const matched = keywords.filter((keyword) => issueText.includes(keyword));
+    if (matched.length > bestScore) {
+      best = dept;
+      bestScore = matched.length;
+    }
+  }
+
+  return bestScore > 0 ? best : null;
+}
+
+function findBestMemberInDepartment(issueText, department, roster) {
+  const allowed = new Set([...(department.members || []), department.lead].filter(Boolean).map((name) => normalizeName(name)));
+  const candidates = roster.filter((member) => allowed.has(normalizeName(member.name)));
+  let best = null;
+  let bestScore = -1;
+
+  for (const member of candidates) {
+    const score = scoreMemberForIssue(member, issueText);
+    if (score > bestScore) {
+      best = member;
+      bestScore = score;
+    }
+  }
+
+  if (best) return best;
+  return findMember(department.lead, roster) || candidates[0] || null;
+}
+
+function scoreMemberForIssue(member, issueText) {
+  const role = (member.role || '').toLowerCase();
+  let score = 0;
+
+  if ((role.includes('lead') || role.includes('architect')) &&
+      (issueText.includes('architecture') || issueText.includes('design') || issueText.includes('structure') || issueText.includes('trade-off'))) {
+    score += 4;
+  }
+  if ((role.includes('codebase') || role.includes('analyst')) &&
+      (issueText.includes('analysis') || issueText.includes('analyze') || issueText.includes('flow') || issueText.includes('trace') || issueText.includes('codebase'))) {
+    score += 3;
+  }
+  if (role.includes('systems') &&
+      (issueText.includes('system') || issueText.includes('tooling') || issueText.includes('dependency') || issueText.includes('workflow') || issueText.includes('config'))) {
+    score += 3;
+  }
+  if ((role.includes('ux') || role.includes('ui')) &&
+      (issueText.includes('ux') || issueText.includes('ui') || issueText.includes('design') || issueText.includes('usability') || issueText.includes('surface'))) {
+    score += 3;
+  }
+
+  return score;
+}
+
 function parseOwnerRepoFromRemote(remoteUrl) {
   const sshMatch = remoteUrl.match(/^git@[^:]+:([^/]+)\/(.+?)(?:\.git)?$/);
   if (sshMatch) return { owner: sshMatch[1], repo: sshMatch[2] };
@@ -501,6 +641,7 @@ async function main() {
   const roster = parseRoster(teamMd);
   const rules = parseRoutingRules(routingMd);
   const modules = parseModuleOwnership(routingMd);
+  const orgContext = loadOrgContext(squadDir);
 
   const { owner, repo } = getOwnerRepoFromGit();
   const openSquadIssues = await fetchSquadIssues(owner, repo, token);
@@ -520,6 +661,7 @@ async function main() {
       rules,
       modules,
       roster,
+      orgContext,
     );
 
     if (!decision) continue;
@@ -527,8 +669,11 @@ async function main() {
       issueNumber: issue.number,
       assignTo: decision.agent.name,
       label: decision.agent.label,
+      labels: [decision.agent.label, decision.deptLabel].filter(Boolean),
       reason: decision.reason,
       source: decision.source,
+      departmentId: decision.departmentId || null,
+      departmentName: decision.departmentName || null,
     });
   }
 

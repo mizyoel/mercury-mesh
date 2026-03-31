@@ -20,13 +20,15 @@ How to decide who handles what.
 |-------|--------|-----|
 | `squad` | Triage: analyze issue, assign `squad:{member}` label | Lead |
 | `squad:{name}` | Pick up issue and complete the work | Named member |
+| `dept:{department}` | Add routing metadata for org-mode triage | Coordinator + workflows |
 
 ### How Issue Assignment Works
 
 1. When a GitHub issue gets the `squad` label, the **Lead** triages it — analyzing content, assigning the right `squad:{member}` label, and commenting with triage notes.
 2. When a `squad:{member}` label is applied, that member picks up the issue in their next session.
-3. Members can reassign by removing their label and adding another member's label.
-4. The `squad` label is the "inbox" — untriaged issues waiting for Lead review.
+3. `dept:{department}` labels are additive metadata only. They never replace `squad:{member}` as the workflow trigger.
+4. Members can reassign by removing their label and adding another member's label.
+5. The `squad` label is the "inbox" — untriaged issues waiting for Lead review.
 
 ## Rules
 
@@ -38,6 +40,33 @@ How to decide who handles what.
 6. **Anticipate downstream work.** If a feature is being built, spawn the tester to write test cases from requirements simultaneously.
 7. **Issue-labeled work** — when a `squad:{member}` label is applied to an issue, route to that member. The Lead handles all `squad` (base label) triage.
 
+## Hierarchical Routing (Org Mode)
+
+Active when `orgMode: true` in `.squad/config.json`. When disabled, all routing falls back to the flat rules above.
+
+### Department Routing
+
+| Department | Lead | Members | Domain Keywords |
+|------------|------|---------|-----------------|
+| Analysis & Research | Danny | Rusty, Linus, Basher | architecture, analysis, investigate, research, design, structure, flows, tooling, dependencies, UX |
+
+### Escalation Routing
+
+| Trigger | Route To | Action |
+|---------|----------|--------|
+| Member blocked | Danny | Advise, unblock, or re-route within Analysis & Research |
+| Cross-department conflict | Involved leads | Run one alignment round, then parallel fan-out |
+| Authority exceeded | Squad | Coordinator decides at org scope |
+| Shared service change | Squad + Shared Service | Align with Scribe or Ralph before changing org-wide automation |
+
+### Cross-Department Work
+
+When work touches multiple departments:
+1. The coordinator matches all relevant departments from `.squad/org/structure.json`.
+2. Members from each matched department are spawned in parallel.
+3. Leads are only spawned when conventions conflict or an escalation rule triggers.
+4. `squad:{member}` remains the assignment trigger. `dept:{department}` labels are routing metadata only.
+
 ## Work Type → Agent
 
 | Work Type | Primary | Secondary |
@@ -46,4 +75,3 @@ How to decide who handles what.
 | repo mapping, flows | Rusty | — |
 | tooling, dependencies | Linus | — |
 | app surfaces, usage | Basher | — |
-

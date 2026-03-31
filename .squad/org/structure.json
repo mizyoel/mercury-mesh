@@ -1,0 +1,81 @@
+{
+  "$schema": "https://squad.dev/schemas/org-structure.v1.json",
+  "version": 1,
+  "organization": {
+    "name": "squad-org",
+    "mode": "hierarchical",
+    "created_at": "2026-03-31T00:00:00Z"
+  },
+  "departments": [
+    {
+      "id": "analysis",
+      "name": "Analysis & Research",
+      "lead": "danny",
+      "members": [
+        "rusty",
+        "linus",
+        "basher"
+      ],
+      "domain": [
+        "architecture",
+        "codebase analysis",
+        "systems analysis",
+        "ux investigation"
+      ],
+      "routingKeywords": [
+        "analyze",
+        "analysis",
+        "investigate",
+        "research",
+        "architecture",
+        "design",
+        "structure",
+        "flows",
+        "tooling",
+        "dependencies",
+        "ux"
+      ],
+      "authority": {
+        "canRoute": true,
+        "canApprove": true,
+        "canEscalate": true,
+        "scopedDecisions": [
+          "local architecture",
+          "tool selection",
+          "investigation methodology"
+        ]
+      }
+    }
+  ],
+  "sharedServices": [
+    {
+      "id": "scribe",
+      "agent": "scribe",
+      "scope": "org",
+      "description": "Session logging, decision merging, orchestration logs"
+    },
+    {
+      "id": "ralph",
+      "agent": "ralph",
+      "scope": "org",
+      "description": "Work monitoring, backlog throughput, issue triage"
+    }
+  ],
+  "escalationRules": [
+    {
+      "trigger": "cross-department-conflict",
+      "action": "spawn-leads",
+      "description": "Spawn involved leads when departments disagree on a shared change"
+    },
+    {
+      "trigger": "authority-exceeded",
+      "action": "escalate-to-coordinator",
+      "description": "Escalate when a decision crosses department or shared-service boundaries"
+    },
+    {
+      "trigger": "member-blocked",
+      "action": "escalate-to-lead",
+      "description": "Route blocked work upward for tactical guidance"
+    }
+  ]
+}
