@@ -1,6 +1,6 @@
 # Bridge Routing
 
-How the Mesh decides who handles what.
+How the Mesh decides who handles what. Missions act as gravity wells — the routing table pulls the right Wings into orbit.
 
 ## Routing Table
 
@@ -12,7 +12,7 @@ How the Mesh decides who handles what.
 | Code review | {Name} | Review PRs, check quality, suggest improvements |
 | Testing | {Name} | Write tests, find edge cases, verify fixes |
 | Scope & priorities | {Name} | What to build next, trade-offs, decisions |
-| Black Box logging | Scribe | Automatic — never needs routing |
+| The Black Box | Scribe | Automatic — never needs routing |
 
 ## Issue Routing
 
@@ -27,10 +27,10 @@ Legacy label note: the bridge keeps `Mercury Mesh` and `Mercury Mesh:{member}` l
 ### How Issue Assignment Works
 
 1. When a GitHub issue gets the `Mercury Mesh` label, the **Lead** triages it as the bridge inbox — analyzing content, assigning the right `Mercury Mesh:{member}` label, and commenting with telemetry notes.
-2. When a `Mercury Mesh:{member}` label is applied, that member picks up the issue in their next session.
+2. When a `Mercury Mesh:{member}` label is applied, that member picks up the issue in their next sortie.
 3. `dept:{department}` labels are additive metadata only. They never replace `Mercury Mesh:{member}` as the workflow trigger.
 4. Members can reassign by removing their label and adding another member's label.
-5. The `Mercury Mesh` label is the inbox gravity well for untriaged issues waiting for Lead review.
+5. The `Mercury Mesh` label is the gravity well for untriaged issues waiting for Lead triage.
 
 ## Rules
 
@@ -64,7 +64,7 @@ Active when `orgMode: true` in `.mesh/config.json`. When disabled, all routing f
 ### Autonomous Department Loop
 
 1. Coordinator routes the mission to the relevant Wing or Deck lead.
-2. Lead decomposes it into local packets.
+2. Lead decomposes it into local packets — the Burn begins.
 3. Coordinator fans out independent packets to eligible members in parallel.
 4. Members update backlog and state via the drop-box pattern and department state files.
-5. Lead resolves local blockers; unresolved blockers escalate to coordinator.
+5. Lead resolves local blockers; unresolved blockers escalate to coordinator via Airbridge.

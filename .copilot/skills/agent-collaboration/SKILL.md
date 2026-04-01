@@ -30,7 +30,7 @@ Format:
 ```
 
 ### Cross-Agent Communication
-If you need another team member's input, say so in your response. The coordinator will bring them in. Don't try to do work outside your domain.
+If you need another team member's input, say so in your response. The coordinator will establish an Airbridge. Don't try to do work outside your domain.
 
 ### Reviewer Protocol
 If you have reviewer authority and reject work: the original author is locked out from revising that artifact. A different agent must own the revision. State who should revise in your rejection response.

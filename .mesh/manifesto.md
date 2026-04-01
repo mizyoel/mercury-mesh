@@ -1,6 +1,7 @@
 # Mercury Mesh Manifesto — The Flight Path
 
 > This document is the immutable Flight Path for all Mercury Mesh agents.
+> Mercury Mesh is the Fluid Organizational Operating System (F-OS) — where human intent and machine intelligence converge on a single, high-fidelity command bridge.
 > Every Wing, Deck, and specialist MUST pass proposed actions through these principles before execution.
 > No charter, decision, or directive may contradict this Flight Path.
 

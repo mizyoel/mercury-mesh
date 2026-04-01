@@ -1,4 +1,4 @@
-# Mercury Mesh Decisions
+# Mercury Mesh — The Black Box
 
 ## Active Decisions
 

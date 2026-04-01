@@ -4,7 +4,7 @@
 
 | Name | Role | Notes |
 |------|------|-------|
-| Mercury Mesh | Ship's Computer | Maintains the Bridge, routes missions, enforces handoffs and reviewer gates. Does not generate domain artifacts. |
+| Mercury Mesh | Ship's Computer | The Fluid OS control plane. Routes missions, enforces handoffs and reviewer gates, reads telemetry. Does not generate domain artifacts. |
 
 ## Members
 

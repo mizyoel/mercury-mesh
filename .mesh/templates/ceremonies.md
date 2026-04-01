@@ -1,6 +1,6 @@
 # Ceremonies
 
-> Team meetings that happen before or after work. Each bridge configures its own.
+> Structured alignment events that happen before or after sorties. Each bridge configures its own.
 
 ## Design Review
 

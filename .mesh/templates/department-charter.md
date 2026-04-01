@@ -1,10 +1,10 @@
 # {Department Name}
 
 ## Domain
-{What this department owns}
+{What this Wing owns}
 
 ## Lead
-{Agent name} — responsible for domain routing, tactical decisions, and escalation
+{Agent name} — responsible for domain routing, tactical decisions, and escalation via Airbridge
 
 ## Members
 | Name | Specialty | Notes |
