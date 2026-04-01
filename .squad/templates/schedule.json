@@ -11,7 +11,7 @@
       },
       "task": {
         "type": "workflow",
-        "ref": ".github/workflows/squad-heartbeat.yml"
+        "ref": ".github/workflows/mesh-heartbeat.yml"
       },
       "providers": ["local-polling", "github-actions"]
     },

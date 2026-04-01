@@ -8,7 +8,7 @@ source: "earned (multiple Windows-specific bugs: colons in filenames, git -C fai
 
 ## Context
 
-Squad runs on Windows, macOS, and Linux. Several bugs have been traced to platform-specific assumptions: ISO timestamps with colons (illegal on Windows), `git -C` with Windows paths (unreliable), forward-slash paths in Node.js on Windows.
+Mercury Mesh runs on Windows, macOS, and Linux. Several bugs have been traced to platform-specific assumptions: ISO timestamps with colons (illegal on Windows), `git -C` with Windows paths (unreliable), forward-slash paths in Node.js on Windows.
 
 ## Patterns
 
@@ -39,7 +39,7 @@ const safeTimestamp = () => new Date().toISOString().replace(/:/g, '-').split('.
 
 // Git workflow (PowerShell)
 cd $teamRoot
-git add .squad/
+git add .mesh/
 if ($LASTEXITCODE -eq 0) {
   $msg = @"
 docs(ai-team): session log
@@ -57,10 +57,10 @@ Changes:
 ✗ **Incorrect:**
 ```javascript
 // Colon in filename
-const logPath = `.squad/log/${new Date().toISOString()}.md`; // ILLEGAL on Windows
+const logPath = `.mesh/log/${new Date().toISOString()}.md`; // ILLEGAL on Windows
 
 // git -C with Windows path
-exec('git -C C:\\src\\squad add .squad/'); // UNRELIABLE
+exec('git -C C:\\src\\Mercury Mesh add .mesh/'); // UNRELIABLE
 
 // Inline newlines in commit message
 exec('git commit -m "First line\nSecond line"'); // FAILS silently in PowerShell

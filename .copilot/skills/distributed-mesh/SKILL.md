@@ -1,6 +1,6 @@
 ---
 name: "distributed-mesh"
-description: "How to coordinate with squads on different machines using git as transport"
+description: "How to coordinate with meshes on different machines using git as transport"
 domain: "distributed-coordination"
 confidence: "high"
 source: "multi-model-consensus (Opus 4.6, Sonnet 4.5, GPT-5.4)"
@@ -10,10 +10,10 @@ source: "multi-model-consensus (Opus 4.6, Sonnet 4.5, GPT-5.4)"
 
 **✅ THIS SKILL PRODUCES (exactly these, nothing more):**
 
-1. **`mesh.json`** — Generated from user answers about zones and squads (which squads participate, what zone each is in, paths/URLs for each), using `mesh.json.example` in this skill's directory as the schema template
+1. **`mesh.json`** — Generated from user answers about zones and meshes (which meshes participate, what zone each is in, paths/URLs for each), using `mesh.json.example` in this skill's directory as the schema template
 2. **`sync-mesh.sh` and `sync-mesh.ps1`** — Copied from this skill's directory into the project root (these are bundled resources, NOT generated code)
 3. **Zone 2 state repo initialization** (if applicable) — If the user specified a Zone 2 shared state repo, run `sync-mesh.sh --init` to scaffold the state repo structure
-4. **A decision entry** in `.squad/decisions/inbox/` documenting the mesh configuration for team awareness
+4. **A decision entry** in `.mesh/decisions/inbox/` documenting the mesh configuration for team awareness
 
 **❌ THIS SKILL DOES NOT PRODUCE:**
 
@@ -21,21 +21,21 @@ source: "multi-model-consensus (Opus 4.6, Sonnet 4.5, GPT-5.4)"
 - **No test files** — No test suites, test cases, or test scaffolding
 - **No GENERATING sync scripts** — They are bundled with this skill as pre-built resources. COPY them, don't generate them.
 - **No daemons or services** — No background processes, servers, or persistent runtimes
-- **No modifications to existing squad files** beyond the decision entry (no changes to team.md, routing.md, agent charters, etc.)
+- **No modifications to existing Mercury Mesh files** beyond the decision entry (no changes to team.md, routing.md, agent charters, etc.)
 
 **Your role:** Configure the mesh topology and install the bundled sync scripts. Nothing more.
 
 ## Context
 
-When squads are on different machines (developer laptops, CI runners, cloud VMs, partner orgs), the local file-reading convention still works — but remote files need to arrive on your disk first. This skill teaches the pattern for distributed squad communication.
+When meshes are on different machines (developer laptops, CI runners, cloud VMs, partner orgs), the local file-reading convention still works — but remote files need to arrive on your disk first. This skill teaches the pattern for distributed Mercury Mesh communication.
 
 **When this applies:**
-- Squads span multiple machines, VMs, or CI runners
-- Squads span organizations or companies
-- An agent needs context from a squad whose files aren't on the local filesystem
+- meshes span multiple machines, VMs, or CI runners
+- meshes span organizations or companies
+- An agent needs context from a Mercury Mesh whose files aren't on the local filesystem
 
 **When this does NOT apply:**
-- All squads are on the same machine (just read the files directly)
+- All meshes are on the same machine (just read the files directly)
 
 ## Patterns
 
@@ -63,23 +63,23 @@ The agent interface never changes. Agents always read local files. The distribut
 5. PUBLISH: git add + commit + push — share state with remote peers
 ```
 
-Steps 2–4 are identical to local-only. Steps 1 and 5 are the entire distributed extension. **Note:** "WORK" means the agent performs its normal squad duties — it does NOT mean "build mesh infrastructure."
+Steps 2–4 are identical to local-only. Steps 1 and 5 are the entire distributed extension. **Note:** "WORK" means the agent performs its normal Mercury Mesh duties — it does NOT mean "build mesh infrastructure."
 
 ### The mesh.json Config
 
 ```json
 {
-  "squads": {
-    "auth-squad": { "zone": "local", "path": "../auth-squad/.mesh" },
-    "ci-squad": {
+  "meshes": {
+    "auth-Mercury Mesh": { "zone": "local", "path": "../auth-Mercury Mesh/.mesh" },
+    "ci-Mercury Mesh": {
       "zone": "remote-trusted",
-      "source": "git@github.com:our-org/ci-squad.git",
+      "source": "git@github.com:our-org/ci-Mercury Mesh.git",
       "ref": "main",
-      "sync_to": ".mesh/remotes/ci-squad"
+      "sync_to": ".mesh/remotes/ci-Mercury Mesh"
     },
     "partner-fraud": {
       "zone": "remote-opaque",
-      "source": "https://partner.dev/squad-contracts/fraud/SUMMARY.md",
+      "source": "https://partner.dev/Mercury Mesh-contracts/fraud/SUMMARY.md",
       "sync_to": ".mesh/remotes/partner-fraud",
       "auth": "bearer"
     }
@@ -87,11 +87,11 @@ Steps 2–4 are identical to local-only. Steps 1 and 5 are the entire distribute
 }
 ```
 
-Three zone types, one file. Local squads need only a path. Remote-trusted need a git URL. Remote-opaque need an HTTP URL.
+Three zone types, one file. Local meshes need only a path. Remote-trusted need a git URL. Remote-opaque need an HTTP URL.
 
 ### Write Partitioning
 
-Each squad writes only to its own directory (`boards/{self}.md`, `squads/{self}/*`, `drops/{date}-{self}-*.md`). No two squads write to the same file. Git push/pull never conflicts. If push fails ("branch is behind"), the fix is always `git pull --rebase && git push`.
+Each Mercury Mesh writes only to its own directory (`boards/{self}.md`, `meshes/{self}/*`, `drops/{date}-{self}-*.md`). No two meshes write to the same file. Git push/pull never conflicts. If push fails ("branch is behind"), the fix is always `git pull --rebase && git push`.
 
 ### Trust Boundaries
 
@@ -113,28 +113,28 @@ For selective visibility, use separate repos per audience (internal, partner, pu
 
 ### Mesh State Repo
 
-The shared mesh state repo is a plain git repository — NOT a Squad project. It holds:
-- One directory per participating squad
-- Each directory contains at minimum a SUMMARY.md with the squad's current state
+The shared mesh state repo is a plain git repository — NOT a Mercury Mesh project. It holds:
+- One directory per participating Mercury Mesh
+- Each directory contains at minimum a SUMMARY.md with the Mercury Mesh's current state
 - A root README explaining what the repo is and who participates
 
-No `.squad/` folder, no agents, no automation. Write partitioning means each squad only pushes to its own directory. The repo is a rendezvous point, not an intelligent system.
+No `.mesh/` folder, no agents, no automation. Write partitioning means each Mercury Mesh only pushes to its own directory. The repo is a rendezvous point, not an intelligent system.
 
-If you want a squad that *observes* mesh health, that's a separate Squad project that lists the state repo as a Zone 2 remote in its `mesh.json` — it does NOT live inside the state repo.
+If you want a Mercury Mesh that *observes* mesh health, that's a separate Mercury Mesh project that lists the state repo as a Zone 2 remote in its `mesh.json` — it does NOT live inside the state repo.
 
 ## Examples
 
-### Developer Laptop + CI Squad (Zone 2)
+### Developer Laptop + CI Mercury Mesh (Zone 2)
 
-Auth-squad agent wakes up. `git pull` brings ci-squad's latest results. Agent reads: "3 test failures in auth module." Adjusts work. Pushes results when done. **Overhead: one `git pull`, one `git push`.**
+Auth-Mercury Mesh agent wakes up. `git pull` brings ci-Mercury Mesh's latest results. Agent reads: "3 test failures in auth module." Adjusts work. Pushes results when done. **Overhead: one `git pull`, one `git push`.**
 
 ### Two Orgs Collaborating (Zone 3)
 
-Payment-squad fetches partner's published SUMMARY.md via curl. Reads: "Risk scoring v3 API deprecated April 15. New field `device_fingerprint` required." The consuming agent (in payment-squad's team) reads this information and uses it to inform its work — for example, updating payment integration code to include the new field. Partner can't see payment-squad's internals.
+Payment-Mercury Mesh fetches partner's published SUMMARY.md via curl. Reads: "Risk scoring v3 API deprecated April 15. New field `device_fingerprint` required." The consuming agent (in payment-Mercury Mesh's team) reads this information and uses it to inform its work — for example, updating payment integration code to include the new field. Partner can't see payment-Mercury Mesh's internals.
 
 ### Same Org, Shared Mesh Repo (Zone 2)
 
-Three squads on different machines. One shared git repo holds the mesh. Each squad: `git pull` before work, `git push` after. Write partitioning ensures zero merge conflicts.
+Three meshes on different machines. One shared git repo holds the mesh. Each Mercury Mesh: `git pull` before work, `git push` after. Write partitioning ensures zero merge conflicts.
 
 ## AGENT WORKFLOW (Deterministic Setup)
 
@@ -144,37 +144,37 @@ When a user invokes this skill to set up a distributed mesh, follow these steps 
 
 Ask these questions (adapt phrasing naturally, but get these answers):
 
-1. **Which squads are participating?** (List of squad names)
-2. **For each squad, which zone is it in?**
+1. **Which meshes are participating?** (List of Mercury Mesh names)
+2. **For each Mercury Mesh, which zone is it in?**
    - `local` — same filesystem (just need a path)
    - `remote-trusted` — different machine, same org, shared git access (need git URL + ref)
    - `remote-opaque` — different org, no shared auth (need HTTPS URL to published contract)
-3. **For each squad, what's the connection info?**
+3. **For each Mercury Mesh, what's the connection info?**
    - Local: relative or absolute path to their `.mesh/` directory
    - Remote-trusted: git URL (SSH or HTTPS), ref (branch/tag), and where to sync it to locally
    - Remote-opaque: HTTPS URL to their SUMMARY.md, where to sync it, and auth type (none/bearer)
-4. **Where should the shared state live?** (For Zone 2 squads: git repo URL for the mesh state, or confirm each squad syncs independently)
+4. **Where should the shared state live?** (For Zone 2 meshes: git repo URL for the mesh state, or confirm each Mercury Mesh syncs independently)
 
 ### Step 2: GENERATE `mesh.json`
 
-Using the answers from Step 1, create a `mesh.json` file at the project root. Use `mesh.json.example` from THIS skill's directory (`.squad/skills/distributed-mesh/mesh.json.example`) as the schema template.
+Using the answers from Step 1, create a `mesh.json` file at the project root. Use `mesh.json.example` from THIS skill's directory (`.mesh/skills/distributed-mesh/mesh.json.example`) as the schema template.
 
 Structure:
 
 ```json
 {
-  "squads": {
-    "<squad-name>": { "zone": "local", "path": "<relative-or-absolute-path>" },
-    "<squad-name>": {
+  "meshes": {
+    "<Mercury Mesh-name>": { "zone": "local", "path": "<relative-or-absolute-path>" },
+    "<Mercury Mesh-name>": {
       "zone": "remote-trusted",
       "source": "<git-url>",
       "ref": "<branch-or-tag>",
-      "sync_to": ".mesh/remotes/<squad-name>"
+      "sync_to": ".mesh/remotes/<Mercury Mesh-name>"
     },
-    "<squad-name>": {
+    "<Mercury Mesh-name>": {
       "zone": "remote-opaque",
       "source": "<https-url-to-summary>",
-      "sync_to": ".mesh/remotes/<squad-name>",
+      "sync_to": ".mesh/remotes/<Mercury Mesh-name>",
       "auth": "<none|bearer>"
     }
   }
@@ -187,10 +187,10 @@ Write this file to the project root. Do NOT write any other code.
 
 Copy the bundled sync scripts from THIS skill's directory into the project root:
 
-- **Source:** `.squad/skills/distributed-mesh/sync-mesh.sh`
+- **Source:** `.mesh/skills/distributed-mesh/sync-mesh.sh`
 - **Destination:** `sync-mesh.sh` (project root)
 
-- **Source:** `.squad/skills/distributed-mesh/sync-mesh.ps1`
+- **Source:** `.mesh/skills/distributed-mesh/sync-mesh.ps1`
 - **Destination:** `sync-mesh.ps1` (project root)
 
 These are bundled resources. Do NOT generate them — COPY them directly.
@@ -209,31 +209,31 @@ bash sync-mesh.sh --init
 .\sync-mesh.ps1 -Init
 ```
 
-This scaffolds the state repo structure (squad directories, placeholder SUMMARY.md files, root README).
+This scaffolds the state repo structure (Mercury Mesh directories, placeholder SUMMARY.md files, root README).
 
 **Skip this step if:**
-- No Zone 2 squads are configured (local/opaque only)
+- No Zone 2 meshes are configured (local/opaque only)
 - The state repo already exists and is initialized
 
 ### Step 5: WRITE a decision entry
 
-Create a decision file at `.squad/decisions/inbox/<your-agent-name>-mesh-setup.md` with this content:
+Create a decision file at `.mesh/decisions/inbox/<your-agent-name>-mesh-setup.md` with this content:
 
 ```markdown
 ### <YYYY-MM-DD>: Mesh configuration
 
 **By:** <your-agent-name> (via distributed-mesh skill)
 
-**What:** Configured distributed mesh with <N> squads across zones <list-zones-used>
+**What:** Configured distributed mesh with <N> meshes across zones <list-zones-used>
 
-**Squads:**
-- `<squad-name>` — Zone <X> — <brief-connection-info>
-- `<squad-name>` — Zone <X> — <brief-connection-info>
+**meshes:**
+- `<Mercury Mesh-name>` — Zone <X> — <brief-connection-info>
+- `<Mercury Mesh-name>` — Zone <X> — <brief-connection-info>
 - ...
 
 **State repo:** <git-url-if-zone-2-used, or "N/A (local/opaque only)">
 
-**Why:** <user's stated reason for setting up the mesh, or "Enable cross-machine squad coordination">
+**Why:** <user's stated reason for setting up the mesh, or "Enable cross-machine Mercury Mesh coordination">
 ```
 
 Write this file. The Scribe will merge it into the main decisions file later.
@@ -245,16 +245,16 @@ Write this file. The Scribe will merge it into the main decisions file later.
 - Write validator code
 - Write test files
 - Create any other modules, libraries, or application code
-- Modify existing squad files (team.md, routing.md, charters)
+- Modify existing Mercury Mesh files (team.md, routing.md, charters)
 - Auto-advance to Phase 2 or Phase 3
 
 Output a simple completion message:
 
 ```
 ✅ Mesh configured. Created:
-- mesh.json (<N> squads)
+- mesh.json (<N> meshes)
 - sync-mesh.sh and sync-mesh.ps1 (copied from skill bundle)
-- Decision entry: .squad/decisions/inbox/<filename>
+- Decision entry: .mesh/decisions/inbox/<filename>
 
 Run `bash sync-mesh.sh` (or `.\sync-mesh.ps1` on Windows) before agents start to materialize remote state.
 ```

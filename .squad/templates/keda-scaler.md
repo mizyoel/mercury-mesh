@@ -7,7 +7,7 @@
 When running Mercury Mesh on Kubernetes, agent pods sit idle when no work exists. [KEDA](https://keda.sh) (Kubernetes Event-Driven Autoscaler) solves this for queue-based workloads, but GitHub Issues is not a native KEDA trigger.
 
 The `keda-copilot-scaler` is a KEDA External Scaler (gRPC) that bridges this gap:
-1. Polls GitHub API for issues matching specific labels (for now, compatibility labels such as `squad:copilot`)
+1. Polls GitHub API for issues matching specific labels (for now, compatibility labels such as `mesh:copilot`)
 2. Reports queue depth as a KEDA metric
 3. Handles rate limits gracefully (Retry-After, exponential backoff)
 4. Supports composite scaling decisions
@@ -25,7 +25,7 @@ Examples below still use the legacy label, namespace, and node-label scheme unti
 
 ```bash
 helm install keda-copilot-scaler oci://ghcr.io/tamirdresher/keda-copilot-scaler \
-  --namespace squad-scaler --create-namespace \
+  --namespace Mercury Mesh-scaler --create-namespace \
   --set github.owner=YOUR_ORG \
   --set github.repo=YOUR_REPO \
   --set github.token=YOUR_TOKEN
@@ -43,7 +43,7 @@ apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: picard-scaler
-  namespace: squad
+  namespace: Mercury Mesh
 spec:
   scaleTargetRef:
     name: picard-deployment
@@ -57,7 +57,7 @@ spec:
       scalerAddress: keda-copilot-scaler.squad-scaler.svc.cluster.local:6000
       owner: your-org
       repo: your-repo
-      labels: squad:copilot    # Only count issues with this label
+      labels: mesh:copilot    # Only count issues with this label
       threshold: "1"           # Scale up when >= 1 issue exists
 ```
 
@@ -65,13 +65,13 @@ spec:
 
 ```bash
 # Check the scaler is running
-kubectl get pods -n squad-scaler
+kubectl get pods -n Mercury Mesh-scaler
 
 # Check ScaledObject status
-kubectl get scaledobject picard-scaler -n squad
+kubectl get scaledobject picard-scaler -n Mercury Mesh
 
 # Watch scaling events
-kubectl get events -n squad --watch
+kubectl get events -n Mercury Mesh --watch
 ```
 
 ## Scaling Behavior
@@ -109,7 +109,7 @@ spec:
   triggers:
   - type: external
     metadata:
-      labels: squad:copilot,needs:gpu
+      labels: mesh:copilot,needs:gpu
 ```
 
 ### Cooperative Rate Limiting (#515)
@@ -143,7 +143,7 @@ GitHub API                    KEDA                    Kubernetes
 | `github.owner` | — | Repository owner |
 | `github.repo` | — | Repository name |
 | `github.token` | — | GitHub PAT with `repo` scope |
-| `github.labels` | `squad:copilot` | Comma-separated label filter |
+| `github.labels` | `mesh:copilot` | Comma-separated label filter |
 | `scaler.port` | `6000` | gRPC server port |
 | `scaler.pollInterval` | `30s` | GitHub API polling interval |
 | `scaler.rateLimitThreshold` | `100` | Stop polling below this remaining |
@@ -161,6 +161,6 @@ The scaler is maintained as a standalone project. PRs and issues welcome.
 ## References
 
 - [KEDA External Scalers](https://keda.sh/docs/latest/concepts/external-scalers/) — KEDA documentation
-- [Mercury Mesh on AKS (legacy repo name: squad-on-aks)](https://github.com/tamirdresher/squad-on-aks) — Full Kubernetes deployment example
+- [Mercury Mesh on AKS (legacy repo name: Mercury Mesh-on-aks)](https://github.com/tamirdresher/Mercury Mesh-on-aks) — Full Kubernetes deployment example
 - [Machine Capabilities](machine-capabilities.md) — Capability-based routing (#514)
 - [Cooperative Rate Limiting](cooperative-rate-limiting.md) — Multi-agent rate management (#515)

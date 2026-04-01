@@ -12,7 +12,7 @@ tools:
     description: "Read the full issue, comments, and labels before drafting"
     when: "Use after selecting a candidate so PAO has complete thread context"
   - name: "github-mcp-server-search_issues"
-    description: "Search for candidate issues or prior squad responses"
+    description: "Search for candidate issues or prior Mercury Mesh responses"
     when: "Use when filtering by keywords, labels, or duplicate response checks"
   - name: "gh CLI"
     description: "Fallback for GitHub issue comments and discussions workflows"
@@ -25,7 +25,7 @@ Phase 1 is **draft-only mode**.
 
 - PAO scans issues and discussions, drafts responses with the humanizer skill, and presents a review table for human approval.
 - **Human review gate is mandatory** — PAO never posts autonomously.
-- Every action is logged to `.squad/comms/audit/`.
+- Every action is logged to `.mesh/comms/audit/`.
 - This workflow is triggered manually only ("PAO, check community") — no automated or Ralph-triggered activation in Phase 1.
 
 ## Patterns
@@ -35,9 +35,9 @@ Phase 1 is **draft-only mode**.
 Find unanswered community items with GitHub MCP tools first, or `gh issue list` / `gh api` as fallback for issues and discussions.
 
 - Include **open** issues and discussions only.
-- Filter for items with **no squad team response**.
+- Filter for items with **no Mercury Mesh team response**.
 - Limit to items created in the last 7 days.
-- Exclude items labeled `squad:internal` or `wontfix`.
+- Exclude items labeled `Mercury Mesh:internal` or `wontfix`.
 - Include discussions **and** issues in the same sweep.
 - Phase 1 scope is **issues and discussions only** — do not draft PR replies.
 
@@ -70,8 +70,8 @@ Determine the response type before drafting.
 |---------------------------|-----------------|----------|
 | New contributor (0 prior issues) | Welcome | T1 |
 | Error message, stack trace, "doesn't work" | Troubleshooting | T2 |
-| "How do I...?", "Can Squad...?", "Is there a way to...?" | Feature Guidance | T3 |
-| Wrong repo, out of scope for Squad | Redirect | T4 |
+| "How do I...?", "Can Mercury Mesh...?", "Is there a way to...?" | Feature Guidance | T3 |
+| Wrong repo, out of scope for Mercury Mesh | Redirect | T4 |
 | Confirmed bug, no fix available yet | Acknowledgment | T5 |
 | Fix shipped, PR merged that resolves issue | Closing | T6 |
 | Unclear cause, needs investigation | Technical Uncertainty | T7 |
@@ -84,9 +84,9 @@ Use exactly one template as the base draft. Replace placeholders with issue-spec
 
 | Confidence | Criteria | Example |
 |-----------|----------|---------|
-| 🟢 High | Answer exists in Squad docs or FAQ, similar question answered before, no technical ambiguity | "How do I install Squad?" |
-| 🟡 Medium | Technical answer is sound but involves judgment calls, OR docs exist but don't perfectly match the question, OR tone is tricky | "Can Squad work with Azure DevOps?" (yes, but setup is nuanced) |
-| 🔴 Needs Review | Technical uncertainty, policy/roadmap question, potential reputational risk, author is frustrated/angry, question about unreleased features | "When will Squad support Claude?" |
+| 🟢 High | Answer exists in Mercury Mesh docs or FAQ, similar question answered before, no technical ambiguity | "How do I install Mercury Mesh?" |
+| 🟡 Medium | Technical answer is sound but involves judgment calls, OR docs exist but don't perfectly match the question, OR tone is tricky | "Can Mercury Mesh work with Azure DevOps?" (yes, but setup is nuanced) |
+| 🔴 Needs Review | Technical uncertainty, policy/roadmap question, potential reputational risk, author is frustrated/angry, question about unreleased features | "When will Mercury Mesh support Claude?" |
 
 **Auto-escalation rules:**
 - Any mention of competitors → 🔴
@@ -172,8 +172,8 @@ After approval:
 
 Log every action.
 
-- Location: `.squad/comms/audit/{timestamp}.md`
-- Required fields vary by action — see `.squad/comms/templates/audit-entry.md` Conditional Fields table
+- Location: `.mesh/comms/audit/{timestamp}.md`
+- Required fields vary by action — see `.mesh/comms/templates/audit-entry.md` Conditional Fields table
 - Universal required fields: `timestamp`, `action`
 - All other fields are conditional on the action type
 
@@ -195,7 +195,7 @@ gh issue list --state open --json number,title,author,labels,comments --limit 20
 
 | # | Item | Author | Type | Confidence | Read | Preview |
 |---|------|--------|------|------------|------|---------|
-| 1 | Issue #426 | @newdev | Welcome | 🟢 | 1/1 | "Hey @newdev! Welcome to Squad..." |
+| 1 | Issue #426 | @newdev | Welcome | 🟢 | 1/1 | "Hey @newdev! Welcome to Mercury Mesh..." |
 | 2 | Discussion #18 | @builder | Feature guidance | 🟡 | 4/4 | "Great question! Today the CLI..." |
 | 3 | Issue #431 ⚠️ | @debugger | Technical uncertainty | 🔴 | 12/12 | "Interesting find, @debugger..." |
 
@@ -224,18 +224,18 @@ reviewer: "@bradygaster"
 ## Draft Content (draft, edit, post actions)
 Thread: 3 comments, last activity 2026-03-16, reporter hit a preview-build regression after install.
 
-Hey @newdev! Welcome to Squad 👋 Thanks for opening this.
+Hey @newdev! Welcome to Mercury Mesh 👋 Thanks for opening this.
 We reproduced the issue in preview builds and we're checking the regression point now.
 Let us know if you can share the command you ran right before the failure.
 
 ## Post Result (post, delete actions)
-https://github.com/bradygaster/squad/issues/426#issuecomment-123456
+https://github.com/bradygaster/Mercury Mesh/issues/426#issuecomment-123456
 ```
 
 ### T1 — Welcome
 
 ```text
-Hey {author}! Welcome to Squad 👋 Thanks for opening this.
+Hey {author}! Welcome to Mercury Mesh 👋 Thanks for opening this.
 {specific acknowledgment or first answer}
 Let us know if you have questions — happy to help!
 ```
@@ -278,7 +278,7 @@ We'll update this thread when we have a fix. Thanks for flagging it!
 ```text
 This should be resolved in {version/PR}! 🎉
 {brief summary of what changed}
-Thanks for reporting this, {author} — it made Squad better.
+Thanks for reporting this, {author} — it made Mercury Mesh better.
 ```
 
 ### T7 — Technical Uncertainty
@@ -321,9 +321,9 @@ That context will help us narrow down what's happening. Appreciate it!
 - ❌ Drafting without reading full thread (context is everything)
 - ❌ Ignoring confidence flags (🔴 items need Flight/human review)
 - ❌ Scanning closed issues (only open items)
-- ❌ Responding to issues labeled `squad:internal` or `wontfix`
+- ❌ Responding to issues labeled `Mercury Mesh:internal` or `wontfix`
 - ❌ Skipping audit logging (every action must be recorded)
-- ❌ Drafting for issues where a squad member already responded (avoid duplicates)
+- ❌ Drafting for issues where a Mercury Mesh member already responded (avoid duplicates)
 - ❌ Drafting pull request responses in Phase 1 (issues/discussions only)
 - ❌ Treating templates like loose examples instead of reusable drafting assets
 - ❌ Asking for more info without specific requests

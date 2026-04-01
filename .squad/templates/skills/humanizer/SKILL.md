@@ -35,7 +35,7 @@ Use this skill whenever PAO drafts external-facing responses for issues or discu
 ### 1. Welcome
 
 ```text
-Hey {author}! Welcome to Squad 👋 Thanks for opening this.
+Hey {author}! Welcome to Mercury Mesh 👋 Thanks for opening this.
 {substantive response}
 Let us know if you have questions — happy to help!
 ```
@@ -78,7 +78,7 @@ We'll update this thread when we have a fix. Thanks for flagging it!
 ```text
 This should be resolved in {version/PR}! 🎉
 {brief summary of what changed}
-Thanks for reporting this, {author} — it made Squad better.
+Thanks for reporting this, {author} — it made Mercury Mesh better.
 ```
 
 ### 7. Technical uncertainty
@@ -93,12 +93,12 @@ We'll dig deeper and update this thread.
 ## Anti-Patterns
 
 - ❌ Corporate speak: "We appreciate your patience as we investigate this matter"
-- ❌ Marketing hype: "Squad is the BEST way to..." or "This amazing feature..."
+- ❌ Marketing hype: "Mercury Mesh is the BEST way to..." or "This amazing feature..."
 - ❌ Passive voice: "It has been determined that..." or "The issue is being tracked"
 - ❌ Dismissive: "This works as designed" without empathy
 - ❌ Over-promising: "We'll ship this next week" without commitment from the team
 - ❌ Empty acknowledgment: "Thanks for your feedback" with no substance
-- ❌ Robot signatures: "Best regards, PAO" or "Sincerely, The Squad Team"
+- ❌ Robot signatures: "Best regards, PAO" or "Sincerely, The Mercury Mesh Team"
 - ❌ Excessive emoji: More than 1-2 emoji per response
 - ❌ Quoting profanity: Even when the original issue contains it, paraphrase instead
 - ❌ Link-dumping: Pasting URLs without context ("See: https://...")

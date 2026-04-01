@@ -4,9 +4,9 @@ The Bridge Protocol for a liquid organizational OS.
 
 ## What Is This?
 
-This repo presents the existing Squad runtime as **Mercury Mesh**: a zero-gravity bridge where human **Commanders** and specialist AI **Wings** operate as one drifting organism. Projects become **Missions** or **Sorties**, departments become **Wings** or **Decks**, and progress is read through **Telemetry** instead of status theater.
+**Mercury Mesh** is a zero-gravity bridge where human **Commanders** and specialist AI **Wings** operate as one drifting organism. Projects become **Missions** or **Sorties**, departments become **Wings** or **Decks**, and progress is read through **Telemetry** instead of status theater.
 
-The implementation still keeps `.squad/`, `squad:*` labels, and related workflow hooks intact. That compatibility layer preserves the current automation while the product language, agent voice, and documentation shift to Mercury Mesh.
+The runtime identity is fully Mercury Mesh: `mesh` / `mesh:{member}` labels, `mesh/{issue}` branches, and `mesh-*.yml` workflows. The on-disk directory remains `.squad/` for backward compatibility; a future physical rename is optional.
 
 ## Getting Started
 
@@ -19,7 +19,7 @@ The implementation still keeps `.squad/`, `squad:*` labels, and related workflow
 
 ```
 .github/
-  agents/squad.agent.md   # Bridge governance for the Mercury Mesh control plane
+  agents/mercury-mesh.agent.md  # Bridge governance for the Mercury Mesh control plane
   workflows/               # GitHub Actions for issue triage, labels, heartbeat
 .squad/
   config.json              # Runtime flags and bridge state
@@ -47,7 +47,7 @@ The implementation still keeps `.squad/`, `squad:*` labels, and related workflow
 | Project | Mission / Sortie | Focused deployment into a defined problem space |
 | Project Lead | Mission Prime | Local lead coordinating the gravity well |
 | Documentation | The Black Box | Immutable ledger of decisions, learnings, and telemetry |
-| Data Strategy | The Flight Path | Long-range direction captured in `.squad/manifesto.md` |
+| Data Strategy | The Flight Path | Long-range direction captured in `.mesh/manifesto.md` |
 | Task Status | Telemetry | Live readout of progress, quality, and resource drift |
 
 ## Vocal Signatures
@@ -62,9 +62,9 @@ The implementation still keeps `.squad/`, `squad:*` labels, and related workflow
 - **Shadowing Phase**: new agents observe and analyze before they are allowed to fire thrusters.
 - **The Loom**: shared knowledge fabric where one agent's learning becomes bridge knowledge.
 
-## Compatibility Layer
+## Runtime Notes
 
-Mercury Mesh currently preserves `.squad/` storage, `squad:*` issue labels, and the `squad/{issue-number}-{slug}` branch convention. Those mechanics are already wired into workflows, so the bridge identity is layered on top rather than forced through a risky runtime rename.
+The on-disk runtime directory is `.squad/`. Workflows and helpers resolve `.mesh/` or `.mercury/` first when present. The physical directory rename is optional and tracked in `docs/mercury-mesh-runtime-rename-impact.md`.
 
 ## License
 

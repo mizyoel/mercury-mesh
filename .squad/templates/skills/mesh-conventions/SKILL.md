@@ -1,18 +1,18 @@
 ---
-name: "squad-conventions"
-description: "Core conventions and patterns used in the Squad codebase"
+name: "Mercury Mesh-conventions"
+description: "Core conventions and patterns used in the Mercury Mesh codebase"
 domain: "project-conventions"
 confidence: "high"
 source: "manual"
 ---
 
 ## Context
-These conventions apply to all work on the Squad CLI tool (`create-squad`). Squad is a zero-dependency Node.js package that adds AI agent teams to any project. Understanding these patterns is essential before modifying any Squad source code.
+These conventions apply to all work on the Mercury Mesh CLI tool (`create-Mercury Mesh`). Mercury Mesh is a zero-dependency Node.js package that adds AI agent teams to any project. Understanding these patterns is essential before modifying any Mercury Mesh source code.
 
 ## Patterns
 
 ### Zero Dependencies
-Squad has zero runtime dependencies. Everything uses Node.js built-ins (`fs`, `path`, `os`, `child_process`). Do not add packages to `dependencies` in `package.json`. This is a hard constraint, not a preference.
+Mercury Mesh has zero runtime dependencies. Everything uses Node.js built-ins (`fs`, `path`, `os`, `child_process`). Do not add packages to `dependencies` in `package.json`. This is a hard constraint, not a preference.
 
 ### Node.js Built-in Test Runner
 Tests use `node:test` and `node:assert/strict` — no test frameworks. Run with `npm test`. Test files live in `test/`. The test command is `node --test test/`.
@@ -24,18 +24,18 @@ All user-facing errors use the `fatal(msg)` function which prints a red `✗` pr
 Colors are defined as constants at the top of `index.js`: `GREEN`, `RED`, `DIM`, `BOLD`, `RESET`. Use these constants — do not inline ANSI escape codes.
 
 ### File Structure
-- `.squad/` — Team state (user-owned, never overwritten by upgrades)
-- `.squad/templates/` — Template files copied from `templates/` (Squad-owned, overwritten on upgrade)
-- `.github/agents/squad.agent.md` — Coordinator prompt (Squad-owned, overwritten on upgrade)
+- `.mesh/` — Team state (user-owned, never overwritten by upgrades)
+- `.mesh/templates/` — Template files copied from `templates/` (Mercury Mesh-owned, overwritten on upgrade)
+- `.github/agents/mercury-mesh.agent.md` — Coordinator prompt (Mercury Mesh-owned, overwritten on upgrade)
 - `templates/` — Source templates shipped with the npm package
-- `.squad/skills/` — Team skills in SKILL.md format (user-owned)
-- `.squad/decisions/inbox/` — Drop-box for parallel decision writes
+- `.mesh/skills/` — Team skills in SKILL.md format (user-owned)
+- `.mesh/decisions/inbox/` — Drop-box for parallel decision writes
 
 ### Windows Compatibility
-Always use `path.join()` for file paths — never hardcode `/` or `\` separators. Squad must work on Windows, macOS, and Linux. All tests must pass on all platforms.
+Always use `path.join()` for file paths — never hardcode `/` or `\` separators. Mercury Mesh must work on Windows, macOS, and Linux. All tests must pass on all platforms.
 
 ### Init Idempotency
-The init flow uses a skip-if-exists pattern: if a file or directory already exists, skip it and report "already exists." Never overwrite user state during init. The upgrade flow overwrites only Squad-owned files.
+The init flow uses a skip-if-exists pattern: if a file or directory already exists, skip it and report "already exists." Never overwrite user state during init. The upgrade flow overwrites only Mercury Mesh-owned files.
 
 ### Copy Pattern
 `copyRecursive(src, target)` handles both files and directories. It creates parent directories with `{ recursive: true }` and uses `fs.copyFileSync` for files.
@@ -50,20 +50,20 @@ function fatal(msg) {
 }
 
 // File path construction (Windows-safe)
-const agentDest = path.join(dest, '.github', 'agents', 'squad.agent.md');
+const agentDest = path.join(dest, '.github', 'agents', 'mercury-mesh.agent.md');
 
 // Skip-if-exists pattern
 if (!fs.existsSync(ceremoniesDest)) {
   fs.copyFileSync(ceremoniesSrc, ceremoniesDest);
-  console.log(`${GREEN}✓${RESET} .squad/ceremonies.md`);
+  console.log(`${GREEN}✓${RESET} .mesh/ceremonies.md`);
 } else {
   console.log(`${DIM}ceremonies.md already exists — skipping${RESET}`);
 }
 ```
 
 ## Anti-Patterns
-- **Adding npm dependencies** — Squad is zero-dep. Use Node.js built-ins only.
+- **Adding npm dependencies** — Mercury Mesh is zero-dep. Use Node.js built-ins only.
 - **Hardcoded path separators** — Never use `/` or `\` directly. Always `path.join()`.
-- **Overwriting user state on init** — Init skips existing files. Only upgrade overwrites Squad-owned files.
+- **Overwriting user state on init** — Init skips existing files. Only upgrade overwrites Mercury Mesh-owned files.
 - **Raw stack traces** — All errors go through `fatal()`. Users see clean messages, not stack traces.
 - **Inline ANSI codes** — Use the color constants (`GREEN`, `RED`, `DIM`, `BOLD`, `RESET`).

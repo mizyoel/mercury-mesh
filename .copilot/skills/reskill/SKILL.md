@@ -23,7 +23,7 @@ Read all agent charters and histories. Measure byte sizes. Identify:
 
 ### Step 2: Extract
 For each identified pattern:
-1. Create or update a skill at `.squad/skills/{skill-name}/SKILL.md`
+1. Create or update a skill at `.mesh/skills/{skill-name}/SKILL.md`
 2. Follow the skill template format (frontmatter + Context + Patterns + Examples + Anti-Patterns)
 3. Set confidence: low (first observation), medium (2+ agents), high (team-wide)
 
@@ -88,5 +88,5 @@ Preferred: {model}
 - Don't create skills for content only one agent uses
 - Don't merge unrelated patterns into a single mega-skill
 - Don't remove Model preference line (coordinator needs it for model selection)
-- Don't touch `.squad/decisions.md` during reskill
+- Don't touch `.mesh/decisions.md` during reskill
 - Don't remove the tagline blockquote — it's the charter's soul in one line

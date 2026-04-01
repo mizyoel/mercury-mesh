@@ -1,6 +1,6 @@
 # Skill: nap
 
-> Context hygiene — compress, prune, archive .squad/ state
+> Context hygiene — compress, prune, archive .mesh/ state
 
 ## What It Does
 
@@ -11,12 +11,12 @@ archiving stale decisions, and cleaning orphaned inbox files.
 
 - Before heavy fan-out work (many agents will spawn)
 - When history.md files exceed 15KB
-- When .squad/ total size exceeds 1MB
+- When .mesh/ total size exceeds 1MB
 - After long-running sessions or sprints
 
 ## Invocation
 
-- CLI: `squad nap` / `squad nap --deep` / `squad nap --dry-run`
+- CLI: `Mercury Mesh nap` / `Mercury Mesh nap --deep` / `Mercury Mesh nap --dry-run`
 - REPL: `/nap` / `/nap --dry-run` / `/nap --deep`
 
 ## Confidence

@@ -4,10 +4,10 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const RUNTIME_DIR_CANDIDATES = ['.mesh', '.mercury', '.squad'];
+const RUNTIME_DIR_CANDIDATES = ['.mesh', '.mercury'];
 
 function defaultRuntimeDir() {
-  return RUNTIME_DIR_CANDIDATES.find((candidate) => fs.existsSync(candidate)) || '.squad';
+  return RUNTIME_DIR_CANDIDATES.find((candidate) => fs.existsSync(candidate)) || '.mesh';
 }
 
 function runtimeDirName(runtimeDir) {
@@ -23,7 +23,7 @@ function parseArgs(argv) {
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === '--squad-dir' || arg === '--mesh-dir') {
+    if (arg === '--mesh-dir') {
       options.squadDir = argv[index + 1];
       index += 1;
       continue;
@@ -44,13 +44,13 @@ function parseArgs(argv) {
     throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (!options.squadDir) throw new Error('--mesh-dir/--squad-dir requires a value');
+  if (!options.squadDir) throw new Error('--mesh-dir requires a value');
   if (!options.output) throw new Error('--output requires a value');
   return options;
 }
 
 function printUsage() {
-  console.log('Usage: node <runtime>/org/reconcile.js [--mesh-dir .mesh | --squad-dir .squad] --output org-runtime-results.json [--apply]');
+  console.log('Usage: node <runtime>/org/reconcile.js [--mesh-dir .mesh] --output org-runtime-results.json [--apply]');
 }
 
 function readJson(filePath) {
@@ -184,6 +184,7 @@ function writeDecisionEntry(rootPath, report, timestamp) {
   ].join('\n');
 
   appendLine(decisionsPath, body);
+
   return path.relative(rootPath, decisionsPath);
 }
 
@@ -300,7 +301,8 @@ function reconcileDepartment(rootPath, department, config, applyChanges) {
 
     const backlogLines = backlogContent.split(/\r?\n/);
     const updatedBacklog = serializeMarkdownTable(backlogLines, tableIndex, headers, parsedTable.rows);
-    fs.writeFileSync(backlogPath, `${updatedBacklog}\n`, 'utf8');
+    const updatedBacklogContent = `${updatedBacklog}\n`;
+    fs.writeFileSync(backlogPath, updatedBacklogContent, 'utf8');
   }
 
   if (applyChanges && (report.changesApplied || report.staleHeartbeat || report.parallelismBreach)) {
@@ -314,7 +316,7 @@ function reconcileDepartment(rootPath, department, config, applyChanges) {
 }
 
 function reportRuntimeName(config, rootPath) {
-  const runtimePath = config.__runtimeDir || path.join(rootPath, '.squad');
+  const runtimePath = config.__runtimeDir || path.join(rootPath, '.mesh');
   return runtimeDirName(runtimePath);
 }
 

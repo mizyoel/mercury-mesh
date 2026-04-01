@@ -45,8 +45,8 @@ Same inputs → same choice (unless LRU changes between assignments).
 
 ### policy.json
 
-Source template: `.squad/templates/casting-policy.json`
-Runtime location: `.squad/casting/policy.json`
+Source template: `.mesh/templates/casting-policy.json`
+Runtime location: `.mesh/casting/policy.json`
 
 ```json
 {
@@ -60,8 +60,8 @@ Runtime location: `.squad/casting/policy.json`
 
 ### registry.json
 
-Source template: `.squad/templates/casting-registry.json`
-Runtime location: `.squad/casting/registry.json`
+Source template: `.mesh/templates/casting-registry.json`
+Runtime location: `.mesh/casting/registry.json`
 
 ```json
 {
@@ -79,8 +79,8 @@ Runtime location: `.squad/casting/registry.json`
 
 ### history.json
 
-Source template: `.squad/templates/casting-history.json`
-Runtime location: `.squad/casting/history.json`
+Source template: `.mesh/templates/casting-history.json`
+Runtime location: `.mesh/casting/history.json`
 
 ```json
 {

@@ -10,7 +10,7 @@ source: "manual"
 
 ✅ THIS SKILL PRODUCES:
 - A modified Layer 3 model selection table applied when economy mode is active
-- `economyMode: true` written to `.squad/config.json` when activated persistently
+- `economyMode: true` written to `.mesh/config.json` when activated persistently
 - Spawn acknowledgments with `💰` indicator when economy mode is active
 
 ❌ THIS SKILL DOES NOT PRODUCE:
@@ -29,8 +29,8 @@ Use this skill when the user wants to reduce costs across an entire session or p
 | Method | How |
 |--------|-----|
 | Session phrase | "use economy mode", "save costs", "go cheap", "reduce costs" |
-| Persistent config | `"economyMode": true` in `.squad/config.json` |
-| CLI flag | `squad --economy` |
+| Persistent config | `"economyMode": true` in `.mesh/config.json` |
+| CLI flag | `Mercury Mesh --economy` |
 
 **Deactivation:** "turn off economy mode", "disable economy mode", or remove `economyMode` from `config.json`.
 
@@ -52,7 +52,7 @@ When economy mode is **active**, Layer 3 auto-selection uses this table instead 
 
 ### On Session Start
 
-1. READ `.squad/config.json`
+1. READ the active runtime config (`.mesh/config.json` or `.mesh/config.json`)
 2. CHECK for `economyMode: true` — if present, activate economy mode for the session
 3. STORE economy mode state in session context
 
@@ -65,7 +65,7 @@ When economy mode is **active**, Layer 3 auto-selection uses this table instead 
 
 **Persistent:** "always use economy mode", "save economy mode"
 
-1. WRITE `economyMode: true` to `.squad/config.json` (merge, don't overwrite other fields)
+1. WRITE `economyMode: true` to the active `config.json` (merge, don't overwrite other fields)
 2. ACKNOWLEDGE: `✅ Economy mode saved — cost-optimized models will be used until disabled.`
 
 ### On Every Agent Spawn (Economy Mode Active)
@@ -80,7 +80,7 @@ When economy mode is **active**, Layer 3 auto-selection uses this table instead 
 
 **Trigger phrases:** "turn off economy mode", "disable economy mode", "use normal models"
 
-1. REMOVE `economyMode` from `.squad/config.json` (if it was persisted)
+1. REMOVE `economyMode` from the active `config.json` (if it was persisted)
 2. CLEAR session economy mode state
 3. ACKNOWLEDGE: `✅ Economy mode disabled — returning to standard model selection.`
 
@@ -94,7 +94,7 @@ After updating economy mode state and including the `💰` indicator in spawn ac
 
 ## Config Schema
 
-`.squad/config.json` economy-related fields:
+`.mesh/config.json` economy-related fields:
 
 ```json
 {

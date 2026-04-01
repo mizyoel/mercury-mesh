@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   triage:
-    if: github.event.label.name == 'squad' || github.event.label.name == 'mesh'
+    if: github.event.label.name == 'mesh'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,22 +21,22 @@ jobs:
           script: |
             const fs = require('fs');
             const issue = context.payload.issue;
-            const runtimeCandidates = ['.mesh', '.mercury', '.squad', '.ai-team'];
-            const stateCandidates = ['.mesh', '.mercury', '.squad'];
+            const runtimeCandidates = ['.mesh', '.mercury', '.ai-team'];
+            const stateCandidates = ['.mesh', '.mercury'];
             const findFirst = (candidates) => candidates.find((candidate) => fs.existsSync(candidate)) || null;
-            const currentBaseLabel = context.payload.label.name === 'mesh' ? 'mesh' : 'squad';
+            const currentBaseLabel = 'mesh';
 
             const teamFile = findFirst(runtimeCandidates.map((candidate) => `${candidate}/team.md`));
             if (!teamFile || !fs.existsSync(teamFile)) {
-              core.warning('No .mesh/team.md, .mercury/team.md, .squad/team.md, or .ai-team/team.md found — cannot run Mercury Mesh triage');
+              core.warning('No .mesh/team.md, .mercury/team.md, or .ai-team/team.md found — cannot run Mercury Mesh triage');
               return;
             }
 
             const runtimeDir = teamFile.slice(0, teamFile.lastIndexOf('/'));
             const stateDir = runtimeDir !== '.ai-team'
               ? runtimeDir
-              : (findFirst(stateCandidates.map((candidate) => `${candidate}/config.json`)) || '.squad/config.json').replace(/\/config\.json$/, '');
-            const labelPrefix = currentBaseLabel === 'mesh' ? 'mesh' : (stateDir === '.squad' ? 'squad' : 'mesh');
+              : (findFirst(stateCandidates.map((candidate) => `${candidate}/config.json`)) || '.mesh/config.json').replace(/\/config\.json$/, '');
+            const labelPrefix = 'mesh';
 
             const content = fs.readFileSync(teamFile, 'utf8');
             const lines = content.split('\n');

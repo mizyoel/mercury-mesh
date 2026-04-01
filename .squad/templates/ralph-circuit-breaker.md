@@ -52,7 +52,7 @@ Premium models burn quota fast:
 - If 2 consecutive successes → transition to CLOSED
 - If rate limit error → back to OPEN, reset cooldown
 
-## State File: `.squad/ralph-circuit-breaker.json`
+## State File: `.mesh/ralph-circuit-breaker.json`
 
 ```json
 {
@@ -81,7 +81,7 @@ Paste these into your `ralph-watch.ps1` or source them from a shared module.
 
 ```powershell
 function Get-CircuitBreakerState {
-    param([string]$StateFile = ".squad/ralph-circuit-breaker.json")
+    param([string]$StateFile = ".mesh/ralph-circuit-breaker.json")
 
     if (-not (Test-Path $StateFile)) {
         $default = @{
@@ -114,7 +114,7 @@ function Get-CircuitBreakerState {
 function Save-CircuitBreakerState {
     param(
         [object]$State,
-        [string]$StateFile = ".squad/ralph-circuit-breaker.json"
+        [string]$StateFile = ".mesh/ralph-circuit-breaker.json"
     )
 
     $State | ConvertTo-Json -Depth 3 | Set-Content $StateFile
@@ -127,7 +127,7 @@ Returns the model Ralph should use right now, based on circuit state.
 
 ```powershell
 function Get-CurrentModel {
-    param([string]$StateFile = ".squad/ralph-circuit-breaker.json")
+    param([string]$StateFile = ".mesh/ralph-circuit-breaker.json")
 
     $cb = Get-CircuitBreakerState -StateFile $StateFile
 
@@ -169,7 +169,7 @@ Call after every successful model response.
 
 ```powershell
 function Update-CircuitBreakerOnSuccess {
-    param([string]$StateFile = ".squad/ralph-circuit-breaker.json")
+    param([string]$StateFile = ".mesh/ralph-circuit-breaker.json")
 
     $cb = Get-CircuitBreakerState -StateFile $StateFile
     $cb.consecutiveFailures = 0
@@ -203,7 +203,7 @@ Call when a model response indicates rate limiting (HTTP 429 or error message co
 
 ```powershell
 function Update-CircuitBreakerOnRateLimit {
-    param([string]$StateFile = ".squad/ralph-circuit-breaker.json")
+    param([string]$StateFile = ".mesh/ralph-circuit-breaker.json")
 
     $cb = Get-CircuitBreakerState -StateFile $StateFile
     $cb.consecutiveFailures++
@@ -260,7 +260,7 @@ if ($result -match "rate.?limit" -or $LASTEXITCODE -eq 429) {
 
 ```powershell
 # Source the circuit breaker functions
-. .squad-templates/ralph-circuit-breaker-functions.ps1
+. .mesh-templates/ralph-circuit-breaker-functions.ps1
 
 while ($true) {
     $model = Get-CurrentModel
@@ -289,7 +289,7 @@ while ($true) {
 
 ## Configuration
 
-Override defaults by editing `.squad/ralph-circuit-breaker.json`:
+Override defaults by editing `.mesh/ralph-circuit-breaker.json`:
 
 | Field | Default | Description |
 |-------|---------|-------------|
@@ -308,6 +308,6 @@ The state file tracks operational metrics:
 
 Query metrics with:
 ```powershell
-$cb = Get-Content .squad/ralph-circuit-breaker.json | ConvertFrom-Json
+$cb = Get-Content .mesh/ralph-circuit-breaker.json | ConvertFrom-Json
 Write-Host "Fallbacks: $($cb.metrics.totalFallbacks) | Recoveries: $($cb.metrics.totalRecoveries)"
 ```

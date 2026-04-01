@@ -1,6 +1,6 @@
 ---
 name: "git-workflow"
-description: "Squad branching model: dev-first workflow with insiders preview channel"
+description: "Mercury Mesh branching model: dev-first workflow with insiders preview channel"
 domain: "version-control"
 confidence: "high"
 source: "team-decision"
@@ -8,7 +8,7 @@ source: "team-decision"
 
 ## Context
 
-Squad uses a three-branch model. **All feature work starts from `dev`, not `main`.**
+Mercury Mesh uses a three-branch model. **All feature work starts from `dev`, not `main`.**
 
 | Branch | Purpose | Publishes |
 |--------|---------|-----------|
@@ -18,11 +18,11 @@ Squad uses a three-branch model. **All feature work starts from `dev`, not `main
 
 ## Branch Naming Convention
 
-Issue branches MUST use: `squad/{issue-number}-{kebab-case-slug}`
+Issue branches MUST use: `mesh/{issue-number}-{kebab-case-slug}`
 
 Examples:
-- `squad/195-fix-version-stamp-bug`
-- `squad/42-add-profile-api`
+- `Mercury Mesh/195-fix-version-stamp-bug`
+- `mesh/42-add-profile-api`
 
 ## Workflow for Issue Work
 
@@ -30,7 +30,7 @@ Examples:
    ```bash
    git checkout dev
    git pull origin dev
-   git checkout -b squad/{issue-number}-{slug}
+   git checkout -b mesh/{issue-number}-{slug}
    ```
 
 2. **Mark issue in-progress:**
@@ -47,7 +47,7 @@ Examples:
 
 5. **Push and mark ready:**
    ```bash
-   git push -u origin squad/{issue-number}-{slug}
+   git push -u origin mesh/{issue-number}-{slug}
    gh pr ready
    ```
 
@@ -55,8 +55,8 @@ Examples:
    ```bash
    git checkout dev
    git pull origin dev
-   git branch -d squad/{issue-number}-{slug}
-   git push origin --delete squad/{issue-number}-{slug}
+   git branch -d mesh/{issue-number}-{slug}
+   git push origin --delete mesh/{issue-number}-{slug}
    ```
 
 ## Parallel Multi-Issue Work (Worktrees)
@@ -80,15 +80,15 @@ From the main clone (must be on dev or any branch):
 git fetch origin dev
 
 # Create a worktree per issue — siblings to the main clone
-git worktree add ../squad-195 -b squad/195-fix-stamp-bug origin/dev
-git worktree add ../squad-193 -b squad/193-refactor-loader origin/dev
+git worktree add ../Mercury Mesh-195 -b Mercury Mesh/195-fix-stamp-bug origin/dev
+git worktree add ../Mercury Mesh-193 -b Mercury Mesh/193-refactor-loader origin/dev
 ```
 
-**Naming convention:** `../{repo-name}-{issue-number}` (e.g., `../squad-195`, `../squad-pr-42`).
+**Naming convention:** `../{repo-name}-{issue-number}` (e.g., `../Mercury Mesh-195`, `../Mercury Mesh-pr-42`).
 
 Each worktree:
 - Has its own working directory and index
-- Is on its own `squad/{issue-number}-{slug}` branch from dev
+- Is on its own `mesh/{issue-number}-{slug}` branch from dev
 - Shares the same `.git` object store (disk-efficient)
 
 ### Per-Worktree Agent Workflow
@@ -96,11 +96,11 @@ Each worktree:
 Each agent operates inside its worktree exactly like the single-issue workflow:
 
 ```bash
-cd ../squad-195
+cd ../Mercury Mesh-195
 
 # Work normally — commits, tests, pushes
 git add -A && git commit -m "fix: stamp bug (#195)"
-git push -u origin squad/195-fix-stamp-bug
+git push -u origin Mercury Mesh/195-fix-stamp-bug
 
 # Create PR targeting dev
 gh pr create --base dev --title "fix: stamp bug" --body "Closes #195" --draft
@@ -108,12 +108,12 @@ gh pr create --base dev --title "fix: stamp bug" --body "Closes #195" --draft
 
 All PRs target `dev` independently. Agents never interfere with each other's filesystem.
 
-### .squad/ State in Worktrees
+### .mesh/ State in Worktrees
 
-The `.squad/` directory exists in each worktree as a copy. This is safe because:
+The `.mesh/` directory exists in each worktree as a copy. This is safe because:
 - `.gitattributes` declares `merge=union` on append-only files (history.md, decisions.md, logs)
 - Each agent appends to its own section; union merge reconciles on PR merge to dev
-- **Rule:** Never rewrite or reorder `.squad/` files in a worktree — append only
+- **Rule:** Never rewrite or reorder `.mesh/` files in a worktree — append only
 
 ### Cleanup After Merge
 
@@ -121,10 +121,10 @@ After a worktree's PR is merged to dev:
 
 ```bash
 # From the main clone
-git worktree remove ../squad-195
+git worktree remove ../Mercury Mesh-195
 git worktree prune          # clean stale metadata
-git branch -d squad/195-fix-stamp-bug
-git push origin --delete squad/195-fix-stamp-bug
+git branch -d Mercury Mesh/195-fix-stamp-bug
+git push origin --delete Mercury Mesh/195-fix-stamp-bug
 ```
 
 If a worktree was deleted manually (rm -rf), `git worktree prune` recovers the state.
@@ -133,7 +133,7 @@ If a worktree was deleted manually (rm -rf), `git worktree prune` recovers the s
 
 ## Multi-Repo Downstream Scenarios
 
-When work spans multiple repositories (e.g., squad-cli changes need squad-sdk changes, or a user's app depends on squad):
+When work spans multiple repositories (e.g., Mercury Mesh-cli changes need Mercury Mesh-sdk changes, or a user's app depends on Mercury Mesh):
 
 ### Setup
 
@@ -141,12 +141,12 @@ Clone downstream repos as siblings to the main repo:
 
 ```
 ~/work/
-  squad-pr/          # main repo
-  squad-sdk/         # downstream dependency
+  Mercury Mesh-pr/          # main repo
+  Mercury Mesh-sdk/         # downstream dependency
   user-app/          # consumer project
 ```
 
-Each repo gets its own issue branch following its own naming convention. If the downstream repo also uses Squad conventions, use `squad/{issue-number}-{slug}`.
+Each repo gets its own issue branch following its own naming convention. If the downstream repo also uses Mercury Mesh conventions, use `mesh/{issue-number}-{slug}`.
 
 ### Coordinated PRs
 
@@ -155,9 +155,9 @@ Each repo gets its own issue branch following its own naming convention. If the 
   ```
   Closes #42
 
-  **Depends on:** squad-sdk PR #17 (squad-sdk changes required for this feature)
+  **Depends on:** Mercury Mesh-sdk PR #17 (Mercury Mesh-sdk changes required for this feature)
   ```
-- Merge order: dependencies first (e.g., squad-sdk), then dependents (e.g., squad-cli)
+- Merge order: dependencies first (e.g., Mercury Mesh-sdk), then dependents (e.g., Mercury Mesh-cli)
 
 ### Local Linking for Testing
 
@@ -165,15 +165,15 @@ Before pushing, verify cross-repo changes work together:
 
 ```bash
 # Node.js / npm
-cd ../squad-sdk && npm link
-cd ../squad-pr && npm link squad-sdk
+cd ../Mercury Mesh-sdk && npm link
+cd ../Mercury Mesh-pr && npm link Mercury Mesh-sdk
 
 # Go
 # Use replace directive in go.mod:
-# replace github.com/org/squad-sdk => ../squad-sdk
+# replace github.com/org/Mercury Mesh-sdk => ../Mercury Mesh-sdk
 
 # Python
-cd ../squad-sdk && pip install -e .
+cd ../Mercury Mesh-sdk && pip install -e .
 ```
 
 **Important:** Remove local links before committing. `npm link` and `go replace` are dev-only — CI must use published packages or PR-specific refs.
@@ -191,7 +191,7 @@ These compose naturally. You can have:
 
 - ❌ Branching from main (branch from dev)
 - ❌ PR targeting main directly (target dev)
-- ❌ Non-conforming branch names (must be squad/{number}-{slug})
+- ❌ Non-conforming branch names (must be Mercury Mesh/{number}-{slug})
 - ❌ Committing directly to main or dev (use PRs)
 - ❌ Switching branches in the main clone while worktrees are active (use worktrees instead)
 - ❌ Using worktrees for cross-repo work (use separate clones)

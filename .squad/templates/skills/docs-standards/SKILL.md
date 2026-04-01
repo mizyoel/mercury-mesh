@@ -1,6 +1,6 @@
 ---
 name: "docs-standards"
-description: "Microsoft Style Guide + Squad-specific documentation patterns"
+description: "Microsoft Style Guide + Mercury Mesh-specific documentation patterns"
 domain: "documentation"
 confidence: "high"
 source: "earned (PAO charter, multiple doc PR reviews)"
@@ -8,7 +8,7 @@ source: "earned (PAO charter, multiple doc PR reviews)"
 
 ## Context
 
-Squad documentation follows the Microsoft Style Guide with Squad-specific conventions. Consistency across docs builds trust and improves discoverability.
+Mercury Mesh documentation follows the Microsoft Style Guide with Mercury Mesh-specific conventions. Consistency across docs builds trust and improves discoverability.
 
 ## Patterns
 
@@ -19,7 +19,7 @@ Squad documentation follows the Microsoft Style Guide with Squad-specific conven
 - **Present tense:** "The system routes..." not "The system will route..."
 - **No ampersands in prose:** "and" not "&" (except in code, brand names, or UI elements)
 
-### Squad Formatting Patterns
+### Mercury Mesh Formatting Patterns
 - **Scannability first:** Paragraphs for narrative (3-4 sentences max), bullets for scannable lists, tables for structured data
 - **"Try this" prompts at top:** Start feature/scenario pages with practical prompts users can copy
 - **Experimental warnings:** Features in preview get callout at top
@@ -35,31 +35,31 @@ Squad documentation follows the Microsoft Style Guide with Squad-specific conven
 
 ✓ **Correct:**
 ```markdown
-# Getting started with Squad
+# Getting started with Mercury Mesh
 
 > ⚠️ **Experimental:** This feature is in preview.
 
 Try this:
 \`\`\`bash
-squad init
+Mercury Mesh init
 \`\`\`
 
-Squad helps you build AI teams...
+Mercury Mesh helps you build AI teams...
 
 ---
 
-## Install Squad
+## Install Mercury Mesh
 
 Run the following command...
 ```
 
 ✗ **Incorrect:**
 ```markdown
-# Getting Started With Squad  // Title case
+# Getting Started With Mercury Mesh  // Title case
 
-Squad is a tool which will help users... // Third person, future tense
+Mercury Mesh is a tool which will help users... // Third person, future tense
 
-You can install Squad with npm & configure it... // Ampersand in prose
+You can install Mercury Mesh with npm & configure it... // Ampersand in prose
 ```
 
 ## Anti-Patterns

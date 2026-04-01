@@ -3,7 +3,7 @@
  * Ralph Triage Script — Standalone CJS implementation
  *
  * ⚠️ SYNC NOTICE: This file ports triage logic from the SDK source:
- *   packages/squad-sdk/src/ralph/triage.ts
+ *   packages/Mercury Mesh-sdk/src/ralph/triage.ts
  *
  * Any changes to routing/triage logic MUST be applied to BOTH files.
  * The SDK module is the canonical implementation; this script exists
@@ -18,10 +18,10 @@ const path = require('node:path');
 const https = require('node:https');
 const { execSync } = require('node:child_process');
 
-const RUNTIME_DIR_CANDIDATES = ['.mesh', '.mercury', '.squad'];
+const RUNTIME_DIR_CANDIDATES = ['.mesh', '.mercury'];
 
 function defaultRuntimeDir() {
-  return RUNTIME_DIR_CANDIDATES.find((candidate) => fs.existsSync(candidate)) || '.squad';
+  return RUNTIME_DIR_CANDIDATES.find((candidate) => fs.existsSync(candidate)) || '.mesh';
 }
 
 function runtimeDirName(runtimeDir) {
@@ -29,7 +29,7 @@ function runtimeDirName(runtimeDir) {
 }
 
 function primaryLabelPrefix(runtimeDir) {
-  return runtimeDirName(runtimeDir) === '.squad' ? 'squad' : 'mesh';
+  return 'mesh';
 }
 
 function normalizeRuntimeRelativePath(relativePath) {
@@ -46,7 +46,7 @@ function parseArgs(argv) {
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
-    if (arg === '--squad-dir' || arg === '--mesh-dir') {
+    if (arg === '--mesh-dir' || arg === '--mesh-dir') {
       squadDir = argv[i + 1];
       i += 1;
       continue;
@@ -63,14 +63,14 @@ function parseArgs(argv) {
     throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (!squadDir) throw new Error('--mesh-dir/--squad-dir requires a value');
+  if (!squadDir) throw new Error('--mesh-dir/--mesh-dir requires a value');
   if (!output) throw new Error('--output requires a value');
 
   return { squadDir, output };
 }
 
 function printUsage() {
-  console.log('Usage: node .squad/templates/ralph-triage.js [--mesh-dir .mesh | --squad-dir .squad] --output triage-results.json');
+  console.log('Usage: node .mesh/templates/ralph-triage.js [--mesh-dir .mesh] --output triage-results.json');
 }
 
 function normalizeEol(content) {
@@ -172,8 +172,8 @@ function loadOrgContext(squadDir) {
     squadDir,
     (config.orgConfig && config.orgConfig.structurePath
       ? config.orgConfig.structurePath
-      : '.squad/org/structure.json'
-    ).replace(/^\.(?:mesh|mercury|squad)[\\/]/, 'org/'),
+      : '.mesh/org/structure.json'
+    ).replace(/^\.(?:mesh|mercury|Mercury Mesh)[\\/]/, 'org/'),
   );
 
   if (!config.orgMode || !fs.existsSync(structurePath)) {
@@ -636,7 +636,7 @@ async function fetchIssuesForLabel(owner, repo, token, label) {
 
 async function fetchBridgeIssues(owner, repo, token) {
   const issuesByNumber = new Map();
-  for (const label of ['mesh', 'squad']) {
+  for (const label of ['mesh', 'Mercury Mesh']) {
     const issues = await fetchIssuesForLabel(owner, repo, token, label);
     for (const issue of issues) {
       issuesByNumber.set(issue.number, issue);
@@ -656,7 +656,7 @@ function issueHasLabel(issue, labelName) {
 
 function isUntriagedIssue(issue, memberLabels) {
   if (issue.pull_request) return false;
-  if (!issueHasLabel(issue, 'squad') && !issueHasLabel(issue, 'mesh')) return false;
+  if (!issueHasLabel(issue, 'Mercury Mesh') && !issueHasLabel(issue, 'mesh')) return false;
   return !memberLabels.some((label) => issueHasLabel(issue, label));
 }
 
@@ -678,13 +678,12 @@ async function main() {
   const orgContext = loadOrgContext(squadDir);
 
   const { owner, repo } = getOwnerRepoFromGit();
-  const openSquadIssues = await fetchBridgeIssues(owner, repo, token);
+  const openBridgeIssues = await fetchBridgeIssues(owner, repo, token);
 
   const memberLabels = roster.flatMap((member) => [
     buildMemberLabel(member.name, 'mesh'),
-    buildMemberLabel(member.name, 'squad'),
   ]);
-  const untriaged = openSquadIssues.filter((issue) => isUntriagedIssue(issue, memberLabels));
+  const untriaged = openBridgeIssues.filter((issue) => isUntriagedIssue(issue, memberLabels));
 
   const results = [];
   for (const issue of untriaged) {

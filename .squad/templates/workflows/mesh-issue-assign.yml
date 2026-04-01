@@ -10,8 +10,8 @@ permissions:
 
 jobs:
   assign-work:
-    # Trigger on either label family during the compatibility phase.
-    if: startsWith(github.event.label.name, 'squad:') || startsWith(github.event.label.name, 'mesh:')
+    # Trigger on mesh: label family.
+    if: startsWith(github.event.label.name, 'mesh:')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,23 +23,23 @@ jobs:
             const fs = require('fs');
             const issue = context.payload.issue;
             const label = context.payload.label.name;
-            const runtimeCandidates = ['.mesh', '.mercury', '.squad', '.ai-team'];
-            const stateCandidates = ['.mesh', '.mercury', '.squad'];
+            const runtimeCandidates = ['.mesh', '.mercury', '.ai-team'];
+            const stateCandidates = ['.mesh', '.mercury'];
             const findFirst = (candidates) => candidates.find((candidate) => fs.existsSync(candidate)) || null;
 
-            const labelPrefix = label.startsWith('mesh:') ? 'mesh' : 'squad';
-            const memberName = label.replace(/^(mesh|squad):/, '').toLowerCase();
+            const labelPrefix = 'mesh';
+            const memberName = label.replace(/^mesh:/, '').toLowerCase();
 
             const teamFile = findFirst(runtimeCandidates.map((candidate) => `${candidate}/team.md`));
             if (!teamFile || !fs.existsSync(teamFile)) {
-              core.warning('No .mesh/team.md, .mercury/team.md, .squad/team.md, or .ai-team/team.md found — cannot route Mercury Mesh work');
+              core.warning('No .mesh/team.md, .mercury/team.md, or .ai-team/team.md found — cannot route Mercury Mesh work');
               return;
             }
 
             const runtimeDir = teamFile.slice(0, teamFile.lastIndexOf('/'));
             const stateDir = runtimeDir !== '.ai-team'
               ? runtimeDir
-              : (findFirst(stateCandidates.map((candidate) => `${candidate}/config.json`)) || '.squad/config.json').replace(/\/config\.json$/, '');
+              : (findFirst(stateCandidates.map((candidate) => `${candidate}/config.json`)) || '.mesh/config.json').replace(/\/config\.json$/, '');
 
             const content = fs.readFileSync(teamFile, 'utf8');
             const lines = content.split('\n');
@@ -173,7 +173,7 @@ jobs:
 
       # Separate step: assign @copilot using PAT (required for coding agent)
       - name: Assign @copilot coding agent
-        if: github.event.label.name == 'squad:copilot' || github.event.label.name == 'mesh:copilot'
+        if: github.event.label.name == 'mesh:copilot'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.COPILOT_ASSIGN_TOKEN }}
@@ -183,21 +183,21 @@ jobs:
             const repo = context.repo.repo;
             const issue_number = context.payload.issue.number;
             const issue = context.payload.issue;
-            const runtimeCandidates = ['.mesh', '.mercury', '.squad', '.ai-team'];
-            const stateCandidates = ['.mesh', '.mercury', '.squad'];
+            const runtimeCandidates = ['.mesh', '.mercury', '.ai-team'];
+            const stateCandidates = ['.mesh', '.mercury'];
             const findFirst = (candidates) => candidates.find((candidate) => fs.existsSync(candidate)) || null;
             const teamFile = findFirst(runtimeCandidates.map((candidate) => `${candidate}/team.md`));
-            const runtimeDir = teamFile ? teamFile.slice(0, teamFile.lastIndexOf('/')) : '.squad';
+            const runtimeDir = teamFile ? teamFile.slice(0, teamFile.lastIndexOf('/')) : '.mesh';
             const stateDir = runtimeDir !== '.ai-team'
               ? runtimeDir
-              : (findFirst(stateCandidates.map((candidate) => `${candidate}/config.json`)) || '.squad/config.json').replace(/\/config\.json$/, '');
+              : (findFirst(stateCandidates.map((candidate) => `${candidate}/config.json`)) || '.mesh/config.json').replace(/\/config\.json$/, '');
             const routingFile = findFirst([`${runtimeDir}/routing.md`, '.ai-team/routing.md']) || `${runtimeDir}/routing.md`;
             const structurePath = `${stateDir}/org/structure.json`;
             const labels = Array.isArray(issue.labels)
               ? issue.labels.map(item => typeof item === 'string' ? item : item && item.name).filter(Boolean)
               : [];
             const deptLabel = labels.find(name => name.startsWith('dept:'));
-            let customInstructions = `Read ${teamFile || '.squad/team.md'} for team context and ${routingFile} for routing rules.`;
+            let customInstructions = `Read ${teamFile || '.mesh/team.md'} for team context and ${routingFile} for routing rules.`;
             if (deptLabel) {
               const deptId = deptLabel.replace('dept:', '');
               customInstructions += ` This issue is tagged to department "${deptId}".`;

@@ -7,8 +7,6 @@ on:
       - '.mesh/org/structure.json'
       - '.mercury/team.md'
       - '.mercury/org/structure.json'
-      - '.squad/team.md'
-      - '.squad/org/structure.json'
       - '.ai-team/team.md'
   workflow_dispatch:
 
@@ -27,8 +25,8 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const runtimeCandidates = ['.mesh', '.mercury', '.squad', '.ai-team'];
-            const stateCandidates = ['.mesh', '.mercury', '.squad'];
+            const runtimeCandidates = ['.mesh', '.mercury', '.ai-team'];
+            const stateCandidates = ['.mesh', '.mercury'];
             const findFirst = (candidates) => candidates.find((candidate) => fs.existsSync(candidate)) || null;
             const teamFile = findFirst(runtimeCandidates.map((candidate) => `${candidate}/team.md`));
 
@@ -40,7 +38,7 @@ jobs:
             const runtimeDir = teamFile.slice(0, teamFile.lastIndexOf('/'));
             const stateDir = runtimeDir !== '.ai-team'
               ? runtimeDir
-              : (findFirst(stateCandidates.map((candidate) => `${candidate}/config.json`)) || '.squad/config.json').replace(/\/config\.json$/, '');
+              : (findFirst(stateCandidates.map((candidate) => `${candidate}/config.json`)) || '.mesh/config.json').replace(/\/config\.json$/, '');
             const content = fs.readFileSync(teamFile, 'utf8');
             const lines = content.split('\n');
             let orgStructure = null;
@@ -80,8 +78,8 @@ jobs:
             // Check if @copilot is on the team
             const hasCopilot = content.includes('🤖 Coding Agent');
 
-            // Define color palette for Mercury Mesh compatibility labels
-            const SQUAD_COLOR = '9B8FCC';
+            // Define color palette for Mercury Mesh labels
+            const MESH_COLOR = '9B8FCC';
             const MEMBER_COLOR = '9B8FCC';
             const COPILOT_COLOR = '10b981';
             const DEPT_COLOR = 'A2EEEF';
@@ -124,10 +122,9 @@ jobs:
               { name: 'priority:p2', color: 'FBCA04', description: 'Next sprint' }
             ];
 
-            // Create both active and legacy label families during the compatibility phase.
+            // Mercury Mesh label family.
             const labels = [
-              { name: 'mesh', color: SQUAD_COLOR, description: 'Mercury Mesh triage inbox — primary label family' },
-              { name: 'squad', color: SQUAD_COLOR, description: 'Mercury Mesh triage inbox — legacy compatibility label for Lead routing' }
+              { name: 'mesh', color: MESH_COLOR, description: 'Mercury Mesh triage inbox' }
             ];
 
             for (const member of members) {
@@ -135,11 +132,6 @@ jobs:
                 name: `mesh:${member.name.toLowerCase()}`,
                 color: MEMBER_COLOR,
                 description: `Assigned to ${member.name} (${member.role})`
-              });
-              labels.push({
-                name: `squad:${member.name.toLowerCase()}`,
-                color: MEMBER_COLOR,
-                description: `Assigned to ${member.name} (${member.role}) — legacy compatibility label`
               });
             }
 
@@ -149,11 +141,6 @@ jobs:
                 name: 'mesh:copilot',
                 color: COPILOT_COLOR,
                 description: 'Assigned to @copilot (Coding Agent) for Mercury Mesh autonomous work'
-              });
-              labels.push({
-                name: 'squad:copilot',
-                color: COPILOT_COLOR,
-                description: 'Assigned to @copilot (Coding Agent) for Mercury Mesh autonomous work — legacy compatibility label'
               });
             }
 

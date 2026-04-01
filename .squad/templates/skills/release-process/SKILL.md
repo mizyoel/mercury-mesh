@@ -1,6 +1,6 @@
 ---
 name: "release-process"
-description: "Step-by-step release checklist for Squad — prevents v0.8.22-style disasters"
+description: "Step-by-step release checklist for Mercury Mesh — prevents v0.8.22-style disasters"
 domain: "release-management"
 confidence: "high"
 source: "team-decision"
@@ -8,9 +8,9 @@ source: "team-decision"
 
 ## Context
 
-This is the **definitive release runbook** for Squad. Born from the v0.8.22 release disaster (4-part semver mangled by npm, draft release never triggered publish, wrong NPM_TOKEN type, 6+ hours of broken `latest` dist-tag).
+This is the **definitive release runbook** for Mercury Mesh. Born from the v0.8.22 release disaster (4-part semver mangled by npm, draft release never triggered publish, wrong NPM_TOKEN type, 6+ hours of broken `latest` dist-tag).
 
-**Rule:** No agent releases Squad without following this checklist. No exceptions. No improvisation.
+**Rule:** No agent releases Mercury Mesh without following this checklist. No exceptions. No improvisation.
 
 ---
 
@@ -113,7 +113,7 @@ node -p "require('semver').valid('$VERSION')"
 npm version $VERSION --workspaces --include-workspace-root --no-git-tag-version
 
 # Verify all 3 match
-grep '"version"' package.json packages/squad-sdk/package.json packages/squad-cli/package.json
+grep '"version"' package.json packages/Mercury Mesh-sdk/package.json packages/Mercury Mesh-cli/package.json
 # All 3 should show: "version": "0.8.22"
 ```
 
@@ -123,7 +123,7 @@ grep '"version"' package.json packages/squad-sdk/package.json packages/squad-cli
 
 ```bash
 # Commit version bump
-git add package.json packages/squad-sdk/package.json packages/squad-cli/package.json
+git add package.json packages/Mercury Mesh-sdk/package.json packages/Mercury Mesh-cli/package.json
 git commit -m "chore: bump version to $VERSION
 
 Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
@@ -176,9 +176,9 @@ gh run view --log
 ```
 
 **Expected flow:**
-1. `publish-sdk` job runs → publishes `@bradygaster/squad-sdk`
+1. `publish-sdk` job runs → publishes `@bradygaster/Mercury Mesh-sdk`
 2. Verify step runs with retry loop (up to 5 attempts, 15s interval) to confirm SDK on npm registry
-3. `publish-cli` job runs → publishes `@bradygaster/squad-cli`
+3. `publish-cli` job runs → publishes `@bradygaster/Mercury Mesh-cli`
 4. Verify step runs with retry loop to confirm CLI on npm registry
 
 **If workflow fails:** Check the logs. Common issues:
@@ -194,17 +194,17 @@ Manually verify both packages are on npm with correct `latest` dist-tag.
 
 ```bash
 # Check SDK
-npm view @bradygaster/squad-sdk version
+npm view @bradygaster/Mercury Mesh-sdk version
 # Output: 0.8.22
 
-npm dist-tag ls @bradygaster/squad-sdk
+npm dist-tag ls @bradygaster/Mercury Mesh-sdk
 # Output should show: latest: 0.8.22
 
 # Check CLI
-npm view @bradygaster/squad-cli version
+npm view @bradygaster/Mercury Mesh-cli version
 # Output: 0.8.22
 
-npm dist-tag ls @bradygaster/squad-cli
+npm dist-tag ls @bradygaster/Mercury Mesh-cli
 # Output should show: latest: 0.8.22
 ```
 
@@ -218,22 +218,22 @@ Verify packages can be installed from npm (real-world smoke test).
 
 ```bash
 # Create temp directory
-mkdir /tmp/squad-release-test && cd /tmp/squad-release-test
+mkdir /tmp/Mercury Mesh-release-test && cd /tmp/Mercury Mesh-release-test
 
 # Test SDK installation
 npm init -y
-npm install @bradygaster/squad-sdk
-node -p "require('@bradygaster/squad-sdk/package.json').version"
+npm install @bradygaster/Mercury Mesh-sdk
+node -p "require('@bradygaster/Mercury Mesh-sdk/package.json').version"
 # Output: 0.8.22
 
 # Test CLI installation
-npm install -g @bradygaster/squad-cli
-squad --version
+npm install -g @bradygaster/Mercury Mesh-cli
+Mercury Mesh --version
 # Output: 0.8.22
 
 # Cleanup
 cd -
-rm -rf /tmp/squad-release-test
+rm -rf /tmp/Mercury Mesh-release-test
 ```
 
 **If installation fails:** npm registry issue or package metadata corruption. DO NOT announce release until this works.
@@ -260,7 +260,7 @@ node -p "require('semver').valid('$NEXT_VERSION')"
 npm version $NEXT_VERSION --workspaces --include-workspace-root --no-git-tag-version
 
 # Commit
-git add package.json packages/squad-sdk/package.json packages/squad-cli/package.json
+git add package.json packages/Mercury Mesh-sdk/package.json packages/Mercury Mesh-cli/package.json
 git commit -m "chore: bump dev to $NEXT_VERSION
 
 Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
@@ -299,8 +299,8 @@ If a release is broken and needs to be rolled back:
 
 ```bash
 # Unpublish (requires npm owner privileges)
-npm unpublish @bradygaster/squad-sdk@0.8.22
-npm unpublish @bradygaster/squad-cli@0.8.22
+npm unpublish @bradygaster/Mercury Mesh-sdk@0.8.22
+npm unpublish @bradygaster/Mercury Mesh-cli@0.8.22
 ```
 
 ### 2. Deprecate on npm (Preferred)
@@ -309,8 +309,8 @@ npm unpublish @bradygaster/squad-cli@0.8.22
 
 ```bash
 # Deprecate broken version
-npm deprecate @bradygaster/squad-sdk@0.8.22 "Broken release, use 0.8.22.1 instead"
-npm deprecate @bradygaster/squad-cli@0.8.22 "Broken release, use 0.8.22.1 instead"
+npm deprecate @bradygaster/Mercury Mesh-sdk@0.8.22 "Broken release, use 0.8.22.1 instead"
+npm deprecate @bradygaster/Mercury Mesh-cli@0.8.22 "Broken release, use 0.8.22.1 instead"
 
 # Publish hotfix version
 # (Follow this runbook with version 0.8.22.1)
@@ -398,10 +398,10 @@ After GitHub Release:
 After workflow completes:
 
 - [ ] Both jobs succeeded: Workflow shows green checkmarks
-- [ ] SDK on npm: `npm view @bradygaster/squad-sdk version` returns correct version
-- [ ] CLI on npm: `npm view @bradygaster/squad-cli version` returns correct version
-- [ ] `latest` tags correct: `npm dist-tag ls @bradygaster/squad-sdk` shows `latest: VERSION`
-- [ ] Packages install: `npm install @bradygaster/squad-cli` succeeds
+- [ ] SDK on npm: `npm view @bradygaster/Mercury Mesh-sdk version` returns correct version
+- [ ] CLI on npm: `npm view @bradygaster/Mercury Mesh-cli version` returns correct version
+- [ ] `latest` tags correct: `npm dist-tag ls @bradygaster/Mercury Mesh-sdk` shows `latest: VERSION`
+- [ ] Packages install: `npm install @bradygaster/Mercury Mesh-cli` succeeds
 
 After dev sync:
 
@@ -411,7 +411,7 @@ After dev sync:
 
 ## Post-Mortem Reference
 
-This skill was created after the v0.8.22 release disaster. Full retrospective: `.squad/decisions/inbox/keaton-v0822-retrospective.md`
+This skill was created after the v0.8.22 release disaster. Full retrospective: `.mesh/decisions/inbox/keaton-v0822-retrospective.md`
 
 **Key learnings:**
 1. No release without a runbook = improvisation = disaster

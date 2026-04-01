@@ -4,10 +4,10 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const RUNTIME_DIR_CANDIDATES = ['.mesh', '.mercury', '.squad'];
+const RUNTIME_DIR_CANDIDATES = ['.mesh', '.mercury'];
 
 function defaultRuntimeDir() {
-  return RUNTIME_DIR_CANDIDATES.find((candidate) => fs.existsSync(candidate)) || '.squad';
+  return RUNTIME_DIR_CANDIDATES.find((candidate) => fs.existsSync(candidate)) || '.mesh';
 }
 
 function runtimeDirName(runtimeDir) {
@@ -22,7 +22,7 @@ function parseArgs(argv) {
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === '--squad-dir' || arg === '--mesh-dir') {
+    if (arg === '--mesh-dir') {
       options.squadDir = argv[index + 1];
       index += 1;
       continue;
@@ -43,7 +43,7 @@ function parseArgs(argv) {
 }
 
 function printUsage() {
-  console.log('Usage: node <runtime>/org/status.js [--mesh-dir .mesh | --squad-dir .squad] --output org-status.json');
+  console.log('Usage: node <runtime>/org/status.js [--mesh-dir .mesh] --output org-status.json');
 }
 
 function readJson(filePath) {

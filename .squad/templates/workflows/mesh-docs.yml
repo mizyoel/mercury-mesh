@@ -1,4 +1,4 @@
-name: Squad Docs — Build & Deploy
+name: Mercury Mesh Docs — Build & Deploy
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
     branches: [preview]
     paths:
       - 'docs/**'
-      - '.github/workflows/squad-docs.yml'
+      - '.github/workflows/mesh-docs.yml'
 
 permissions:
   contents: read

@@ -1,13 +1,13 @@
 # Skill: CLI Command Wiring
 
-**Bug class:** Commands implemented in `packages/squad-cli/src/cli/commands/` but never routed in `cli-entry.ts`.
+**Bug class:** Commands implemented in `packages/Mercury Mesh-cli/src/cli/commands/` but never routed in `cli-entry.ts`.
 
 ## Checklist — Adding a New CLI Command
 
-1. **Create command file** in `packages/squad-cli/src/cli/commands/<name>.ts`
+1. **Create command file** in `packages/Mercury Mesh-cli/src/cli/commands/<name>.ts`
    - Export a `run<Name>(cwd, options)` async function (or class with static methods for utility modules)
 
-2. **Add routing block** in `packages/squad-cli/src/cli-entry.ts` inside `main()`:
+2. **Add routing block** in `packages/Mercury Mesh-cli/src/cli-entry.ts` inside `main()`:
    ```ts
    if (cmd === '<name>') {
      const { run<Name> } = await import('./cli/commands/<name>.js');

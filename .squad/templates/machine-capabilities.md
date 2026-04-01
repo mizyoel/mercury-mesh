@@ -10,7 +10,7 @@ When running Mercury Mesh across multiple machines (laptops, DevBoxes, GPU serve
 
 ### 1. Create a Capabilities Manifest
 
-Create `~/.squad/machine-capabilities.json` (user-wide) or `.squad/machine-capabilities.json` (project-local):
+Create `~/.mesh/machine-capabilities.json` (user-wide) or `.mesh/machine-capabilities.json` (project-local):
 
 ```json
 {
@@ -41,7 +41,7 @@ Custom capabilities are supported — any `needs:X` label works if `X` is in the
 ### 3. Run Ralph
 
 ```bash
-squad watch --interval 5
+Mercury Mesh watch --interval 5
 ```
 
 The CLI command is still legacy-named during the compatibility phase.
@@ -74,4 +74,4 @@ spec:
     node.squad.dev/gpu: "true"
 ```
 
-A DaemonSet can run capability discovery on each node and maintain labels automatically. See the [Mercury Mesh on AKS (legacy repo name: squad-on-aks)](https://github.com/tamirdresher/squad-on-aks) project for a complete Kubernetes deployment example.
+A DaemonSet can run capability discovery on each node and maintain labels automatically. See the [Mercury Mesh on AKS (legacy repo name: Mercury Mesh-on-aks)](https://github.com/tamirdresher/Mercury Mesh-on-aks) project for a complete Kubernetes deployment example.

@@ -1,6 +1,6 @@
 # Orchestration Log Entry
 
-> One file per agent spawn. Saved to `.squad/orchestration-log/{timestamp}-{agent-name}.md`
+> One file per agent spawn. Saved to `.mesh/orchestration-log/{timestamp}-{agent-name}.md`
 
 ---
 

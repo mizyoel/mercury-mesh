@@ -1,4 +1,4 @@
-name: Squad CI
+name: Mercury Mesh CI
 
 on:
   pull_request:

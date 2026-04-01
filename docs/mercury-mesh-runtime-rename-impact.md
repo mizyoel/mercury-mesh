@@ -2,18 +2,18 @@
 
 This document separates safe branding changes from runtime-breaking renames.
 
-## Current State
+## Current State (Post Phase 4)
 
-The repo now presents itself as Mercury Mesh at the narrative layer, but the runtime still depends on legacy Squad identifiers:
+All four migration phases are complete. The runtime identity is now Mercury Mesh end-to-end:
 
-- Runtime directory: `.squad/`
-- Agent entrypoint: `.github/agents/squad.agent.md`
-- Workflow filenames: `squad-*.yml`
-- GitHub labels: `squad`, `squad:{member}`
-- Branch prefix: `squad/{issue-number}-{slug}`
-- CLI examples and helper flags: `squad upgrade`, `squad watch`, `--squad-dir`
-
-These are not just names. They are referenced by workflows, templates, scripts, and parsing logic.
+- **Runtime directory resolution:** `.mesh/` primary, `.mercury/` alternate. `.squad/` is no longer in the helper candidate list.
+- **Agent entrypoint:** `.github/agents/mercury-mesh.agent.md` (sole agent; `squad.agent.md` deleted).
+- **Workflow filenames:** `mesh-triage.yml`, `mesh-issue-assign.yml`, `mesh-heartbeat.yml`, `sync-mesh-labels.yml` (all `squad-*.yml` stubs deleted).
+- **GitHub labels:** `mesh` base label, `mesh:{member}` assignment labels only. No `squad` / `squad:*` labels created or consumed.
+- **Branch prefix:** `mesh/{issue-number}-{slug}`.
+- **CLI flags:** `--mesh-dir` only. `--squad-dir` removed from all helpers.
+- **Physical directory:** The on-disk directory remains `.squad/` — a future physical rename is a separate operation.
+- **Internal variable names:** Helper scripts still use `squadDir` internally as a variable name; this is cosmetic and has no functional impact.
 
 ## Implemented In Phase 1
 
@@ -26,8 +26,61 @@ The repo now has partial dual-resolution support in the active automation surfac
 - Helper scripts use runtime-aware default paths when the runtime root is `.mesh` or `.mercury`.
 - Schedule and seeded org templates now default to `.mesh` paths instead of reintroducing `.squad` in new installs.
 - Seed-facing instructions and charters now describe `.mesh` as the primary runtime root while keeping `.squad` documented as a compatibility alias.
+- Branch prefix documented as `mesh/{issue}` primary with `squad/{issue}` compat across git-workflow SKILL, issue-lifecycle, and copilot-instructions.
+- Agent governance (`squad.agent.md`) updated: Init flow, dept commands, config refs, spawn templates, and model selection all reference active runtime root.
+- Economy-mode and model-selection SKILLs use active runtime root pattern instead of hardcoded `.squad/config.json`.
 
 Phase 1 in this repo is therefore active on the main workflow path and now extends into the seed/runtime scaffolding layer, but it is not complete across every downstream package or documentation artifact.
+
+## Implemented In Phase 2
+
+Phase 2 dual-write is now active across all org helper scripts. When both a primary runtime root (e.g. `.mesh`) and an alternate root (e.g. `.squad`) contain a `config.json`, every state write is replicated to both roots.
+
+### What was added
+
+- **Shared utilities** (`findAlternateRoot`, `mirrorPath`, `mirrorFileWrite`/`mirrorFileAppend`) added to all four template helpers.
+- **org-runtime-reconcile.js**: State JSON, backlog markdown, and decision inbox entries are mirrored to the alternate root after each write.
+- **org-backlog-from-triage.js**: Backlog markdown updates are mirrored to the alternate root when `--apply` is used.
+- **org-seed-runtime.js**: All seeded files (charters, backlogs, state, contracts, installed scripts) are mirrored. Template loading falls back across runtime roots so `.mesh` can find templates in `.squad/templates/` and vice versa.
+- **org-status.js**: Read-only; no mirroring needed. Utilities present for consistency.
+- **Installed copies** (`.squad/org/*.js`) synced from updated templates.
+
+### Mirror activation rule
+
+Mirroring only activates when `findAlternateRoot(primaryDir)` locates a sibling runtime directory that contains `config.json`. If only one root exists, no mirror write occurs. This makes the dual-write layer zero-cost for repos that haven't yet created a second runtime root.
+
+## Implemented In Phase 3
+
+Phase 3 flips the default so `.mesh` is the primary runtime identity. Legacy `squad-*` names are preserved as deprecated stubs.
+
+### What was changed
+
+- **Workflow filenames:** New `mesh-triage.yml`, `mesh-issue-assign.yml`, `mesh-heartbeat.yml`, `sync-mesh-labels.yml` are the active workflows. The old `squad-*.yml` files are now `workflow_dispatch`-only stubs that print a deprecation notice.
+- **Label check order:** Workflows now check `mesh`/`mesh:*` before `squad`/`squad:*` in `if:` conditions.
+- **Agent entrypoint:** `mercury-mesh.agent.md` is the primary agent definition. `squad.agent.md` is a thin redirect.
+- **Agent content:** Governance root references `.mesh/manifesto.md` (falls back to `.squad/` for legacy installs). Bridge nomenclature documents `.mesh/` as primary, `.squad/` as legacy alias.
+- **Helper fallback:** `defaultRuntimeDir()` falls back to `.mesh` instead of `.squad` when no runtime directory is found on disk.
+- **Template copies:** `mesh-*.yml` template workflow copies created alongside `squad-*.yml` in `.squad/templates/workflows/`. Template agent file synced. Installed org helpers synced.
+- **SYNC comment** in heartbeat workflow updated to reference `mesh-heartbeat.yml` paths.
+
+## Implemented In Phase 4
+
+Phase 4 removes all legacy Squad compatibility code. The runtime is fully Mercury Mesh.
+
+### What was removed
+
+- **RUNTIME_DIR_CANDIDATES:** `.squad` removed from all four template helpers. Candidates are now `['.mesh', '.mercury']`.
+- **`--squad-dir` CLI flag:** Removed from all helpers. `--mesh-dir` is the sole flag.
+- **Dual-write utilities:** `findAlternateRoot`, `mirrorPath`, `mirrorFileWrite`, `mirrorFileAppend` removed from all helpers. Mirror calls stripped from reconcile, backlog-from-triage, and seed-runtime.
+- **`ALTERNATE_ROOTS` mapping:** Removed from all helpers.
+- **`primaryDir` / `__runtimeDir` plumbing:** Removed; helpers pass only `squadDir` internally.
+- **Deprecated workflow stubs:** `squad-triage.yml`, `squad-issue-assign.yml`, `squad-heartbeat.yml`, `sync-squad-labels.yml` deleted from `.github/workflows/`.
+- **`squad.agent.md`:** Deleted. `mercury-mesh.agent.md` is the sole agent file.
+- **Workflow label triggers:** `squad` and `squad:*` label conditions removed from triage and issue-assign workflows.
+- **Label sync:** `squad` base label and `squad:{member}` labels no longer created by `sync-mesh-labels.yml`.
+- **Agent file:** ~120 `squad` references in `mercury-mesh.agent.md` replaced with Mercury Mesh / `.mesh/` equivalents.
+- **Template workflows:** Legacy `squad-*.yml` templates removed; renamed to `mesh-*.yml`.
+- **Installed helpers:** `.squad/org/*.js` synced from cleaned templates.
 
 ## Safe Now
 
@@ -38,116 +91,60 @@ These surfaces can be rebranded immediately without changing runtime behavior:
 - Label descriptions while preserving the label keys themselves
 - PR guidance, ceremony text, and historical ledger headings
 
-## Breaking Surfaces
+## Breaking Surfaces (Resolved)
 
-These surfaces cannot be renamed safely in one pass because automation currently depends on exact strings, paths, or prefixes.
+All previously breaking surfaces have been migrated:
 
-| Surface | Current dependency | Break risk | Notes |
-|---------|--------------------|------------|-------|
-| `.squad/` path | Workflows, scripts, templates, prompts, helper tools | High | Requires dual-read or dual-write support before cutover |
-| `.github/agents/squad.agent.md` | Agent discovery and repo conventions | Medium | Renaming file likely needs parallel registration or updated references |
-| `squad` label | Triage trigger in workflows | High | Current workflow logic keys directly on this label |
-| `squad:{member}` labels | Assignment trigger in workflows and docs | High | Used for routing and copilot assignment |
-| `squad/{issue}` branch prefix | Docs, branch lifecycle, cleanup logic | Medium | Needs workflow and helper updates before changing |
-| `--squad-dir` CLI arg | Helper scripts and workflow invocations | High | Requires script interface migration or alias support |
-| `## Members` section in `.squad/team.md` | Workflow parsing logic | High | Header must remain until parsing logic is expanded |
+| Surface | Resolution |
+|---------|-----------|
+| `.squad/` path | Helpers resolve `.mesh/` or `.mercury/` only; physical dir rename is a future optional step |
+| `.github/agents/squad.agent.md` | Deleted; replaced by `mercury-mesh.agent.md` |
+| `squad` label | Removed from workflow triggers; `mesh` is sole base label |
+| `squad:{member}` labels | Removed from workflow triggers; `mesh:{member}` is sole assignment label |
+| `squad/{issue}` branch prefix | Replaced with `mesh/{issue}` in all docs and skills |
+| `--squad-dir` CLI arg | Removed; `--mesh-dir` is sole flag |
+| `## Members` in team.md | Unchanged — parsing logic still keys on this header |
 
-## Still Pending After Phase 1
+## Still Pending
 
-These areas are not fully migrated yet and still need follow-up work before a default flip:
-
-- Any downstream CLI package or external source templates outside this workspace
-- Remaining docs that still describe legacy runtime locations as the primary examples where compatibility is no longer the main point
-- Branch lifecycle and helper surfaces that still treat `squad/{issue}` as the only canonical default
+- **Physical directory rename:** The on-disk `.squad/` directory has not been renamed to `.mesh/`. This is a separate operation that requires updating all template paths and installed file locations.
+- **Downstream packages:** External CLI packages or template mirrors outside this workspace may still reference legacy names.
+- **Internal variable names:** Helper scripts use `squadDir` as a variable name internally — cosmetic only.
 
 ## Required Migration Strategy
 
-### Phase 1: Dual-Resolution
+### Phase 1: Dual-Resolution ✅
 
-Add support for both legacy and Mercury Mesh runtime names.
+### Phase 2: Dual-Write And Mirror ✅
 
-- Read `.mesh/` or `.mercury/` first, then fall back to `.squad/`
-- Accept both `mesh` and `squad` base labels in workflows
-- Accept both `mesh:{member}` and `squad:{member}` assignment labels
-- Accept both `mesh/{issue}` and `squad/{issue}` branch prefixes in helpers and docs
-- Allow helper scripts to accept both `--mesh-dir` and `--squad-dir`
+### Phase 3: Default Flip ✅
 
-### Phase 2: Dual-Write And Mirror
+### Phase 4: Legacy Removal ✅
 
-While compatibility is active:
-
-- Sync new state into both runtime directories if both exist
-- Create both legacy and new labels during label sync
-- Comment in issues using Mercury Mesh language, but preserve both label families
-- Prefer the new runtime in docs while explicitly marking legacy forms as compatibility aliases
-
-### Phase 3: Default Flip
-
-After workflows and scripts prove dual-support:
-
-- Make the new runtime directory primary
-- Make Mercury Mesh labels primary in docs and automation
-- Switch helper invocations to new flag names
-- Introduce new workflow filenames or aliases if needed
-
-### Phase 4: Legacy Removal
-
-Only after all repos and automation have migrated:
-
-- Remove `.squad/` fallback logic
-- Remove `squad` and `squad:{member}` label handling
-- Retire `squad/{issue}` branch conventions
-- Remove legacy CLI aliases and helper flags
-
-## Files That Must Change Before A Full Runtime Rename
+## Files Changed During Migration
 
 ### Workflow Layer
 
-- `.github/workflows/squad-triage.yml`
-- `.github/workflows/squad-issue-assign.yml`
-- `.github/workflows/squad-heartbeat.yml`
-- `.github/workflows/sync-squad-labels.yml`
-- Matching copies in `.squad/templates/workflows/`
+- `.github/workflows/mesh-triage.yml` (was `squad-triage.yml`)
+- `.github/workflows/mesh-issue-assign.yml` (was `squad-issue-assign.yml`)
+- `.github/workflows/mesh-heartbeat.yml` (was `squad-heartbeat.yml`)
+- `.github/workflows/sync-mesh-labels.yml` (was `sync-squad-labels.yml`)
+- Template copies in `.squad/templates/workflows/` renamed to `mesh-*`
 
 ### Script And Helper Layer
 
 - `.squad/templates/org-runtime-reconcile.js`
+- `.squad/templates/org-backlog-from-triage.js`
 - `.squad/templates/org-seed-runtime.js`
-- Any helper expecting `--squad-dir`
+- `.squad/templates/org-status.js`
+- Installed copies in `.squad/org/`
 
 ### Agent And Template Layer
 
-- `.github/agents/squad.agent.md`
+- `.github/agents/mercury-mesh.agent.md` (was `squad.agent.md`)
 - `.squad/templates/copilot-instructions.md`
 - `.squad/templates/issue-lifecycle.md`
-- `.squad/templates/charter.md`
-- `.squad/templates/schedule.json`
-- `.squad/templates/org-structure.json`
-- `.squad/templates/*` files that mention labels, branch names, or CLI commands
-
-### State And Parsing Layer
-
-- `.squad/team.md`
-- `.squad/routing.md`
-- `.squad/config.json`
-- `.squad/org/structure.json`
-- Any workflow parser that assumes `## Members`
-
-## Recommended Target Names
-
-If the runtime is fully renamed, these are the cleanest replacements:
-
-| Legacy | Proposed target |
-|--------|------------------|
-| `.squad/` | `.mesh/` |
-| `squad` label | `mesh` |
-| `squad:{member}` | `mesh:{member}` |
-| `squad/{issue}-{slug}` | `mesh/{issue}-{slug}` |
-| `squad.agent.md` | `mercury-mesh.agent.md` |
-| `--squad-dir` | `--mesh-dir` |
 
 ## Recommendation
 
-Do not perform the full runtime rename as a search-and-replace.
-
-Phase 1 dual-support is now in place on the repo's active automation path and the remaining schedule/seed templates. The next safe step is to propagate those defaults into any downstream template mirrors, then flip branch and label defaults only after the new runtime names have proven stable.
+The runtime identity migration is complete within this repo. The only remaining step is the optional physical directory rename (`.squad/` → `.mesh/`), which can be done when all downstream consumers have been verified.

@@ -32,7 +32,7 @@ Agents must optimize for **Minimum Viable Compute** — no wasted energy, burn, 
 Every meaningful action an agent takes is logged for human audit.
 
 - **Scribe** maintains the session log and orchestration log after every substantial interaction.
-- **Decisions** are written to `.squad/decisions/inbox/` and merged into `decisions.md`, the Black Box ledger.
+- **Decisions** are written to `.mesh/decisions/inbox/` and merged into `decisions.md`, the Black Box ledger.
 - **Agent history** is append-only (`merge=union` in `.gitattributes`).
 - No agent may suppress, overwrite, or redact log entries.
 - When an agent is uncertain about a decision, it must state the uncertainty explicitly — never present a guess as a fact.

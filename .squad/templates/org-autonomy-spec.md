@@ -24,7 +24,7 @@ Department members execute leased work packets in parallel.
 When `orgMode: true`, create:
 
 ```text
-.squad/org/
+.mesh/org/
   structure.json
   contracts/
     {contract-name}.md
@@ -101,7 +101,7 @@ This preserves the coordinator's spawn ownership while allowing local department
 
 Cross-department work is **contract-first**.
 
-- Before departments run in parallel, define an interface contract in `.squad/org/contracts/`.
+- Before departments run in parallel, define an interface contract in `.mesh/org/contracts/`.
 - Contracts define producer, consumer, inputs, outputs, invariants, and version.
 - Departments may proceed concurrently against the current contract version.
 - Contract changes trigger a lead alignment round.
@@ -128,7 +128,7 @@ Department leads must escalate:
 Autonomy is suspended when:
 
 - `halted: true`
-- `.squad/HALT` exists
+- `.mesh/HALT` exists
 - the user lacks required human tier
 - the acting agent is `shadow`
 - department parallelism limit is reached

@@ -6,7 +6,7 @@
 
 ✅ THIS SKILL PRODUCES:
 - A resolved `model` parameter for every `task` tool call
-- Persistent model preferences in `.squad/config.json`
+- Persistent model preferences in `.mesh/config.json`
 - Spawn acknowledgments that include the resolved model
 
 ❌ THIS SKILL DOES NOT PRODUCE:
@@ -16,7 +16,7 @@
 
 ## Context
 
-Squad supports 18+ models across three tiers (premium, standard, fast). The coordinator must select the right model for each agent spawn. Users can set persistent preferences that survive across sessions.
+Mercury Mesh supports 18+ models across three tiers (premium, standard, fast). The coordinator must select the right model for each agent spawn. Users can set persistent preferences that survive across sessions.
 
 ## 5-Layer Model Resolution Hierarchy
 
@@ -24,8 +24,8 @@ Resolution is **first-match-wins** — the highest layer with a value wins.
 
 | Layer | Name | Source | Persistence |
 |-------|------|--------|-------------|
-| **0a** | Per-Agent Config | `.squad/config.json` → `agentModelOverrides.{name}` | Persistent (survives sessions) |
-| **0b** | Global Config | `.squad/config.json` → `defaultModel` | Persistent (survives sessions) |
+| **0a** | Per-Agent Config | `.mesh/config.json` → `agentModelOverrides.{name}` | Persistent (survives sessions) |
+| **0b** | Global Config | `.mesh/config.json` → `defaultModel` | Persistent (survives sessions) |
 | **1** | Session Directive | User said "use X" in current session | Session-only |
 | **2** | Charter Preference | Agent's `charter.md` → `## Model` section | Persistent (in charter) |
 | **3** | Task-Aware Auto | Code → sonnet, docs → haiku, visual → opus | Computed per-spawn |
@@ -37,7 +37,7 @@ Resolution is **first-match-wins** — the highest layer with a value wins.
 
 ### On Session Start
 
-1. READ `.squad/config.json`
+1. READ `.mesh/config.json`
 2. CHECK for `defaultModel` field — if present, this is the Layer 0 override for all spawns
 3. CHECK for `agentModelOverrides` field — if present, these are per-agent Layer 0a overrides
 4. STORE both values in session context for the duration
@@ -61,20 +61,20 @@ Resolution is **first-match-wins** — the highest layer with a value wins.
 **Trigger phrases:** "always use X", "use X for everything", "switch to X", "default to X"
 
 1. VALIDATE the model ID against the catalog (18+ models)
-2. WRITE `defaultModel` to `.squad/config.json` (merge, don't overwrite)
+2. WRITE `defaultModel` to the active `config.json` (merge, don't overwrite)
 3. ACKNOWLEDGE: `✅ Model preference saved: {model} — all future sessions will use this until changed.`
 
 **Per-agent trigger:** "use X for {agent}"
 
 1. VALIDATE model ID
-2. WRITE to `agentModelOverrides.{agent}` in `.squad/config.json`
+2. WRITE to `agentModelOverrides.{agent}` in the active `config.json`
 3. ACKNOWLEDGE: `✅ {Agent} will always use {model} — saved to config.`
 
 ### When User Clears a Preference
 
 **Trigger phrases:** "switch back to automatic", "clear model preference", "use default models"
 
-1. REMOVE `defaultModel` from `.squad/config.json`
+1. REMOVE `defaultModel` from the active `config.json`
 2. ACKNOWLEDGE: `✅ Model preference cleared — returning to automatic selection.`
 
 ### STOP
@@ -82,12 +82,12 @@ Resolution is **first-match-wins** — the highest layer with a value wins.
 After resolving the model and including it in the spawn template, this skill is done. Do NOT:
 - Generate model comparison reports
 - Run benchmarks or speed tests
-- Create new config files (only modify existing `.squad/config.json`)
+- Create new config files (only modify existing `config.json` in the active runtime root)
 - Change the model after spawn (fallback chains handle runtime failures)
 
 ## Config Schema
 
-`.squad/config.json` model-related fields:
+The active `config.json` (`.mesh/config.json` or `.mesh/config.json`) model-related fields:
 
 ```json
 {

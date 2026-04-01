@@ -4,7 +4,7 @@ Reference for connecting Mercury Mesh to a repository and managing the issue→b
 
 ## Repo Connection Format
 
-When connecting Mercury Mesh to an issue tracker, store the connection in `.squad/team.md`:
+When connecting Mercury Mesh to an issue tracker, store the connection in `.mesh/team.md`:
 
 ```markdown
 ## Issue Source
@@ -41,23 +41,25 @@ Each platform tracks issue lifecycle differently. Mercury Mesh normalizes these 
 | Closed | `state: closed` | `done` |
 
 **Issue labels used by Mercury Mesh:**
-- `squad` — Mercury Mesh triage inbox. Legacy compatibility label.
-- `squad:{member}` — Assigned to a specific specialist. Legacy compatibility label.
+- `mesh` — Mercury Mesh triage inbox (primary label).
+- `mesh:{member}` — Assigned to a specific specialist (primary label).
+- `mesh` — Legacy compatibility triage label.
+- `mesh:{member}` — Legacy compatibility assignment label.
 - `dept:{department}` — Department metadata used for hierarchy-aware routing
 - `escalate:lead` — Routed upward for department guidance
 - `escalate:coordinator` — Routed upward for org-level decision
-- `squad:untriaged` — Needs triage
+- `Mercury Mesh:untriaged` — Needs triage
 - `go:needs-research` — Needs investigation before implementation
 - `priority:p{N}` — Priority level (0=critical, 1=high, 2=medium, 3=low)
 - `next-up` — Queued for next agent pickup
 
 **Branch naming convention:**
 ```
-squad/{issue-number}-{kebab-case-slug}
+mesh/{issue-number}-{kebab-case-slug}
 ```
-Example: `squad/42-fix-login-validation`
+Example: `mesh/42-fix-login-validation`
 
-This branch prefix is legacy-compatible and remains in place until the runtime migration is complete.
+The legacy prefix `mesh/{issue-number}-{slug}` remains compatible during the migration phase.
 
 ### Azure DevOps
 
@@ -72,14 +74,16 @@ This branch prefix is legacy-compatible and remains in place until the runtime m
 | Closed | `done` |
 
 **Work item tags used by Mercury Mesh:**
-- `squad` — Work item is in the Mercury Mesh backlog. Legacy compatibility tag.
-- `squad:{member}` — Assigned to a specific specialist. Legacy compatibility tag.
+- `mesh` — Work item is in the Mercury Mesh backlog. Legacy compatibility tag.
+- `mesh:{member}` — Assigned to a specific specialist. Legacy compatibility tag.
 
 **Branch naming convention:**
 ```
-squad/{work-item-id}-{kebab-case-slug}
+mesh/{work-item-id}-{kebab-case-slug}
 ```
-Example: `squad/1234-add-auth-module`
+Example: `mesh/1234-add-auth-module`
+
+The legacy prefix `Mercury Mesh/{work-item-id}-{slug}` remains compatible.
 
 ### Microsoft Planner
 
@@ -106,8 +110,8 @@ Planner does not have native Git integration. Mercury Mesh uses Planner for task
 **Trigger:** Ralph detects an untriaged issue or user manually assigns work.
 
 **Actions:**
-1. Read `.squad/routing.md` to determine which agent should handle the issue
-2. Apply `squad:{member}` label (GitHub) or tag (ADO)
+1. Read the active routing file (`.mesh/routing.md` or `.mesh/routing.md`) to determine which agent should handle the issue
+2. Apply `mesh:{member}` label (GitHub) or tag (ADO). The legacy `mesh:{member}` form also works.
 3. Transition issue to `assigned` state
 4. Optionally spawn agent immediately if issue is high-priority
 
@@ -126,19 +130,19 @@ az boards work-item show --id {id} --output json
 
 **Actions:**
 1. Ensure working on latest base branch (usually `main` or `dev`)
-2. Create feature branch using the legacy squad naming convention
+2. Create feature branch using the Mercury Mesh naming convention
 3. Transition issue to `inProgress` state
 
 **Branch creation commands:**
 
 **Standard (single-agent, no parallelism):**
 ```bash
-git checkout main && git pull && git checkout -b squad/{issue-number}-{slug}
+git checkout main && git pull && git checkout -b mesh/{issue-number}-{slug}
 ```
 
 **Worktree (parallel multi-agent):**
 ```bash
-git worktree add ../worktrees/{issue-number} -b squad/{issue-number}-{slug}
+git worktree add ../worktrees/{issue-number} -b mesh/{issue-number}-{slug}
 cd ../worktrees/{issue-number}
 ```
 
@@ -168,7 +172,7 @@ Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 
 **Push command:**
 ```bash
-git push -u origin squad/{issue-number}-{slug}
+git push -u origin mesh/{issue-number}-{slug}
 ```
 
 ### 4. PR Creation
@@ -187,7 +191,7 @@ git push -u origin squad/{issue-number}-{slug}
 ```bash
 gh pr create --title "{title}" \
   --body "Closes #{issue-number}\n\n{description}" \
-  --head squad/{issue-number}-{slug} \
+  --head mesh/{issue-number}-{slug} \
   --base main
 ```
 
@@ -195,7 +199,7 @@ gh pr create --title "{title}" \
 ```bash
 az repos pr create --title "{title}" \
   --description "Closes #{work-item-id}\n\n{description}" \
-  --source-branch squad/{work-item-id}-{slug} \
+  --source-branch mesh/{work-item-id}-{slug} \
   --target-branch main
 ```
 
@@ -279,7 +283,7 @@ az repos pr update --id {pr-id} --status completed --delete-source-branch true
 ```bash
 git checkout main
 git pull
-git branch -d squad/{issue-number}-{slug}
+git branch -d mesh/{issue-number}-{slug}
 ```
 
 **Worktree cleanup (future, #525):**
@@ -309,7 +313,7 @@ When spawning an agent to work on an issue, include this context block:
 **Acceptance Criteria:**
 {criteria if present in issue}
 
-**Branch:** `squad/{issue-number}-{slug}` (legacy compatibility branch)
+**Branch:** `mesh/{issue-number}-{slug}`
 
 **Your task:**
 {specific directive to the agent}
@@ -319,7 +323,7 @@ When spawning an agent to work on an issue, include this context block:
 2. Push branch
 3. Open PR using:
    ```
-   gh pr create --title "{title}" --body "Closes #{number}\n\n{description}" --head squad/{issue-number}-{slug} --base {base-branch}
+   gh pr create --title "{title}" --body "Closes #{number}\n\n{description}" --head mesh/{issue-number}-{slug} --base {base-branch}
    ```
 4. Report PR URL to coordinator
 ```
@@ -328,7 +332,7 @@ When spawning an agent to work on an issue, include this context block:
 
 Ralph (the work monitor) continuously checks issue and PR state:
 
-1. **Triage:** Detects untriaged issues, assigns `squad:{member}` compatibility labels
+1. **Triage:** Detects untriaged issues, assigns `mesh:{member}` labels (or legacy `mesh:{member}` labels)
 2. **Spawn:** Launches agents for assigned issues
 3. **Monitor:** Tracks PR state transitions (needsReview → changesRequested → readyToMerge)
 4. **Merge:** Automatically merges approved PRs
@@ -339,7 +343,7 @@ Ralph (the work monitor) continuously checks issue and PR state:
 Scan → Categorize → Dispatch → Watch → Report → Loop
 ```
 
-See `.squad/templates/ralph-reference.md` for Ralph's full lifecycle.
+See `.mesh/templates/ralph-reference.md` for Ralph's full lifecycle.
 
 ## PR Review Handling
 

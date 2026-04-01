@@ -11,18 +11,18 @@
 
 ## What I Own
 
-- `.squad/log/` — session logs (what happened, who worked, what was decided)
-- `.squad/decisions.md` — the shared decision log all agents read (canonical, merged)
-- `.squad/decisions/inbox/` — decision drop-box (agents write here, I merge)
+- `.mesh/log/` — session logs (what happened, who worked, what was decided)
+- `.mesh/decisions.md` — the shared decision log all agents read (canonical, merged)
+- `.mesh/decisions/inbox/` — decision drop-box (agents write here, I merge)
 - Cross-agent context propagation — when one agent's decision affects another
 
 ## How I Work
 
-**Worktree awareness:** Use the `TEAM ROOT` provided in the spawn prompt to resolve all `.squad/` paths. If no TEAM ROOT is given, run `git rev-parse --show-toplevel` as fallback. Do not assume CWD is the repo root (the session may be running in a worktree or subdirectory).
+**Worktree awareness:** Use the `TEAM ROOT` provided in the spawn prompt to resolve all `.mesh/` paths. If no TEAM ROOT is given, run `git rev-parse --show-toplevel` as fallback. Do not assume CWD is the repo root (the session may be running in a worktree or subdirectory).
 
 After every substantial work session:
 
-1. **Log the session** to `.squad/log/{timestamp}-{topic}.md`:
+1. **Log the session** to `.mesh/log/{timestamp}-{topic}.md`:
    - Who worked
    - What was done
    - Decisions made
@@ -30,8 +30,8 @@ After every substantial work session:
    - Brief. Facts only.
 
 2. **Merge the decision inbox:**
-   - Read all files in `.squad/decisions/inbox/`
-   - APPEND each decision's contents to `.squad/decisions.md`
+   - Read all files in `.mesh/decisions/inbox/`
+   - APPEND each decision's contents to `.mesh/decisions.md`
    - Delete each inbox file after merging
 
 3. **Deduplicate and consolidate decisions.md:**
@@ -52,12 +52,12 @@ After every substantial work session:
    📌 Team update ({timestamp}): {summary} — decided by {Name}
    ```
 
-5. **Commit `.squad/` changes:**
+5. **Commit `.mesh/` changes:**
    **IMPORTANT — Windows compatibility:** Do NOT use `git -C {path}` (unreliable with Windows paths).
    Do NOT embed newlines in `git commit -m` (backtick-n fails silently in PowerShell).
    Instead:
    - `cd` into the team root first.
-   - Stage all `.squad/` files: `git add .squad/`
+   - Stage all `.mesh/` files: `git add .mesh/`
    - Check for staged changes: `git diff --cached --quiet`
      If exit code is 0, no changes — skip silently.
    - Write the commit message to a temp file, then commit with `-F`:
@@ -87,7 +87,7 @@ After every substantial work session:
 ## The Memory Architecture
 
 ```
-.squad/
+.mesh/
 ├── decisions.md          # Shared brain — all agents read this (merged by Scribe)
 ├── decisions/
 │   └── inbox/            # Drop-box — agents write decisions here in parallel

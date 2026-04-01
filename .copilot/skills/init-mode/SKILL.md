@@ -12,7 +12,7 @@ tools:
 
 ## Context
 
-Init Mode activates when `.squad/team.md` does not exist, or exists but has zero roster entries under `## Members`. The coordinator proposes a team (Phase 1), waits for user confirmation, then creates the team structure (Phase 2).
+Init Mode activates when `.mesh/team.md` does not exist, or exists but has zero roster entries under `## Members`. The coordinator proposes a team (Phase 1), waits for user confirmation, then creates the team structure (Phase 2).
 
 ## Patterns
 
@@ -26,7 +26,7 @@ No team exists yet. Propose one — but **DO NOT create any files until the user
    - Determine team size (typically 4–5 + Scribe).
    - Determine assignment shape from the user's project description.
    - Derive resonance signals from the session and repo context.
-   - Select a universe. If the universe is custom, allocate character names from that universe based on the related list found in the `.squad/templates/casting/` directory. Prefer custom universes when available.
+   - Select a universe. If the universe is custom, allocate character names from that universe based on the related list found in the `.mesh/templates/casting/` directory. Prefer custom universes when available.
    - Scribe is always "Scribe" — exempt from casting.
    - Ralph is always "Ralph" — exempt from casting.
 4. Propose the team with their cast names. Example (names will vary per cast):
@@ -52,20 +52,20 @@ No team exists yet. Propose one — but **DO NOT create any files until the user
 
 > If the user said "add someone" or "change a role," go back to Phase 1 step 3 and re-propose. Do NOT enter Phase 2 until the user confirms.
 
-6. Create the `.squad/` directory structure (see `.squad/templates/` for format guides or use the standard structure: team.md, routing.md, ceremonies.md, decisions.md, decisions/inbox/, casting/, agents/, orchestration-log/, skills/, log/).
+6. Create the `.mesh/` directory structure (see `.mesh/templates/` for format guides or use the standard structure: team.md, routing.md, ceremonies.md, decisions.md, decisions/inbox/, casting/, agents/, orchestration-log/, skills/, log/).
 
-**Casting state initialization:** Copy `.squad/templates/casting-policy.json` to `.squad/casting/policy.json` (or create from defaults). Create `registry.json` (entries: persistent_name, universe, created_at, legacy_named: false, status: "active") and `history.json` (first assignment snapshot with unique assignment_id).
+**Casting state initialization:** Copy `.mesh/templates/casting-policy.json` to `.mesh/casting/policy.json` (or create from defaults). Create `registry.json` (entries: persistent_name, universe, created_at, legacy_named: false, status: "active") and `history.json` (first assignment snapshot with unique assignment_id).
 
-**Seeding:** Each agent's `history.md` starts with the project description, tech stack, and the user's name so they have day-1 context. Agent folder names are the cast name in lowercase (e.g., `.squad/agents/ripley/`). The Scribe's charter includes maintaining `decisions.md` and cross-agent context sharing.
+**Seeding:** Each agent's `history.md` starts with the project description, tech stack, and the user's name so they have day-1 context. Agent folder names are the cast name in lowercase (e.g., `.mesh/agents/ripley/`). The Scribe's charter includes maintaining `decisions.md` and cross-agent context sharing.
 
-**Team.md structure:** `team.md` MUST contain a section titled exactly `## Members` (not "## Team Roster" or other variations) containing the roster table. This header is hard-coded in GitHub workflows (`squad-heartbeat.yml`, `squad-issue-assign.yml`, `squad-triage.yml`, `sync-squad-labels.yml`) for label automation. If the header is missing or titled differently, label routing breaks.
+**Team.md structure:** `team.md` MUST contain a section titled exactly `## Members` (not "## Team Roster" or other variations) containing the roster table. This header is hard-coded in GitHub workflows (`mesh-heartbeat.yml`, `mesh-issue-assign.yml`, `mesh-triage.yml`, `sync-mesh-labels.yml`) for label automation. If the header is missing or titled differently, label routing breaks.
 
-**Merge driver for append-only files:** Create or update `.gitattributes` at the repo root to enable conflict-free merging of `.squad/` state across branches:
+**Merge driver for append-only files:** Create or update `.gitattributes` at the repo root to enable conflict-free merging of `.mesh/` state across branches:
 ```
-.squad/decisions.md merge=union
-.squad/agents/*/history.md merge=union
-.squad/log/** merge=union
-.squad/orchestration-log/** merge=union
+.mesh/decisions.md merge=union
+.mesh/agents/*/history.md merge=union
+.mesh/log/** merge=union
+.mesh/orchestration-log/** merge=union
 ```
 The `union` merge driver keeps all lines from both sides, which is correct for append-only files. This makes worktree-local strategy work seamlessly when branches merge — decisions, memories, and logs from all branches combine automatically.
 
@@ -88,7 +88,7 @@ The `union` merge driver keeps all lines from both sides, which is correct for a
 5. Coordinator runs casting algorithm → selects "The Usual Suspects" universe
 6. Proposes: Keaton (Lead), Verbal (Prompt), Fenster (Backend), Hockney (Tester), Scribe, Ralph
 7. Uses `ask_user` with choices → user selects "Yes, hire this team"
-8. Coordinator creates `.squad/` structure, initializes casting state, seeds agents
+8. Coordinator creates `.mesh/` structure, initializes casting state, seeds agents
 9. Says: *"✅ Team hired. Try: 'Keaton, set up the project structure'"*
 
 ## Anti-Patterns
@@ -98,5 +98,5 @@ The `union` merge driver keeps all lines from both sides, which is correct for a
 - ❌ Skipping the `ask_user` tool and assuming confirmation
 - ❌ Proceeding to Phase 2 when user said "add someone" or "change a role"
 - ❌ Using `## Team Roster` instead of `## Members` as the header (breaks GitHub workflows)
-- ❌ Forgetting to initialize `.squad/casting/` state files
+- ❌ Forgetting to initialize `.mesh/casting/` state files
 - ❌ Reading or storing `git config user.email` (PII violation)

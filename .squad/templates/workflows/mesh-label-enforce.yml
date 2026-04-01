@@ -1,4 +1,4 @@
-name: Squad Label Enforce
+name: Mercury Mesh Label Enforce
 
 on:
   issues:

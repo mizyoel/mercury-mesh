@@ -44,7 +44,7 @@ function shouldProceed(light: TrafficLight, agentPriority: number): boolean {
 
 ### Pattern 2: Cooperative Token Pool (CMARP)
 
-A shared JSON file (`~/.squad/rate-pool.json`) distributes API quota:
+A shared JSON file (`~/.mesh/rate-pool.json`) distributes API quota:
 
 ```json
 {
@@ -225,5 +225,5 @@ See [keda-copilot-scaler](https://github.com/tamirdresher/keda-copilot-scaler) f
 ## References
 
 - [Circuit Breaker Template](ralph-circuit-breaker.md) — Foundation patterns
-- [Mercury Mesh on AKS (legacy repo name: squad-on-aks)](https://github.com/tamirdresher/squad-on-aks) — Production K8s deployment
+- [Mercury Mesh on AKS (legacy repo name: Mercury Mesh-on-aks)](https://github.com/tamirdresher/Mercury Mesh-on-aks) — Production K8s deployment
 - [KEDA Copilot Scaler](https://github.com/tamirdresher/keda-copilot-scaler) — Custom KEDA external scaler

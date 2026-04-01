@@ -7,7 +7,7 @@ source: "earned (2026-02-21 interactive shell proposal)"
 tools:
   - name: "view"
     description: "Read existing codebase, prior decisions, and team context before proposing changes"
-    when: "Always read .squad/decisions.md, relevant PRDs, and current architecture docs before writing proposal"
+    when: "Always read .mesh/decisions.md, relevant PRDs, and current architecture docs before writing proposal"
   - name: "create"
     description: "Create proposal in docs/proposals/ with structured format"
     when: "After gathering context, before any implementation work begins"
@@ -65,7 +65,7 @@ When a proposal invalidates existing wave structure:
 **Example (Interactive Shell):**
 - Wave 0 (NEW): Interactive Shell — blocks all other waves
 - Wave 1 (ADJUSTED): npm Distribution — shell bundled in cli.js
-- Wave 2 (DEFERRED): SquadUI — waits for shell foundation
+- Wave 2 (DEFERRED): MeshUI — waits for shell foundation
 - Wave 3 (ADJUSTED): Public Docs — now documents shell as primary interface
 
 ### Decision Framing
@@ -108,15 +108,15 @@ When a proposal invalidates existing wave structure:
 **Mitigation:**
 - Add integration test: Send 1000-message stream, verify all deltas arrive in order
 - Implement fallback: If streaming fails, fall back to polling session state
-- Log all SDK events to `.squad/orchestration-log/sdk-events.jsonl` for debugging
+- Log all SDK events to `.mesh/orchestration-log/sdk-events.jsonl` for debugging
 ```
 
 ## Examples
 
 **File references from interactive shell proposal:**
-- Full proposal: `docs/proposals/squad-interactive-shell.md`
-- User directive: `.squad/decisions/inbox/copilot-directive-2026-02-21T202535Z.md`
-- Team decisions: `.squad/decisions.md`
+- Full proposal: `docs/proposals/Mercury Mesh-interactive-shell.md`
+- User directive: `.mesh/decisions/inbox/copilot-directive-2026-02-21T202535Z.md`
+- Team decisions: `.mesh/decisions.md`
 - Current architecture: `docs/architecture/module-map.md`, `docs/prd-23-release-readiness.md`
 
 **Key patterns demonstrated:**
@@ -126,7 +126,7 @@ When a proposal invalidates existing wave structure:
 4. Document problem with specific evidence (unreliable handoffs, zero visibility, UX mismatch)
 5. Propose solution with technical specifics (ink components, SDK session management, spawn.ts module)
 6. Restructure waves when foundation shifts (Wave 0 becomes blocker)
-7. Preserve backward compatibility (squad.agent.md still works, VS Code mode unchanged)
+7. Preserve backward compatibility (mercury-mesh.agent.md still works, VS Code mode unchanged)
 8. Frame decisions explicitly (5 key decisions with recommendations)
 9. Document risks with mitigations (5 risks, each with concrete actions)
 10. Define scope (what's in v1 vs. deferred)

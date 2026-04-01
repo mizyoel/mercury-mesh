@@ -6,18 +6,18 @@
 
 | Name | Role | Notes |
 |------|------|-------|
-| Squad | Coordinator | Routes work, enforces handoffs and reviewer gates. Does not generate domain artifacts. |
+| Mercury Mesh | Coordinator | Routes work, enforces handoffs and reviewer gates. Does not generate domain artifacts. |
 
 ## Members
 
 | Name | Role | Department | Charter | Status |
 |------|------|------------|---------|--------|
-| {Name} | {Role} | {Department} | `.squad/agents/{name}/charter.md` | ✅ Active |
-| {Name} | {Role} | {Department} | `.squad/agents/{name}/charter.md` | ✅ Active |
-| {Name} | {Role} | {Department} | `.squad/agents/{name}/charter.md` | ✅ Active |
-| {Name} | {Role} | {Department} | `.squad/agents/{name}/charter.md` | ✅ Active |
-| Scribe | Session Logger | Shared Services | `.squad/agents/scribe/charter.md` | 📋 Silent |
-| Ralph | Work Monitor | Shared Services | `.squad/agents/ralph/charter.md` | 🔄 Monitor |
+| {Name} | {Role} | {Department} | `.mesh/agents/{name}/charter.md` | ✅ Active |
+| {Name} | {Role} | {Department} | `.mesh/agents/{name}/charter.md` | ✅ Active |
+| {Name} | {Role} | {Department} | `.mesh/agents/{name}/charter.md` | ✅ Active |
+| {Name} | {Role} | {Department} | `.mesh/agents/{name}/charter.md` | ✅ Active |
+| Scribe | Session Logger | Shared Services | `.mesh/agents/scribe/charter.md` | 📋 Silent |
+| Ralph | Work Monitor | Shared Services | `.mesh/agents/ralph/charter.md` | 🔄 Monitor |
 
 ## Coding Agent
 
@@ -38,13 +38,13 @@
 - Boilerplate/scaffolding generation
 - Documentation fixes and README updates
 
-**🟡 Needs review — route to @copilot but flag for squad member PR review:**
+**🟡 Needs review — route to @copilot but flag for Mercury Mesh member PR review:**
 - Medium features with clear specs and acceptance criteria
 - Refactoring with existing test coverage
 - API endpoint additions following established patterns
 - Migration scripts with well-defined schemas
 
-**🔴 Not suitable — route to squad member instead:**
+**🔴 Not suitable — route to Mercury Mesh member instead:**
 - Architecture decisions and system design
 - Multi-system integration requiring coordination
 - Ambiguous requirements needing clarification

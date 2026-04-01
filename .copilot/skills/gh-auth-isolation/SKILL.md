@@ -12,7 +12,7 @@ tools:
 
 ## Context
 
-Many developers use GitHub through an Enterprise Managed User (EMU) account at work while maintaining a personal GitHub account for open-source contributions. AI agents spawned by Squad inherit the shell's default `gh` authentication — which is usually the EMU account. This causes failures when agents try to push to personal repos, create PRs on forks, or interact with resources outside the enterprise org.
+Many developers use GitHub through an Enterprise Managed User (EMU) account at work while maintaining a personal GitHub account for open-source contributions. AI agents spawned by Mercury Mesh inherit the shell's default `gh` authentication — which is usually the EMU account. This causes failures when agents try to push to personal repos, create PRs on forks, or interact with resources outside the enterprise org.
 
 This skill teaches agents how to detect the active identity, switch contexts safely, and avoid mixing credentials across operations.
 
@@ -139,13 +139,13 @@ git remote set-url origin https://github.com/personaluser/personaluser.github.io
 ### ✓ Correct: Agent creates a PR from personal fork to upstream
 
 ```powershell
-# Fork: personaluser/squad, Upstream: bradygaster/squad
+# Fork: personaluser/Mercury Mesh, Upstream: bradygaster/Mercury Mesh
 # Agent is on branch contrib/fix-docs in the fork clone
 
 git push origin contrib/fix-docs  # Pushes to fork (may need token auth)
 
 # Create PR targeting upstream
-gh pr create --repo bradygaster/squad --head personaluser:contrib/fix-docs `
+gh pr create --repo bradygaster/Mercury Mesh --head personaluser:contrib/fix-docs `
   --title "docs: fix installation guide" `
   --body "Fixes #123"
 ```
@@ -177,7 +177,7 @@ git push https://personaluser:$token@github.com/personaluser/repo.git main
 - ❌ **Hardcoding tokens** in scripts, environment variables, or committed files. Use `gh auth token --user` to extract at runtime.
 - ❌ **Assuming the default `gh` auth works** for all repos. EMU accounts can't access personal repos and vice versa.
 - ❌ **Switching `gh auth login`** globally mid-session. This changes the default for ALL processes and can break parallel agents.
-- ❌ **Storing personal tokens in `.env`** or `.squad/` files. These get committed by Scribe. Use `gh`'s credential store.
+- ❌ **Storing personal tokens in `.env`** or `.mesh/` files. These get committed by Scribe. Use `gh`'s credential store.
 - ❌ **Ignoring token cleanup** after inline HTTPS pushes. Always reset the remote URL to avoid persisting tokens.
 - ❌ **Using `gh auth switch`** in multi-agent sessions. One agent switching affects all others sharing the shell.
 - ❌ **Mixing EMU and personal operations** in the same git clone. Use separate clones or explicit remote URLs per operation.

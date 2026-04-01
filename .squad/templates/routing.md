@@ -20,17 +20,17 @@ How to decide who handles what.
 |-------|--------|-----|
 | `mesh` | Triage: analyze issue, assign `mesh:{member}` label | Lead |
 | `mesh:{name}` | Pick up issue and complete the work | Named member |
-| `squad`, `squad:{name}` | Legacy compatibility labels; trigger the same routing during migration | Coordinator + workflows |
+| `mesh`, `Mercury Mesh:{name}` | Legacy compatibility labels; trigger the same routing during migration | Coordinator + workflows |
 | `dept:{department}` | Add routing metadata for org-mode triage | Coordinator + workflows |
 
 ### How Issue Assignment Works
 
 1. When a GitHub issue gets the `mesh` label, the **Lead** triages it — analyzing content, assigning the right `mesh:{member}` label, and commenting with triage notes.
 2. When a `mesh:{member}` label is applied, that member picks up the issue in their next session.
-3. Legacy `squad` and `squad:{member}` labels continue to trigger the same workflow path during the compatibility phase.
+3. Legacy `mesh` and `mesh:{member}` labels continue to trigger the same workflow path during the compatibility phase.
 4. `dept:{department}` labels are additive metadata only. They never replace `mesh:{member}` as the primary workflow trigger.
 5. Members can reassign by removing their label and adding another member's label.
-6. The `mesh` label is the primary inbox. The `squad` label remains a compatibility alias until the default flip is complete.
+6. The `mesh` label is the primary inbox. The `mesh` label remains a compatibility alias until the default flip is complete.
 
 ## Rules
 
@@ -40,11 +40,11 @@ How to decide who handles what.
 4. **When two agents could handle it**, pick the one whose domain is the primary concern.
 5. **"Team, ..." → fan-out.** Spawn all relevant agents in parallel as `mode: "background"`.
 6. **Anticipate downstream work.** If a feature is being built, spawn the tester to write test cases from requirements simultaneously.
-7. **Issue-labeled work** — when a `mesh:{member}` label is applied to an issue, route to that member. The Lead handles all `mesh` (base label) triage, while `squad` labels remain compatible.
+7. **Issue-labeled work** — when a `mesh:{member}` label is applied to an issue, route to that member. The Lead handles all `mesh` (base label) triage, while `mesh` labels remain compatible.
 
 ## Hierarchical Routing (Org Mode)
 
-Active when `orgMode: true` in `.mesh/config.json`. If the runtime still lives under `.squad/config.json`, the same rules apply through the compatibility layer. When disabled, all routing falls back to the flat rules above.
+Active when `orgMode: true` in `.mesh/config.json`. If the runtime still lives under `.mesh/config.json`, the same rules apply through the compatibility layer. When disabled, all routing falls back to the flat rules above.
 
 ### Department Routing
 
@@ -66,7 +66,7 @@ When work touches multiple departments:
 1. The coordinator matches all relevant departments from `.mesh/org/structure.json`.
 2. Members from each matched department are spawned in parallel.
 3. Leads are only spawned when conventions conflict or an escalation rule triggers.
-4. `mesh:{member}` is the primary assignment trigger. `squad:{member}` remains a compatibility alias, and `dept:{department}` labels are routing metadata only.
+4. `mesh:{member}` is the primary assignment trigger. `mesh:{member}` remains a compatibility alias, and `dept:{department}` labels are routing metadata only.
 
 ## Work Type → Agent
 

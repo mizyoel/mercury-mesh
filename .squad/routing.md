@@ -18,19 +18,19 @@ How the Mesh decides who handles what.
 
 | Label | Action | Who |
 |-------|--------|-----|
-| `squad` | Triage: analyze issue, assign `squad:{member}` label | Lead |
-| `squad:{name}` | Pick up issue and complete the work | Named member |
+| `Mercury Mesh` | Triage: analyze issue, assign `Mercury Mesh:{member}` label | Lead |
+| `Mercury Mesh:{name}` | Pick up issue and complete the work | Named member |
 | `dept:{department}` | Add routing metadata for org-mode triage | Coordinator + workflows |
 
-Legacy label note: the bridge keeps `squad` and `squad:{member}` labels until workflow automation is migrated. Treat them as compatibility labels, not product language.
+Legacy label note: the bridge keeps `Mercury Mesh` and `Mercury Mesh:{member}` labels until workflow automation is migrated. Treat them as compatibility labels, not product language.
 
 ### How Issue Assignment Works
 
-1. When a GitHub issue gets the `squad` label, the **Lead** triages it as the bridge inbox — analyzing content, assigning the right `squad:{member}` label, and commenting with telemetry notes.
-2. When a `squad:{member}` label is applied, that member picks up the issue in their next session.
-3. `dept:{department}` labels are additive metadata only. They never replace `squad:{member}` as the workflow trigger.
+1. When a GitHub issue gets the `Mercury Mesh` label, the **Lead** triages it as the bridge inbox — analyzing content, assigning the right `Mercury Mesh:{member}` label, and commenting with telemetry notes.
+2. When a `Mercury Mesh:{member}` label is applied, that member picks up the issue in their next session.
+3. `dept:{department}` labels are additive metadata only. They never replace `Mercury Mesh:{member}` as the workflow trigger.
 4. Members can reassign by removing their label and adding another member's label.
-5. The `squad` label is the inbox gravity well for untriaged issues waiting for Lead review.
+5. The `Mercury Mesh` label is the inbox gravity well for untriaged issues waiting for Lead review.
 
 ## Rules
 
@@ -40,11 +40,11 @@ Legacy label note: the bridge keeps `squad` and `squad:{member}` labels until wo
 4. **When two agents could handle it**, pick the one whose domain is the primary concern.
 5. **"Team, ..." → fan-out.** Spawn all relevant agents in parallel as `mode: "background"`.
 6. **Anticipate downstream work.** If a feature is being built, spawn the tester to write test cases from requirements simultaneously.
-7. **Issue-labeled work** — when a `squad:{member}` label is applied to an issue, route to that member. The Lead handles all `squad` (base label) triage.
+7. **Issue-labeled work** — when a `Mercury Mesh:{member}` label is applied to an issue, route to that member. The Lead handles all `Mercury Mesh` (base label) triage.
 
 ## Hierarchical Routing (Org Mode)
 
-Active when `orgMode: true` in `.squad/config.json`. When disabled, all routing falls back to the flat rules above.
+Active when `orgMode: true` in `.mesh/config.json`. When disabled, all routing falls back to the flat rules above.
 
 ### Department Routing
 
@@ -54,11 +54,11 @@ Active when `orgMode: true` in `.squad/config.json`. When disabled, all routing 
 ### Department Runtime Rules
 
 1. **Supervised autonomy** — the Ship's Computer remains the control plane. Department leads may decompose and prioritize local work, but all actual agent spawns still flow through the coordinator.
-2. **Queue before execution** — when work lands in a department, the lead may convert it into work packets in `.squad/org/{department}/backlog.md` before members begin execution.
+2. **Queue before execution** — when work lands in a department, the lead may convert it into work packets in `.mesh/org/{department}/backlog.md` before members begin execution.
 3. **Claim before work** — a member may only start a packet that is `queued` and unclaimed.
-4. **Lease every claim** — claimed work must record an owner and lease expiry in `.squad/org/{department}/state.json`.
+4. **Lease every claim** — claimed work must record an owner and lease expiry in `.mesh/org/{department}/state.json`.
 5. **Re-queue stale work** — expired claims return to `queued` when allowed by config.
-6. **Contract-first cross-department work** — if two departments depend on one another, define or update a contract in `.squad/org/contracts/` before parallel execution.
+6. **Contract-first cross-department work** — if two departments depend on one another, define or update a contract in `.mesh/org/contracts/` before parallel execution.
 7. **Lead review on probation or conflict** — probationary outputs and cross-department conflicts route to the department lead before coordinator synthesis.
 
 ### Autonomous Department Loop
