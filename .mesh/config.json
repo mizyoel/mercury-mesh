@@ -1,7 +1,11 @@
 {
   "version": 2,
-  "orgMode": false,
+  "orgMode": true,
   "halted": false,
+  "allowedModels": [
+    "gpt-5.4",
+    "claude-opus-4.6"
+  ],
   "orgConfig": {
     "autonomyMode": "delegated",
     "crossDeptStrategy": "contract-first",

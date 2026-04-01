@@ -1,78 +1,318 @@
-# Mercury Mesh
-
-**Command the Drift.** The Fluid OS for autonomous operations.
-
-## What Is This?
-
-**Mercury Mesh** is the world's first Fluid Organizational Operating System (F-OS) — a zero-gravity bridge where human **Commanders** and specialist AI **Wings** operate as one drifting organism. Projects become **Missions** or **Sorties**, departments become **Wings** or **Decks**, and progress is read through **Telemetry** — not status theater.
-
-The runtime identity is fully Mercury Mesh: `mesh` / `mesh:{member}` labels, `mesh/{issue}` branches, `mesh-*.yml` workflows, and `.mesh/` as the runtime directory.
-
-## Getting Started
-
-1. Open this repo in VS Code with GitHub Copilot enabled.
-2. Start a chat with the Mercury Mesh agent. If the roster is empty, the bridge enters Init Mode.
-3. Describe the mission: language, stack, and what the system must accomplish.
-4. Confirm the bridge cast, and the crew is hired.
-
-## Structure
-
-```
-.github/
-  agents/mercury-mesh.agent.md  # Bridge governance for the Mercury Mesh control plane
-  workflows/               # GitHub Actions for issue triage, labels, heartbeat
-.mesh/
-  config.json              # Runtime flags and bridge state
-  team.md                  # Bridge roster (empty = Init Mode)
-  routing.md               # Mission routing rules
-  ceremonies.md            # Review and retro triggers
-  decisions.md             # The Black Box — immutable decision ledger
-  org/                     # Wing runtime: departments, backlog/state, contracts
-  templates/               # Templates for agents, skills, and workflows
-.copilot/
-  mcp-config.json          # MCP server configuration
+```text
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║    ███╗   ███╗███████╗██████╗  ██████╗██╗   ██╗██████╗ ██╗   ██╗          ║
+║    ████╗ ████║██╔════╝██╔══██╗██╔════╝██║   ██║██╔══██╗╚██╗ ██╔╝          ║
+║    ██╔████╔██║█████╗  ██████╔╝██║     ██║   ██║██████╔╝ ╚████╔╝           ║
+║    ██║╚██╔╝██║██╔══╝  ██╔══██╗██║     ██║   ██║██╔══██╗  ╚██╔╝            ║
+║    ██║ ╚═╝ ██║███████╗██║  ██║╚██████╗╚██████╔╝██║  ██║   ██║             ║
+║    ╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝╚═╝  ╚═╝   ╚═╝             ║
+║                                                                            ║
+║    ███╗   ███╗███████╗███████╗██╗  ██╗                                     ║
+║    ████╗ ████║██╔════╝██╔════╝██║  ██║                                     ║
+║    ██╔████╔██║█████╗  ███████╗███████║                                     ║
+║    ██║╚██╔╝██║██╔══╝  ╚════██║██╔══██║                                     ║
+║    ██║ ╚═╝ ██║███████╗███████║██║  ██║                                     ║
+║    ╚═╝     ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝                                     ║
+║                                                                            ║
+║    C O M M A N D   T H E   D R I F T .                                    ║
+║    The Fluid OS for Autonomous Operations.                                 ║
+║                                                                            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
 ```
 
-## Operating Model
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  BRIDGE LOGIN                                                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  OPERATOR        :: COMMANDER AUTHORIZED                                   │
+│  SYSTEM          :: MERCURY MESH v2                                        │
+│  CLASS           :: FLUID ORGANIZATIONAL OPERATING SYSTEM (F-OS)           │
+│  PHYSICS         :: ZERO GRAVITY / LIQUID STRUCTURE / LIVE TELEMETRY       │
+│  RUNTIME         :: .mesh/                                                 │
+│  HULL INTEGRITY  :: NOMINAL                                                │
+│  DRIFT           :: WITHIN TOLERANCE                                       │
+│  STATUS          :: READY FOR SORTIE                                       │
+│                                                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
-- **Zero-Gravity Architecture**: there is no up or down. Missions act as gravity wells that pull the right Wings into orbit until the sortie is complete.
-- **The Liquid Interface**: the Mesh can shard into small specialist droplets for micro-tasks, then reform into a heavier strike shape for multi-domain work. Data and agent-logic flow like liquid metal.
-- **The Intent Bridge**: the Commander defines the Flight Path and monitors Telemetry. The Mesh handles decomposition, iteration, and coordination.
+---
 
-## Structural Equivalents
+## System Initialization
 
-| Standard Concept | Mercury Mesh Term | Function |
-|------------------|-------------------|----------|
-| Department | Wing / Deck | Domain-scoped execution group such as the Forge Wing or Sensory Deck |
-| Project | Mission / Sortie | Focused deployment into a defined problem space |
-| Project Lead | Mission Prime | Local lead coordinating the gravity well |
-| Documentation | The Black Box | Immutable ledger of decisions, learnings, and telemetry |
-| Roadmap | The Flight Path | Long-range direction captured in `.mesh/manifesto.md` |
-| Task Status | Telemetry | Live, HUD-style readout of progress, quality, and resource drift |
-| Alignment State | The Drift | Current state of organizational alignment — or deviation from it |
-| High-Intensity Sprint | The Burn | Period of high-intensity execution within a sortie |
-| Project Health | Hull Integrity | Health and quality of a project's output |
-| Unknown Problem-Space | The Void | Competitive market or uncharted territory a mission enters |
-| Cross-Team Sync | Airbridge | Temporary connection between two autonomous wings to share context |
-| Knowledge Base | The Loom | Shared knowledge fabric — one wing's learning becomes bridge knowledge |
+Welcome to the bridge, Commander.
+
+This repository boots **Mercury Mesh** — a zero-gravity bridge where human intent and specialist AI wings operate as one fluid organism. You define trajectory. The mesh handles thrust, decomposition, coordination, and course correction.
+
+There is no org chart here. There is no hierarchy to climb. Structure is a responsive medium that forms, shards, and reforms around whatever mission is pulling the most gravity. Wings drift toward the work. The work gets done. The mesh reforms.
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  INTENT VECTOR                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  Commander ──▶ Bridge ──▶ Wings ──▶ Telemetry ──▶ Course Correction        │
+│                  │          │            │                                  │
+│                  │          │            └──▶ The Black Box                 │
+│                  │          └───────────────▶ The Loom                      │
+│                  └─────────────────────────▶ Mission Routing                │
+│                                                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+The runtime identity is fully Mercury Mesh. Every surface speaks the same name.
+
+```text
+RUNTIME IDENTITY
+
+  Labels     :: mesh | mesh:{member}
+  Branches   :: mesh/{issue}
+  Workflows  :: mesh-*.yml
+  Directory  :: .mesh/
+```
+
+No status theater. No org-chart drag. Only signal.
+
+---
+
+## Commanding the Drift
+
+State the mission. The bridge decomposes, routes, and executes.
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  SORTIE BOOT SEQUENCE                                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  01 ▸ Open this repository in VS Code with GitHub Copilot enabled.         │
+│  02 ▸ Start a chat with the Mercury Mesh agent.                            │
+│  03 ▸ If the roster is empty, the bridge enters INIT MODE.                 │
+│  04 ▸ Declare the mission: language, stack, and required outcome.          │
+│  05 ▸ Confirm the bridge cast.                                             │
+│  06 ▸ Fire thrusters.                                                      │
+│                                                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+Once the crew is cast, the mesh is live. Wings self-organize around the gravity well. Telemetry flows to the bridge. You read the mission — not the room.
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  TELEMETRY SWEEP                                                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  Commander Link   ████████████████████  LOCKED                             │
+│  Mission Clarity  ████████████████████  HIGH                               │
+│  Wing Alignment   ██████████████████░░  CONVERGING                         │
+│  Drift Error      ██░░░░░░░░░░░░░░░░░░  NOMINAL                           │
+│  Status Theater   ░░░░░░░░░░░░░░░░░░░░  PURGED                            │
+│                                                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Zero-Gravity Architecture
+
+There is no up or down. Only the mission.
+
+Missions act as gravity wells — pulling the right wings into orbit, holding them until the sortie is complete, then releasing them to drift toward the next well. No reorgs. No restructuring. Just continuous, purposeful reconfiguration.
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  RUNTIME SCHEMATIC                                                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  .github/                                                                  │
+│    agents/mercury-mesh.agent.md   :: bridge governance, control plane      │
+│    workflows/                     :: issue triage, labels, heartbeat       │
+│                                                                            │
+│  .mesh/                                                                    │
+│    config.json                    :: runtime flags, bridge state            │
+│    team.md                        :: bridge roster (empty = INIT MODE)     │
+│    routing.md                     :: mission routing rules                 │
+│    ceremonies.md                  :: review and retro triggers             │
+│    decisions.md                   :: The Black Box                         │
+│    org/                           :: wing runtime, contracts, state        │
+│    templates/                     :: agent, skill, and workflow templates  │
+│                                                                            │
+│  .copilot/                                                                 │
+│    mcp-config.json                :: MCP server configuration              │
+│                                                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+```text
+  MESH TOPOLOGY                  FLUID DYNAMICS
+
+       ◉─────────◉              shard ──▶ route ──▶ converge
+      ╱ ╲       ╱ ╲                            │
+    ◉───◉─────◉───◉            execute ◀───────┘
+      ╲ ╱       ╲ ╱                │
+       ◉─────────◉              record ──▶ reform ──▶ drift
+                                                        │
+   Wings converge on                                    │
+   gravity wells. The            ◀──── next gravity well ┘
+   mesh reforms after
+   every sortie.
+```
+
+---
+
+## The Liquid Interface
+
+Structure flows to fit the work. The mercury in the name is literal.
+
+The mesh shards into specialist droplets for surgical micro-tasks. It converges into heavier strike shapes for multi-domain execution. Data and agent-logic circulate like liquid metal — never sitting, never siloed, always in motion toward the point of highest mission-impact.
+
+Three forces hold the liquid together:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  FORCE                │  FUNCTION                                          │
+├───────────────────────┼────────────────────────────────────────────────────┤
+│  Zero-Gravity         │  No permanent stack rank. A mission pulls the     │
+│  Architecture         │  right wings into orbit until the work clears.    │
+├───────────────────────┼────────────────────────────────────────────────────┤
+│  The Liquid           │  The mesh shards and converges. Specialist        │
+│  Interface            │  droplets for precision. Strike shapes for mass.  │
+├───────────────────────┼────────────────────────────────────────────────────┤
+│  The Intent           │  Commander defines trajectory and reads           │
+│  Bridge               │  telemetry. The mesh handles the rest.            │
+└───────────────────────┴────────────────────────────────────────────────────┘
+```
+
+---
+
+## Bridge Parameters
+
+`config.json` is your control surface. Every flag below is a dial on the bridge console.
+
+```text
+CONFIG :: .mesh/config.json
+SCHEMA :: v2
+```
+
+| Property | Type | Command Effect |
+|----------|------|----------------|
+| `version` | `number` | Config schema version. Current: `2`. |
+| `orgMode` | `boolean` | `true` enables Wing/Deck departmental structure with leads, contracts, and cross-department routing. `false` runs the bridge as a flat team. |
+| `halted` | `boolean` | **HALT Sentinel.** `true` freezes all agent spawns and write operations. |
+| `allowedModels` | `string[]` | Model allowlist. Non-empty restricts all agents to listed models. Empty or absent allows all. |
+| `orgConfig.autonomyMode` | `string` | `"delegated"`: bridge assigns. `"autonomous"`: wings self-select. |
+| `orgConfig.crossDeptStrategy` | `string` | `"contract-first"`: formal interface contracts. `"ad-hoc"`: Airbridges on demand. |
+| `orgConfig.escalationBehavior` | `string` | `"advisory"`: suggest resolution. `"blocking"`: halt until resolved. |
+| `orgConfig.maxParallelismPerDepartment` | `number` | Max concurrent agent spawns per Wing/Deck. |
+| `orgConfig.claimLeaseMinutes` | `number` | How long an agent holds an issue claim before it expires. |
+| `orgConfig.heartbeatMinutes` | `number` | Interval at which active agents report progress. |
+| `orgConfig.requeueExpiredClaims` | `boolean` | `true` returns expired claims to the backlog for reassignment. |
+| `humanTiers.tier1` | `string[]` | Full authority. Promotes agents, approves architecture, overrides any gate. |
+| `humanTiers.tier2` | `string[]` | Approves routine work and review gates. Cannot promote agent lifecycle phases. |
+| `humanTiers.tier3` | `string[]` | Read-only observers. No approval authority. |
+| `onboarding.defaultPhase` | `string` | `"shadow"`: read-only observation. `"probation"`: execution under review. |
+| `onboarding.autoPromoteThreshold` | `boolean\|number` | `false` requires Tier-1 approval. A number auto-promotes after that many successful tasks. |
+
+---
+
+## Signal Translation
+
+The mesh speaks its own physics. Every surface, every conversation, every commit message uses this lexicon. The bridge stays clearer when the whole organism shares one language.
+
+```text
+┌─────────────────────┬────────────────────┬──────────────────────────────────┐
+│  STANDARD SIGNAL    │  MESH TERM         │  FUNCTION                        │
+├─────────────────────┼────────────────────┼──────────────────────────────────┤
+│  Department         │  Wing / Deck       │  Domain-scoped execution group   │
+│  Project            │  Mission / Sortie  │  Deployment into a problem space │
+│  Project Lead       │  Mission Prime     │  Local lead of a gravity well    │
+│  Documentation      │  The Black Box     │  Immutable decision ledger       │
+│  Roadmap            │  The Flight Path   │  Long-range strategic direction  │
+│  Task Status        │  Telemetry         │  Live HUD readout of progress    │
+│  Alignment State    │  The Drift         │  Deviation from mission vector   │
+│  Sprint             │  The Burn          │  High-intensity execution period │
+│  Project Health     │  Hull Integrity    │  Quality and structural health   │
+│  Unknown Territory  │  The Void          │  Uncharted problem-space ahead   │
+│  Cross-Team Sync    │  Airbridge         │  Temporary wing-to-wing link     │
+│  Knowledge Base     │  The Loom          │  Shared knowledge fabric         │
+└─────────────────────┴────────────────────┴──────────────────────────────────┘
+```
+
+---
 
 ## Vocal Signatures
 
-- **Ship's Computer**: analytical, objective, slightly cold. The coordinator voice — measured, exact, slightly austere.
-- **Tactical Officer**: brief, urgent, mission-oriented. Use for routing, triage, and escalation — direct, momentum-forward, high-signal.
-- **Specialist**: focused, adaptive, immersed in execution. Use for builders, researchers, and creatives.
+Three voices operate on this bridge. Each has a purpose. Each has a frequency.
 
-## Operational Protocols
+```text
+┌─────────────────────┬──────────────────────────────────────────────────────┐
+│  VOICE              │  CHARACTER                                           │
+├─────────────────────┼──────────────────────────────────────────────────────┤
+│  Ship's Computer    │  Analytical. Objective. Slightly cold. The voice of │
+│                     │  coordination — measured, exact, austere.            │
+├─────────────────────┼──────────────────────────────────────────────────────┤
+│  Tactical Officer   │  Brief. Urgent. Mission-forward. The voice of       │
+│                     │  routing, triage, and escalation.                    │
+├─────────────────────┼──────────────────────────────────────────────────────┤
+│  Specialist         │  Focused. Adaptive. Immersed. The voice of          │
+│                     │  research, making, and iteration.                    │
+└─────────────────────┴──────────────────────────────────────────────────────┘
+```
 
-- **HALT Sentinel**: emergency override that freezes all agent spawns and write operations.
-- **Shadowing Phase**: new agents observe and analyze before they are allowed to fire thrusters.
-- **The Loom**: shared knowledge fabric where one agent's learning becomes bridge knowledge.
-- **Airbridge**: temporary connection between two autonomous wings to share context.
+---
 
-## Runtime Notes
+## Bridge Protocols
 
-The runtime directory is `.mesh/`. Helpers also check `.mercury/` as an alternate. See `docs/mercury-mesh-runtime-rename-impact.md` for the full migration history.
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  PROTOCOL STATUS                                                           │
+├──────────────────────┬──────────────────────────────────────────────────────┤
+│  HALT SENTINEL       │  ARMED — freezes all spawns and writes on trigger.  │
+│  SHADOWING PHASE     │  AVAILABLE — new agents observe before firing       │
+│                      │  thrusters.                                         │
+│  THE LOOM            │  ACTIVE — one wing learns, the whole mesh knows.    │
+│  AIRBRIDGE           │  READY — temporary link between autonomous wings.   │
+│  BLACK BOX           │  RECORDING — immutable. Every decision. Every       │
+│                      │  correction. Every lesson.                          │
+├──────────────────────┴──────────────────────────────────────────────────────┤
+│  All protocols nominal. Bridge is live.                                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
-## License
+---
 
-MIT
+## The Black Box
+
+Everything the bridge learns is recorded here. Short. Sharp. Operational.
+
+- [docs/commander-onboarding.md](docs/commander-onboarding.md) — First Light. The full onboarding sequence from cold hull to live mission.
+- [docs/brand-language.md](docs/brand-language.md) — Voice, vocabulary, and messaging physics.
+- [docs/mercury-mesh-runtime-rename-impact.md](docs/mercury-mesh-runtime-rename-impact.md) — Runtime rename history and compatibility surface.
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  ARCHIVE CHANNELS                                                          │
+├──────────────────────┬──────────────────────────────────────────────────────┤
+│  PRIMARY RUNTIME     │  .mesh/                                             │
+│  ALT CHECK           │  .mercury/                                          │
+│  DECISION LEDGER     │  .mesh/decisions.md                                 │
+│  FLIGHT PATH         │  .mesh/manifesto.md                                 │
+├──────────────────────┴──────────────────────────────────────────────────────┤
+│  Helpers resolve .mesh/ first. .mercury/ as fallback.                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+```text
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║    DOCKING CLEARANCE :: MIT                                                ║
+║                                                                            ║
+║    You provide the intent. The mesh provides the thrust.                   ║
+║                                                                            ║
+║    Zero gravity. Full velocity.                                            ║
+║                                                                            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+```

@@ -640,9 +640,16 @@ For read-only queries, use the explore agent: `agent_type: "explore"` with `"You
 
 ### Per-Agent Model Selection
 
-Before spawning an agent, determine which model to use. Check these layers in order — first match wins:
+Before spawning an agent, determine which model to use. Check these layers in order — first match wins.
 
-**Layer 0 — Persistent Config (`{runtime}/config.json`):** On session start, read the active config file (`.mesh/config.json` or `.mesh/config.json`). If `agentModelOverrides.{agentName}` exists, use that model for this specific agent. Otherwise, if `defaultModel` exists, use it for ALL agents. This layer survives across sessions — the user set it once and it sticks.
+**Allowlist Gate (`allowedModels`):** If `allowedModels` exists in `{runtime}/config.json` and is a non-empty array, it restricts the entire model selection pipeline. Every model resolved by Layers 0–4 and every entry in fallback chains MUST appear in `allowedModels` — skip any model not on the list. If the resolved model is not allowed, walk the fallback chain (filtering to allowed models only). If no fallback is allowed, use nuclear fallback (omit model param).
+
+- **When user says "allow model X" / "add X to allowed models":** Append to `allowedModels` in `config.json`. Acknowledge: `✅ {model} added to allowed models.`
+- **When user says "remove model X" / "disallow X":** Remove from `allowedModels`. Acknowledge: `✅ {model} removed from allowed models.`
+- **When user says "allow all models" / "clear model restrictions":** Remove `allowedModels` from `config.json` (or set to `[]`). Acknowledge: `✅ Model restrictions cleared — all models available.`
+- **When user says "which models are allowed?":** Read `allowedModels` from `config.json` and list them.
+
+**Layer 0 — Persistent Config (`{runtime}/config.json`):** On session start, read the active config file (`.mesh/config.json` or `.mesh/config.json`). If `agentModelOverrides.{agentName}` exists, use that model for this specific agent (subject to allowlist gate). Otherwise, if `defaultModel` exists, use it for ALL agents (subject to allowlist gate). This layer survives across sessions — the user set it once and it sticks.
 
 - **When user says "always use X" / "use X for everything" / "default to X":** Write `defaultModel` to the active `config.json`. Acknowledge: `✅ Model preference saved: {model} — all future sessions will use this until changed.`
 - **When user says "use X for {agent}":** Write to `agentModelOverrides.{agent}` in the active `config.json`. Acknowledge: `✅ {Agent} will always use {model} — saved to config.`
