@@ -65,13 +65,13 @@ On Kubernetes, machine capabilities map to node labels:
 
 ```yaml
 # Node labels (set by capability DaemonSet or manually)
-node.squad.dev/gpu: "true"
-node.squad.dev/browser: "true"
+node.mesh.dev/gpu: "true"
+node.mesh.dev/browser: "true"
 
 # Pod spec uses nodeSelector
 spec:
   nodeSelector:
-    node.squad.dev/gpu: "true"
+    node.mesh.dev/gpu: "true"
 ```
 
 A DaemonSet can run capability discovery on each node and maintain labels automatically. See the [Mercury Mesh on AKS (legacy repo name: Mercury Mesh-on-aks)](https://github.com/tamirdresher/Mercury Mesh-on-aks) project for a complete Kubernetes deployment example.

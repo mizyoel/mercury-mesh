@@ -16,14 +16,14 @@ function runtimeDirName(runtimeDir) {
 
 function parseArgs(argv) {
   const options = {
-    squadDir: defaultRuntimeDir(),
+    meshDir: defaultRuntimeDir(),
     output: 'org-status.json',
   };
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--mesh-dir') {
-      options.squadDir = argv[index + 1];
+      options.meshDir = argv[index + 1];
       index += 1;
       continue;
     }
@@ -125,12 +125,12 @@ function summarizeState(statePath, heartbeatMinutes) {
 
 function main() {
   const options = parseArgs(process.argv.slice(2));
-  const squadDir = path.resolve(options.squadDir);
-  const runtimeName = runtimeDirName(squadDir);
-  const repoRoot = path.dirname(squadDir);
-  const configPath = path.join(squadDir, 'config.json');
-  const structurePath = path.join(squadDir, 'org', 'structure.json');
-  const contractsDir = path.join(squadDir, 'org', 'contracts');
+  const meshDir = path.resolve(options.meshDir);
+  const runtimeName = runtimeDirName(meshDir);
+  const repoRoot = path.dirname(meshDir);
+  const configPath = path.join(meshDir, 'config.json');
+  const structurePath = path.join(meshDir, 'org', 'structure.json');
+  const contractsDir = path.join(meshDir, 'org', 'contracts');
 
   if (!fs.existsSync(configPath)) {
     throw new Error(`config.json not found: ${configPath}`);

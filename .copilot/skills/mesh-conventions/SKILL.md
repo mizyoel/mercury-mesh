@@ -1,5 +1,5 @@
 ---
-name: "Mercury Mesh-conventions"
+name: "mercury mesh-conventions"
 description: "Core conventions and patterns used in the Mercury Mesh codebase"
 domain: "project-conventions"
 confidence: "high"

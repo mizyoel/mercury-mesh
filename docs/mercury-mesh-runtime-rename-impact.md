@@ -6,14 +6,14 @@ This document separates safe branding changes from runtime-breaking renames.
 
 All four migration phases are complete. The runtime identity is now Mercury Mesh end-to-end:
 
-- **Runtime directory resolution:** `.mesh/` primary, `.mercury/` alternate. `.squad/` is no longer in the helper candidate list.
+- **Runtime directory resolution:** `.mesh/` primary, `.mercury/` alternate.
 - **Agent entrypoint:** `.github/agents/mercury-mesh.agent.md` (sole agent; `squad.agent.md` deleted).
 - **Workflow filenames:** `mesh-triage.yml`, `mesh-issue-assign.yml`, `mesh-heartbeat.yml`, `sync-mesh-labels.yml` (all `squad-*.yml` stubs deleted).
 - **GitHub labels:** `mesh` base label, `mesh:{member}` assignment labels only. No `squad` / `squad:*` labels created or consumed.
 - **Branch prefix:** `mesh/{issue-number}-{slug}`.
 - **CLI flags:** `--mesh-dir` only. `--squad-dir` removed from all helpers.
-- **Physical directory:** The on-disk directory remains `.squad/` — a future physical rename is a separate operation.
-- **Internal variable names:** Helper scripts still use `squadDir` internally as a variable name; this is cosmetic and has no functional impact.
+- **Physical directory:** `.mesh/` (renamed from `.squad/`). `.gitattributes` and `.gitignore` updated.
+- **Internal variable names:** Helper scripts use `meshDir` internally.
 
 ## Implemented In Phase 1
 
@@ -73,7 +73,7 @@ Phase 4 removes all legacy Squad compatibility code. The runtime is fully Mercur
 - **`--squad-dir` CLI flag:** Removed from all helpers. `--mesh-dir` is the sole flag.
 - **Dual-write utilities:** `findAlternateRoot`, `mirrorPath`, `mirrorFileWrite`, `mirrorFileAppend` removed from all helpers. Mirror calls stripped from reconcile, backlog-from-triage, and seed-runtime.
 - **`ALTERNATE_ROOTS` mapping:** Removed from all helpers.
-- **`primaryDir` / `__runtimeDir` plumbing:** Removed; helpers pass only `squadDir` internally.
+- **`primaryDir` / `__runtimeDir` plumbing:** Removed; helpers pass only `meshDir` internally.
 - **Deprecated workflow stubs:** `squad-triage.yml`, `squad-issue-assign.yml`, `squad-heartbeat.yml`, `sync-squad-labels.yml` deleted from `.github/workflows/`.
 - **`squad.agent.md`:** Deleted. `mercury-mesh.agent.md` is the sole agent file.
 - **Workflow label triggers:** `squad` and `squad:*` label conditions removed from triage and issue-assign workflows.
@@ -97,7 +97,7 @@ All previously breaking surfaces have been migrated:
 
 | Surface | Resolution |
 |---------|-----------|
-| `.squad/` path | Helpers resolve `.mesh/` or `.mercury/` only; physical dir rename is a future optional step |
+| `.squad/` path | Renamed to `.mesh/`; `.gitattributes` and `.gitignore` updated |
 | `.github/agents/squad.agent.md` | Deleted; replaced by `mercury-mesh.agent.md` |
 | `squad` label | Removed from workflow triggers; `mesh` is sole base label |
 | `squad:{member}` labels | Removed from workflow triggers; `mesh:{member}` is sole assignment label |
@@ -107,9 +107,7 @@ All previously breaking surfaces have been migrated:
 
 ## Still Pending
 
-- **Physical directory rename:** The on-disk `.squad/` directory has not been renamed to `.mesh/`. This is a separate operation that requires updating all template paths and installed file locations.
 - **Downstream packages:** External CLI packages or template mirrors outside this workspace may still reference legacy names.
-- **Internal variable names:** Helper scripts use `squadDir` as a variable name internally — cosmetic only.
 
 ## Required Migration Strategy
 
@@ -129,22 +127,22 @@ All previously breaking surfaces have been migrated:
 - `.github/workflows/mesh-issue-assign.yml` (was `squad-issue-assign.yml`)
 - `.github/workflows/mesh-heartbeat.yml` (was `squad-heartbeat.yml`)
 - `.github/workflows/sync-mesh-labels.yml` (was `sync-squad-labels.yml`)
-- Template copies in `.squad/templates/workflows/` renamed to `mesh-*`
+- Template copies in `.mesh/templates/workflows/` renamed to `mesh-*`
 
 ### Script And Helper Layer
 
-- `.squad/templates/org-runtime-reconcile.js`
-- `.squad/templates/org-backlog-from-triage.js`
-- `.squad/templates/org-seed-runtime.js`
-- `.squad/templates/org-status.js`
-- Installed copies in `.squad/org/`
+- `.mesh/templates/org-runtime-reconcile.js`
+- `.mesh/templates/org-backlog-from-triage.js`
+- `.mesh/templates/org-seed-runtime.js`
+- `.mesh/templates/org-status.js`
+- Installed copies in `.mesh/org/`
 
 ### Agent And Template Layer
 
 - `.github/agents/mercury-mesh.agent.md` (was `squad.agent.md`)
-- `.squad/templates/copilot-instructions.md`
-- `.squad/templates/issue-lifecycle.md`
+- `.mesh/templates/copilot-instructions.md`
+- `.mesh/templates/issue-lifecycle.md`
 
 ## Recommendation
 
-The runtime identity migration is complete within this repo. The only remaining step is the optional physical directory rename (`.squad/` → `.mesh/`), which can be done when all downstream consumers have been verified.
+The runtime identity migration is complete. The physical directory has been renamed from `.squad/` to `.mesh/`, all internal variable names updated, and all references now point to `.mesh/`.

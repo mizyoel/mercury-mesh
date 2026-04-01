@@ -41,13 +41,13 @@ function buildMemberLabel(name, labelPrefix) {
 }
 
 function parseArgs(argv) {
-  let squadDir = defaultRuntimeDir();
+  let meshDir = defaultRuntimeDir();
   let output = 'triage-results.json';
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--mesh-dir' || arg === '--mesh-dir') {
-      squadDir = argv[i + 1];
+      meshDir = argv[i + 1];
       i += 1;
       continue;
     }
@@ -63,10 +63,10 @@ function parseArgs(argv) {
     throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (!squadDir) throw new Error('--mesh-dir/--mesh-dir requires a value');
+  if (!meshDir) throw new Error('--mesh-dir/--mesh-dir requires a value');
   if (!output) throw new Error('--output requires a value');
 
-  return { squadDir, output };
+  return { meshDir, output };
 }
 
 function printUsage() {
@@ -155,8 +155,8 @@ function parseRoster(teamMd, labelPrefix) {
   return members;
 }
 
-function loadOrgContext(squadDir) {
-  const configPath = path.join(squadDir, 'config.json');
+function loadOrgContext(meshDir) {
+  const configPath = path.join(meshDir, 'config.json');
   if (!fs.existsSync(configPath)) {
     return { enabled: false, departments: [], memberDepartment: new Map() };
   }
@@ -169,7 +169,7 @@ function loadOrgContext(squadDir) {
   }
 
   const structurePath = path.join(
-    squadDir,
+    meshDir,
     (config.orgConfig && config.orgConfig.structurePath
       ? config.orgConfig.structurePath
       : '.mesh/org/structure.json'
@@ -667,15 +667,15 @@ async function main() {
     throw new Error('GITHUB_TOKEN is required');
   }
 
-  const squadDir = path.resolve(process.cwd(), args.squadDir);
-  const labelPrefix = primaryLabelPrefix(squadDir);
-  const teamMd = fs.readFileSync(path.join(squadDir, 'team.md'), 'utf8');
-  const routingMd = fs.readFileSync(path.join(squadDir, 'routing.md'), 'utf8');
+  const meshDir = path.resolve(process.cwd(), args.meshDir);
+  const labelPrefix = primaryLabelPrefix(meshDir);
+  const teamMd = fs.readFileSync(path.join(meshDir, 'team.md'), 'utf8');
+  const routingMd = fs.readFileSync(path.join(meshDir, 'routing.md'), 'utf8');
 
   const roster = parseRoster(teamMd, labelPrefix);
   const rules = parseRoutingRules(routingMd);
   const modules = parseModuleOwnership(routingMd);
-  const orgContext = loadOrgContext(squadDir);
+  const orgContext = loadOrgContext(meshDir);
 
   const { owner, repo } = getOwnerRepoFromGit();
   const openBridgeIssues = await fetchBridgeIssues(owner, repo, token);

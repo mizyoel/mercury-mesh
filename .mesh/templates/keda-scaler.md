@@ -54,7 +54,7 @@ spec:
   triggers:
   - type: external
     metadata:
-      scalerAddress: keda-copilot-scaler.squad-scaler.svc.cluster.local:6000
+      scalerAddress: keda-copilot-scaler.mesh-scaler.svc.cluster.local:6000
       owner: your-org
       repo: your-repo
       labels: mesh:copilot    # Only count issues with this label
@@ -105,7 +105,7 @@ spec:
   template:
     spec:
       nodeSelector:
-        node.squad.dev/gpu: "true"
+        node.mesh.dev/gpu: "true"
   triggers:
   - type: external
     metadata:

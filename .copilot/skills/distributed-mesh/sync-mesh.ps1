@@ -1,6 +1,6 @@
-# sync-mesh.ps1 — Materialize remote squad state locally
+# sync-mesh.ps1 — Materialize remote mesh state locally
 #
-# Reads mesh.json, fetches remote squads into local directories.
+# Reads mesh.json, fetches remote meshes into local directories.
 # Run before agent reads. No daemon. No service. ~40 lines.
 #
 # Usage: .\sync-mesh.ps1 [path-to-mesh.json]
@@ -21,20 +21,20 @@ if ($Init) {
     
     Write-Host "🚀 Initializing mesh state repository..."
     $config = Get-Content $MeshJson -Raw | ConvertFrom-Json
-    $squads = $config.squads.PSObject.Properties.Name
+    $nodes = $config.meshes.PSObject.Properties.Name
     
-    # Create squad directories with placeholder SUMMARY.md
-    foreach ($squad in $squads) {
-        if (-not (Test-Path $squad)) {
-            New-Item -ItemType Directory -Path $squad | Out-Null
-            Write-Host "  ✓ Created $squad/"
+    # Create node directories with placeholder SUMMARY.md
+    foreach ($node in $nodes) {
+        if (-not (Test-Path $node)) {
+            New-Item -ItemType Directory -Path $node | Out-Null
+            Write-Host "  ✓ Created $node/"
         } else {
-            Write-Host "  • $squad/ exists (skipped)"
+            Write-Host "  • $node/ exists (skipped)"
         }
         
-        $summaryPath = "$squad/SUMMARY.md"
+        $summaryPath = "$node/SUMMARY.md"
         if (-not (Test-Path $summaryPath)) {
-            "# $squad`n`n_No state published yet._" | Set-Content $summaryPath
+            "# $node`n`n_No state published yet._" | Set-Content $summaryPath
             Write-Host "  ✓ Created $summaryPath"
         } else {
             Write-Host "  • $summaryPath exists (skipped)"
@@ -44,20 +44,20 @@ if ($Init) {
     # Generate root README.md
     if (-not (Test-Path "README.md")) {
         $readme = @"
-# Squad Mesh State Repository
+# Mercury Mesh State Repository
 
-This repository tracks published state from participating squads.
+This repository tracks published state from participating meshes.
 
-## Participating Squads
+## Participating Meshes
 
 "@
-        foreach ($squad in $squads) {
-            $zone = $config.squads.$squad.zone
-            $readme += "- **$squad** (Zone: $zone)`n"
+        foreach ($node in $nodes) {
+            $zone = $config.meshes.$node.zone
+            $readme += "- **$node** (Zone: $zone)`n"
         }
         $readme += @"
 
-Each squad directory contains a ``SUMMARY.md`` with their latest published state.
+Each mesh directory contains a ``SUMMARY.md`` with their latest published state.
 State is synchronized using ``sync-mesh.sh`` or ``sync-mesh.ps1``.
 "@
         $readme | Set-Content "README.md"
@@ -74,25 +74,25 @@ State is synchronized using ``sync-mesh.sh`` or ``sync-mesh.ps1``.
 $config = Get-Content $MeshJson -Raw | ConvertFrom-Json
 
 # Zone 2: Remote-trusted — git clone/pull
-foreach ($entry in $config.squads.PSObject.Properties | Where-Object { $_.Value.zone -eq "remote-trusted" }) {
-    $squad  = $entry.Name
+foreach ($entry in $config.meshes.PSObject.Properties | Where-Object { $_.Value.zone -eq "remote-trusted" }) {
+    $node   = $entry.Name
     $source = $entry.Value.source
     $ref    = if ($entry.Value.ref) { $entry.Value.ref } else { "main" }
     $target = $entry.Value.sync_to
 
     if (Test-Path "$target/.git") {
         git -C $target pull --rebase --quiet 2>$null
-        if ($LASTEXITCODE -ne 0) { Write-Host "⚠ ${squad}: pull failed (using stale)" }
+        if ($LASTEXITCODE -ne 0) { Write-Host "⚠ ${node}: pull failed (using stale)" }
     } else {
         New-Item -ItemType Directory -Force -Path (Split-Path $target -Parent) | Out-Null
         git clone --quiet --depth 1 --branch $ref $source $target 2>$null
-        if ($LASTEXITCODE -ne 0) { Write-Host "⚠ ${squad}: clone failed (unavailable)" }
+        if ($LASTEXITCODE -ne 0) { Write-Host "⚠ ${node}: clone failed (unavailable)" }
     }
 }
 
 # Zone 3: Remote-opaque — fetch published contracts
-foreach ($entry in $config.squads.PSObject.Properties | Where-Object { $_.Value.zone -eq "remote-opaque" }) {
-    $squad  = $entry.Name
+foreach ($entry in $config.meshes.PSObject.Properties | Where-Object { $_.Value.zone -eq "remote-opaque" }) {
+    $node   = $entry.Name
     $source = $entry.Value.source
     $target = $entry.Value.sync_to
     $auth   = $entry.Value.auth
@@ -100,12 +100,12 @@ foreach ($entry in $config.squads.PSObject.Properties | Where-Object { $_.Value.
     New-Item -ItemType Directory -Force -Path $target | Out-Null
     $params = @{ Uri = $source; OutFile = "$target/SUMMARY.md"; UseBasicParsing = $true }
     if ($auth -eq "bearer") {
-        $tokenVar = ($squad.ToUpper() -replace '-', '_') + "_TOKEN"
+        $tokenVar = ($node.ToUpper() -replace '-', '_') + "_TOKEN"
         $token = [Environment]::GetEnvironmentVariable($tokenVar)
         if ($token) { $params.Headers = @{ Authorization = "Bearer $token" } }
     }
     try { Invoke-WebRequest @params -ErrorAction Stop }
-    catch { "# ${squad} — unavailable ($(Get-Date))" | Set-Content "$target/SUMMARY.md" }
+    catch { "# ${node} — unavailable ($(Get-Date))" | Set-Content "$target/SUMMARY.md" }
 }
 
 Write-Host "✓ Mesh sync complete"

@@ -6,7 +6,7 @@ The Bridge Protocol for a liquid organizational OS.
 
 **Mercury Mesh** is a zero-gravity bridge where human **Commanders** and specialist AI **Wings** operate as one drifting organism. Projects become **Missions** or **Sorties**, departments become **Wings** or **Decks**, and progress is read through **Telemetry** instead of status theater.
 
-The runtime identity is fully Mercury Mesh: `mesh` / `mesh:{member}` labels, `mesh/{issue}` branches, and `mesh-*.yml` workflows. The on-disk directory remains `.squad/` for backward compatibility; a future physical rename is optional.
+The runtime identity is fully Mercury Mesh: `mesh` / `mesh:{member}` labels, `mesh/{issue}` branches, `mesh-*.yml` workflows, and `.mesh/` as the runtime directory.
 
 ## Getting Started
 
@@ -21,7 +21,7 @@ The runtime identity is fully Mercury Mesh: `mesh` / `mesh:{member}` labels, `me
 .github/
   agents/mercury-mesh.agent.md  # Bridge governance for the Mercury Mesh control plane
   workflows/               # GitHub Actions for issue triage, labels, heartbeat
-.squad/
+.mesh/
   config.json              # Runtime flags and bridge state
   team.md                  # Bridge roster (empty = Init Mode)
   routing.md               # Mission routing rules
@@ -64,7 +64,7 @@ The runtime identity is fully Mercury Mesh: `mesh` / `mesh:{member}` labels, `me
 
 ## Runtime Notes
 
-The on-disk runtime directory is `.squad/`. Workflows and helpers resolve `.mesh/` or `.mercury/` first when present. The physical directory rename is optional and tracked in `docs/mercury-mesh-runtime-rename-impact.md`.
+The runtime directory is `.mesh/`. Helpers also check `.mercury/` as an alternate. See `docs/mercury-mesh-runtime-rename-impact.md` for the full migration history.
 
 ## License
 

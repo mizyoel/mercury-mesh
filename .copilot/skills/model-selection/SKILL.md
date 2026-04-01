@@ -1,3 +1,7 @@
+---
+name: "model selection"
+description: "Determines which LLM model to use for each agent spawn based on a 5-layer resolution hierarchy, including user preferences, session directives, charter specifications, task-aware defaults, and a hardcoded fallback."
+---
 # Model Selection
 
 > Determines which LLM model to use for each agent spawn.

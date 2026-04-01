@@ -16,7 +16,7 @@ function runtimeDirName(runtimeDir) {
 
 function parseArgs(argv) {
   const options = {
-    squadDir: defaultRuntimeDir(),
+    meshDir: defaultRuntimeDir(),
     output: 'org-seed-results.json',
     apply: false,
     force: false,
@@ -25,7 +25,7 @@ function parseArgs(argv) {
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--mesh-dir') {
-      options.squadDir = argv[index + 1];
+      options.meshDir = argv[index + 1];
       index += 1;
       continue;
     }
@@ -65,8 +65,8 @@ function writeFile(filePath, content) {
   fs.writeFileSync(filePath, content, 'utf8');
 }
 
-function loadTemplate(squadDir, fileName) {
-  return fs.readFileSync(path.join(squadDir, 'templates', fileName), 'utf8');
+function loadTemplate(meshDir, fileName) {
+  return fs.readFileSync(path.join(meshDir, 'templates', fileName), 'utf8');
 }
 
 function fillTemplate(template, values) {
@@ -162,11 +162,11 @@ function buildContractContent(template, contractPath, owners) {
 
 function main() {
   const options = parseArgs(process.argv.slice(2));
-  const squadDir = path.resolve(options.squadDir);
-  const runtimeName = runtimeDirName(squadDir);
-  const repoRoot = path.dirname(squadDir);
-  const configPath = path.join(squadDir, 'config.json');
-  const structurePath = path.join(squadDir, 'org', 'structure.json');
+  const meshDir = path.resolve(options.meshDir);
+  const runtimeName = runtimeDirName(meshDir);
+  const repoRoot = path.dirname(meshDir);
+  const configPath = path.join(meshDir, 'config.json');
+  const structurePath = path.join(meshDir, 'org', 'structure.json');
 
   if (!fs.existsSync(configPath)) {
     throw new Error(`config.json not found: ${configPath}`);
@@ -186,10 +186,10 @@ function main() {
   const structure = readJson(structurePath);
   const departments = Array.isArray(structure.departments) ? structure.departments : [];
   const contractOwners = collectContractOwners(departments);
-  const charterTemplate = loadTemplate(squadDir, 'department-charter.md');
-  const backlogTemplate = loadTemplate(squadDir, 'department-backlog.md');
-  const stateTemplate = loadTemplate(squadDir, 'department-state.json');
-  const contractTemplate = loadTemplate(squadDir, 'interface-contract.md');
+  const charterTemplate = loadTemplate(meshDir, 'department-charter.md');
+  const backlogTemplate = loadTemplate(meshDir, 'department-backlog.md');
+  const stateTemplate = loadTemplate(meshDir, 'department-state.json');
+  const contractTemplate = loadTemplate(meshDir, 'interface-contract.md');
 
   const report = {
     enabled: true,
@@ -201,14 +201,14 @@ function main() {
     generatedAt: new Date().toISOString(),
   };
 
-  const reconcileSource = path.join(squadDir, 'templates', 'org-runtime-reconcile.js');
-  const seedSource = path.join(squadDir, 'templates', 'org-seed-runtime.js');
-  const backlogBridgeSource = path.join(squadDir, 'templates', 'org-backlog-from-triage.js');
-  const statusSource = path.join(squadDir, 'templates', 'org-status.js');
-  const reconcileTarget = path.join(squadDir, 'org', 'reconcile.js');
-  const seedTarget = path.join(squadDir, 'org', 'seed-runtime.js');
-  const backlogBridgeTarget = path.join(squadDir, 'org', 'backlog-from-triage.js');
-  const statusTarget = path.join(squadDir, 'org', 'status.js');
+  const reconcileSource = path.join(meshDir, 'templates', 'org-runtime-reconcile.js');
+  const seedSource = path.join(meshDir, 'templates', 'org-seed-runtime.js');
+  const backlogBridgeSource = path.join(meshDir, 'templates', 'org-backlog-from-triage.js');
+  const statusSource = path.join(meshDir, 'templates', 'org-status.js');
+  const reconcileTarget = path.join(meshDir, 'org', 'reconcile.js');
+  const seedTarget = path.join(meshDir, 'org', 'seed-runtime.js');
+  const backlogBridgeTarget = path.join(meshDir, 'org', 'backlog-from-triage.js');
+  const statusTarget = path.join(meshDir, 'org', 'status.js');
 
   seedFile(report, reconcileTarget, fs.readFileSync(reconcileSource, 'utf8'), options.apply, options.force);
   seedFile(report, seedTarget, fs.readFileSync(seedSource, 'utf8'), options.apply, options.force);
@@ -217,7 +217,7 @@ function main() {
 
   for (const department of departments) {
     const runtime = department.runtime || {};
-    const departmentRoot = path.join(squadDir, 'org', department.id);
+    const departmentRoot = path.join(meshDir, 'org', department.id);
     const charterPath = path.join(departmentRoot, 'charter.md');
     const backlogPath = path.resolve(repoRoot, runtime.backlogPath || `${runtimeName}/org/${department.id}/backlog.md`);
     const statePath = path.resolve(repoRoot, runtime.statePath || `${runtimeName}/org/${department.id}/state.json`);

@@ -16,7 +16,7 @@ function runtimeDirName(runtimeDir) {
 
 function parseArgs(argv) {
   const options = {
-    squadDir: defaultRuntimeDir(),
+    meshDir: defaultRuntimeDir(),
     output: 'org-runtime-results.json',
     apply: false,
   };
@@ -24,7 +24,7 @@ function parseArgs(argv) {
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--mesh-dir') {
-      options.squadDir = argv[index + 1];
+      options.meshDir = argv[index + 1];
       index += 1;
       continue;
     }
@@ -44,7 +44,7 @@ function parseArgs(argv) {
     throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (!options.squadDir) throw new Error('--mesh-dir requires a value');
+  if (!options.meshDir) throw new Error('--mesh-dir requires a value');
   if (!options.output) throw new Error('--output requires a value');
   return options;
 }
@@ -322,10 +322,10 @@ function reportRuntimeName(config, rootPath) {
 
 function main() {
   const options = parseArgs(process.argv.slice(2));
-  const squadDir = path.resolve(options.squadDir);
-  const runtimeName = runtimeDirName(squadDir);
-  const repoRoot = path.dirname(squadDir);
-  const configPath = path.join(squadDir, 'config.json');
+  const meshDir = path.resolve(options.meshDir);
+  const runtimeName = runtimeDirName(meshDir);
+  const repoRoot = path.dirname(meshDir);
+  const configPath = path.join(meshDir, 'config.json');
   const outputPath = path.resolve(options.output);
 
   if (!fs.existsSync(configPath)) {
@@ -333,8 +333,8 @@ function main() {
   }
 
   const config = readJson(configPath);
-  config.__runtimeDir = squadDir;
-  const structurePath = path.join(squadDir, 'org', 'structure.json');
+  config.__runtimeDir = meshDir;
+  const structurePath = path.join(meshDir, 'org', 'structure.json');
   if (!config.orgMode || !fs.existsSync(structurePath)) {
     const result = {
       enabled: false,

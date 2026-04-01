@@ -4,7 +4,6 @@ name: Mercury Mesh Heartbeat (Ralph)
 #   - packages/mesh-cli/templates/workflows/mesh-heartbeat.yml (CLI package)
 #   - .mesh/templates/workflows/mesh-heartbeat.yml (installed template)
 #   - .github/workflows/mesh-heartbeat.yml (active workflow)
-# Legacy copies (squad-heartbeat.yml) have been removed.
 
 on:
   schedule:
