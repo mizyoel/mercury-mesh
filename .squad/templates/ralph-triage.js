@@ -667,6 +667,7 @@ async function main() {
     if (!decision) continue;
     results.push({
       issueNumber: issue.number,
+      issueTitle: issue.title || '',
       assignTo: decision.agent.name,
       label: decision.agent.label,
       labels: [decision.agent.label, decision.deptLabel].filter(Boolean),

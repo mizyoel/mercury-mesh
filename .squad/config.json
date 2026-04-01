@@ -1,4 +1,23 @@
 {
   "version": 2,
-  "orgMode": false
+  "orgMode": false,
+  "halted": false,
+  "orgConfig": {
+    "autonomyMode": "delegated",
+    "crossDeptStrategy": "contract-first",
+    "escalationBehavior": "advisory",
+    "maxParallelismPerDepartment": 3,
+    "claimLeaseMinutes": 30,
+    "heartbeatMinutes": 15,
+    "requeueExpiredClaims": true
+  },
+  "humanTiers": {
+    "tier1": [],
+    "tier2": [],
+    "tier3": []
+  },
+  "onboarding": {
+    "defaultPhase": "shadow",
+    "autoPromoteThreshold": false
+  }
 }

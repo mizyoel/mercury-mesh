@@ -48,3 +48,21 @@ Active when `orgMode: true` in `.squad/config.json`. When disabled, all routing 
 
 | Department | Lead | Members | Domain Keywords |
 |------------|------|---------|-----------------|
+
+### Department Runtime Rules
+
+1. **Supervised autonomy** — the coordinator remains the control plane. Department leads may decompose and prioritize local work, but all actual agent spawns still flow through the coordinator.
+2. **Queue before execution** — when work lands in a department, the lead may convert it into work packets in `.squad/org/{department}/backlog.md` before members begin execution.
+3. **Claim before work** — a member may only start a packet that is `queued` and unclaimed.
+4. **Lease every claim** — claimed work must record an owner and lease expiry in `.squad/org/{department}/state.json`.
+5. **Re-queue stale work** — expired claims return to `queued` when allowed by config.
+6. **Contract-first cross-department work** — if two departments depend on one another, define or update a contract in `.squad/org/contracts/` before parallel execution.
+7. **Lead review on probation or conflict** — probationary outputs and cross-department conflicts route to the department lead before coordinator synthesis.
+
+### Autonomous Department Loop
+
+1. Coordinator routes the mission to the relevant department lead.
+2. Lead decomposes it into local packets.
+3. Coordinator fans out independent packets to eligible members in parallel.
+4. Members update backlog/state via the drop-box pattern and department state files.
+5. Lead resolves local blockers; unresolved blockers escalate to coordinator.

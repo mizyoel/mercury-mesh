@@ -14,6 +14,51 @@
         "ref": ".github/workflows/squad-heartbeat.yml"
       },
       "providers": ["local-polling", "github-actions"]
+    },
+    {
+      "id": "org-runtime-reconcile",
+      "name": "Org Runtime Reconcile",
+      "enabled": false,
+      "trigger": {
+        "type": "interval",
+        "intervalSeconds": 900
+      },
+      "task": {
+        "type": "script",
+        "ref": ".squad/org/reconcile.js",
+        "args": ["--squad-dir", ".squad", "--output", "org-runtime-results.json"]
+      },
+      "providers": ["local-polling"]
+    },
+    {
+      "id": "org-backlog-from-triage",
+      "name": "Org Backlog From Triage",
+      "enabled": false,
+      "trigger": {
+        "type": "event",
+        "event": "triage-complete"
+      },
+      "task": {
+        "type": "script",
+        "ref": ".squad/org/backlog-from-triage.js",
+        "args": ["--squad-dir", ".squad", "--triage-file", "triage-results.json", "--output", "org-backlog-results.json"]
+      },
+      "providers": ["local-polling"]
+    },
+    {
+      "id": "org-status",
+      "name": "Org Status Snapshot",
+      "enabled": false,
+      "trigger": {
+        "type": "interval",
+        "intervalSeconds": 600
+      },
+      "task": {
+        "type": "script",
+        "ref": ".squad/org/status.js",
+        "args": ["--squad-dir", ".squad", "--output", "org-status.json"]
+      },
+      "providers": ["local-polling"]
     }
   ]
 }

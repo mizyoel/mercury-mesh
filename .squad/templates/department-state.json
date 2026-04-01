@@ -1,0 +1,19 @@
+{
+  "department": "{department-id}",
+  "autonomyMode": "delegated",
+  "maxParallelism": 3,
+  "heartbeatMinutes": 15,
+  "activeClaims": [
+    {
+      "workItemId": "{department-id}-001",
+      "claimedBy": "{AgentName}",
+      "claimedAt": "2026-04-01T00:00:00Z",
+      "leaseExpiresAt": "2026-04-01T00:30:00Z",
+      "status": "claimed",
+      "dependsOn": [],
+      "outputs": []
+    }
+  ],
+  "blocked": [],
+  "lastHeartbeatAt": "2026-04-01T00:00:00Z"
+}

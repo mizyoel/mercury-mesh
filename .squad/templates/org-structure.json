@@ -1,0 +1,38 @@
+{
+  "departments": [
+    {
+      "id": "frontend",
+      "name": "Frontend",
+      "lead": "{CastName}",
+      "members": ["{CastName}"],
+      "domain": ["ui", "components", "pages", "design-system"],
+      "routingKeywords": ["ui", "component", "page", "css", "react"],
+      "leadStyle": "player-coach",
+      "authority": {
+        "canDecideLocally": [
+          "component boundaries",
+          "local naming",
+          "test strategy inside department"
+        ],
+        "mustEscalate": [
+          "cross-department API changes",
+          "shared architecture changes",
+          "roster changes"
+        ]
+      },
+      "runtime": {
+        "autonomyMode": "delegated",
+        "maxParallelism": 3,
+        "claimLeaseMinutes": 30,
+        "heartbeatMinutes": 15,
+        "backlogPath": ".squad/org/frontend/backlog.md",
+        "statePath": ".squad/org/frontend/state.json",
+        "contracts": [".squad/org/contracts/ui-api.md"]
+      }
+    }
+  ],
+  "crossDepartment": {
+    "strategy": "contract-first",
+    "escalation": "lead-alignment"
+  }
+}
