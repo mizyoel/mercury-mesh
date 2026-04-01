@@ -4,15 +4,25 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
+const RUNTIME_DIR_CANDIDATES = ['.mesh', '.mercury', '.squad'];
+
+function defaultRuntimeDir() {
+  return RUNTIME_DIR_CANDIDATES.find((candidate) => fs.existsSync(candidate)) || '.squad';
+}
+
+function runtimeDirName(runtimeDir) {
+  return path.basename(path.resolve(runtimeDir));
+}
+
 function parseArgs(argv) {
   const options = {
-    squadDir: '.squad',
+    squadDir: defaultRuntimeDir(),
     output: 'org-status.json',
   };
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === '--squad-dir') {
+    if (arg === '--squad-dir' || arg === '--mesh-dir') {
       options.squadDir = argv[index + 1];
       index += 1;
       continue;
@@ -33,7 +43,7 @@ function parseArgs(argv) {
 }
 
 function printUsage() {
-  console.log('Usage: node .squad/templates/org-status.js --squad-dir .squad --output org-status.json');
+  console.log('Usage: node <runtime>/org/status.js [--mesh-dir .mesh | --squad-dir .squad] --output org-status.json');
 }
 
 function readJson(filePath) {
@@ -116,6 +126,7 @@ function summarizeState(statePath, heartbeatMinutes) {
 function main() {
   const options = parseArgs(process.argv.slice(2));
   const squadDir = path.resolve(options.squadDir);
+  const runtimeName = runtimeDirName(squadDir);
   const repoRoot = path.dirname(squadDir);
   const configPath = path.join(squadDir, 'config.json');
   const structurePath = path.join(squadDir, 'org', 'structure.json');
@@ -129,7 +140,7 @@ function main() {
   if (!config.orgMode || !fs.existsSync(structurePath)) {
     writeJson(path.resolve(options.output), {
       enabled: false,
-      reason: 'orgMode disabled or .squad/org/structure.json missing',
+      reason: `orgMode disabled or ${runtimeName}/org/structure.json missing`,
       departments: [],
       contracts: [],
     });
@@ -143,8 +154,8 @@ function main() {
 
   const departmentReports = departments.map((department) => {
     const runtime = department.runtime || {};
-    const backlogPath = path.resolve(repoRoot, runtime.backlogPath || `.squad/org/${department.id}/backlog.md`);
-    const statePath = path.resolve(repoRoot, runtime.statePath || `.squad/org/${department.id}/state.json`);
+    const backlogPath = path.resolve(repoRoot, runtime.backlogPath || `${runtimeName}/org/${department.id}/backlog.md`);
+    const statePath = path.resolve(repoRoot, runtime.statePath || `${runtimeName}/org/${department.id}/state.json`);
     const backlog = summarizeBacklog(backlogPath);
     const state = summarizeState(statePath, runtime.heartbeatMinutes || heartbeatMinutes);
     const maxParallelism = runtime.maxParallelism || maxParallelismDefault;
@@ -168,7 +179,7 @@ function main() {
   const contracts = fs.existsSync(contractsDir)
     ? fs.readdirSync(contractsDir)
         .filter((fileName) => fileName.endsWith('.md'))
-        .map((fileName) => path.posix.join('.squad/org/contracts', fileName))
+        .map((fileName) => path.posix.join(runtimeName, 'org', 'contracts', fileName))
     : [];
 
   writeJson(path.resolve(options.output), {

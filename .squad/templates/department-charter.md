@@ -18,9 +18,9 @@
 ## Runtime
 - **Autonomy mode:** delegated | advisory
 - **Max parallelism:** {number of packets that may run concurrently}
-- **Backlog path:** `.squad/org/{department-id}/backlog.md`
-- **State path:** `.squad/org/{department-id}/state.json`
-- **Contracts:** {list of `.squad/org/contracts/*.md` files this department depends on}
+- **Backlog path:** `.mesh/org/{department-id}/backlog.md`
+- **State path:** `.mesh/org/{department-id}/state.json`
+- **Contracts:** {list of `.mesh/org/contracts/*.md` files this department depends on}
 - **Lease policy:** claims expire after {minutes}; stale work is re-queued
 
 ## Conventions

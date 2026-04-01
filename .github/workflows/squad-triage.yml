@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   triage:
-    if: github.event.label.name == 'squad'
+    if: github.event.label.name == 'squad' || github.event.label.name == 'mesh'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,16 +21,22 @@ jobs:
           script: |
             const fs = require('fs');
             const issue = context.payload.issue;
+            const runtimeCandidates = ['.mesh', '.mercury', '.squad', '.ai-team'];
+            const stateCandidates = ['.mesh', '.mercury', '.squad'];
+            const findFirst = (candidates) => candidates.find((candidate) => fs.existsSync(candidate)) || null;
+            const currentBaseLabel = context.payload.label.name === 'mesh' ? 'mesh' : 'squad';
 
-            // Read team roster — check .squad/ first, fall back to .ai-team/
-            let teamFile = '.squad/team.md';
-            if (!fs.existsSync(teamFile)) {
-              teamFile = '.ai-team/team.md';
-            }
-            if (!fs.existsSync(teamFile)) {
-              core.warning('No .squad/team.md or .ai-team/team.md found — cannot run Mercury Mesh triage');
+            const teamFile = findFirst(runtimeCandidates.map((candidate) => `${candidate}/team.md`));
+            if (!teamFile || !fs.existsSync(teamFile)) {
+              core.warning('No .mesh/team.md, .mercury/team.md, .squad/team.md, or .ai-team/team.md found — cannot run Mercury Mesh triage');
               return;
             }
+
+            const runtimeDir = teamFile.slice(0, teamFile.lastIndexOf('/'));
+            const stateDir = runtimeDir !== '.ai-team'
+              ? runtimeDir
+              : (findFirst(stateCandidates.map((candidate) => `${candidate}/config.json`)) || '.squad/config.json').replace(/\/config\.json$/, '');
+            const labelPrefix = currentBaseLabel === 'mesh' ? 'mesh' : (stateDir === '.squad' ? 'squad' : 'mesh');
 
             const content = fs.readFileSync(teamFile, 'utf8');
             const lines = content.split('\n');
@@ -88,11 +94,7 @@ jobs:
               }
             }
 
-            // Read routing rules — check .squad/ first, fall back to .ai-team/
-            let routingFile = '.squad/routing.md';
-            if (!fs.existsSync(routingFile)) {
-              routingFile = '.ai-team/routing.md';
-            }
+            const routingFile = findFirst([`${runtimeDir}/routing.md`, '.ai-team/routing.md']) || `${runtimeDir}/routing.md`;
             let routingContent = '';
             if (fs.existsSync(routingFile)) {
               routingContent = fs.readFileSync(routingFile, 'utf8');
@@ -101,18 +103,18 @@ jobs:
             let orgConfig = null;
             let orgStructure = null;
             try {
-              if (fs.existsSync('.squad/config.json')) {
-                orgConfig = JSON.parse(fs.readFileSync('.squad/config.json', 'utf8'));
+              if (fs.existsSync(`${stateDir}/config.json`)) {
+                orgConfig = JSON.parse(fs.readFileSync(`${stateDir}/config.json`, 'utf8'));
               }
             } catch (err) {
-              core.warning(`Could not parse .squad/config.json: ${err.message}`);
+              core.warning(`Could not parse ${stateDir}/config.json: ${err.message}`);
             }
             try {
-              if (fs.existsSync('.squad/org/structure.json')) {
-                orgStructure = JSON.parse(fs.readFileSync('.squad/org/structure.json', 'utf8'));
+              if (fs.existsSync(`${stateDir}/org/structure.json`)) {
+                orgStructure = JSON.parse(fs.readFileSync(`${stateDir}/org/structure.json`, 'utf8'));
               }
             } catch (err) {
-              core.warning(`Could not parse .squad/org/structure.json: ${err.message}`);
+              core.warning(`Could not parse ${stateDir}/org/structure.json: ${err.message}`);
             }
 
             const normalize = (value = '') => value.toLowerCase().replace(/[^\w@-]+/g, ' ').trim();
@@ -213,7 +215,7 @@ jobs:
 
             // Build triage context
             const memberList = members.map(m =>
-              `- **${m.name}** (${m.role}) → label: \`squad:${m.name.toLowerCase()}\``
+              `- **${m.name}** (${m.role}) → label: \`${labelPrefix}:${m.name.toLowerCase()}\``
             ).join('\n');
 
             // Determine best assignee based on issue content and routing
@@ -305,7 +307,7 @@ jobs:
             if (!assignedDepartment && !isCopilot && orgModeEnabled) {
               assignedDepartment = memberDepartment.get(memberKey(assignedMember.name)) || null;
             }
-            const assignLabel = isCopilot ? 'squad:copilot' : `squad:${assignedMember.name.toLowerCase()}`;
+            const assignLabel = isCopilot ? `${labelPrefix}:copilot` : `${labelPrefix}:${assignedMember.name.toLowerCase()}`;
             const labelsToAdd = [assignLabel];
             if (assignedDepartment && assignedDepartment.id) {
               labelsToAdd.push(`dept:${String(assignedDepartment.id).toLowerCase()}`);
@@ -366,9 +368,9 @@ jobs:
               '',
               `**Bridge roster:**`,
               memberList,
-              hasCopilot ? `- **@copilot** (Coding Agent) → label: \`squad:copilot\`` : '',
+              hasCopilot ? `- **@copilot** (Coding Agent) → label: \`${labelPrefix}:copilot\`` : '',
               '',
-              `> To reassign, remove the current \`squad:*\` compatibility label and add the correct one. Keep any \`dept:*\` labels as metadata unless the routing changes.`,
+              `> To reassign, remove the current \`${labelPrefix}:*\` label and add the correct one. Keep any \`dept:*\` labels as metadata unless the routing changes.`,
             ].filter(Boolean).join('\n');
 
             await github.rest.issues.createComment({

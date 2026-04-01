@@ -25,8 +25,8 @@
       },
       "task": {
         "type": "script",
-        "ref": ".squad/org/reconcile.js",
-        "args": ["--squad-dir", ".squad", "--output", "org-runtime-results.json"]
+        "ref": ".mesh/org/reconcile.js",
+        "args": ["--mesh-dir", ".mesh", "--output", "org-runtime-results.json"]
       },
       "providers": ["local-polling"]
     },
@@ -40,8 +40,8 @@
       },
       "task": {
         "type": "script",
-        "ref": ".squad/org/backlog-from-triage.js",
-        "args": ["--squad-dir", ".squad", "--triage-file", "triage-results.json", "--output", "org-backlog-results.json"]
+        "ref": ".mesh/org/backlog-from-triage.js",
+        "args": ["--mesh-dir", ".mesh", "--triage-file", "triage-results.json", "--output", "org-backlog-results.json"]
       },
       "providers": ["local-polling"]
     },
@@ -55,8 +55,8 @@
       },
       "task": {
         "type": "script",
-        "ref": ".squad/org/status.js",
-        "args": ["--squad-dir", ".squad", "--output", "org-status.json"]
+        "ref": ".mesh/org/status.js",
+        "args": ["--mesh-dir", ".mesh", "--output", "org-status.json"]
       },
       "providers": ["local-polling"]
     }

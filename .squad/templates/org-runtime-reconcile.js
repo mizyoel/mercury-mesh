@@ -4,16 +4,26 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
+const RUNTIME_DIR_CANDIDATES = ['.mesh', '.mercury', '.squad'];
+
+function defaultRuntimeDir() {
+  return RUNTIME_DIR_CANDIDATES.find((candidate) => fs.existsSync(candidate)) || '.squad';
+}
+
+function runtimeDirName(runtimeDir) {
+  return path.basename(path.resolve(runtimeDir));
+}
+
 function parseArgs(argv) {
   const options = {
-    squadDir: '.squad',
+    squadDir: defaultRuntimeDir(),
     output: 'org-runtime-results.json',
     apply: false,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === '--squad-dir') {
+    if (arg === '--squad-dir' || arg === '--mesh-dir') {
       options.squadDir = argv[index + 1];
       index += 1;
       continue;
@@ -34,13 +44,13 @@ function parseArgs(argv) {
     throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (!options.squadDir) throw new Error('--squad-dir requires a value');
+  if (!options.squadDir) throw new Error('--mesh-dir/--squad-dir requires a value');
   if (!options.output) throw new Error('--output requires a value');
   return options;
 }
 
 function printUsage() {
-  console.log('Usage: node .squad/templates/org-runtime-reconcile.js --squad-dir .squad --output org-runtime-results.json [--apply]');
+  console.log('Usage: node <runtime>/org/reconcile.js [--mesh-dir .mesh | --squad-dir .squad] --output org-runtime-results.json [--apply]');
 }
 
 function readJson(filePath) {
@@ -162,7 +172,7 @@ function writeDecisionEntry(rootPath, report, timestamp) {
     return null;
   }
 
-  const decisionsPath = path.join(rootPath, '.squad', 'decisions', 'inbox', `ralph-org-runtime-${slugify(report.departmentId)}-${timestamp.replace(/[:.]/g, '-')}.md`);
+  const decisionsPath = path.join(rootPath, report.runtimeName, 'decisions', 'inbox', `ralph-org-runtime-${slugify(report.departmentId)}-${timestamp.replace(/[:.]/g, '-')}.md`);
   const workItems = report.expiredClaims.map((claim) => claim.workItemId).join(', ');
   const body = [
     `### ${timestamp}: Org runtime reconcile for ${report.departmentId}`,
@@ -179,8 +189,9 @@ function writeDecisionEntry(rootPath, report, timestamp) {
 
 function reconcileDepartment(rootPath, department, config, applyChanges) {
   const runtime = department.runtime || {};
-  const statePath = normalizePath(rootPath, runtime.statePath || `.squad/org/${department.id}/state.json`);
-  const backlogPath = normalizePath(rootPath, runtime.backlogPath || `.squad/org/${department.id}/backlog.md`);
+  const runtimeName = reportRuntimeName(config, rootPath);
+  const statePath = normalizePath(rootPath, runtime.statePath || `${runtimeName}/org/${department.id}/state.json`);
+  const backlogPath = normalizePath(rootPath, runtime.backlogPath || `${runtimeName}/org/${department.id}/backlog.md`);
   const now = new Date();
   const heartbeatMinutes = runtime.heartbeatMinutes || (config.orgConfig && config.orgConfig.heartbeatMinutes) || 15;
   const maxParallelism = runtime.maxParallelism || (config.orgConfig && config.orgConfig.maxParallelismPerDepartment) || 3;
@@ -188,6 +199,7 @@ function reconcileDepartment(rootPath, department, config, applyChanges) {
 
   const report = {
     departmentId: department.id,
+    runtimeName,
     backlogPath: path.relative(rootPath, backlogPath),
     statePath: path.relative(rootPath, statePath),
     expiredClaims: [],
@@ -301,9 +313,15 @@ function reconcileDepartment(rootPath, department, config, applyChanges) {
   return report;
 }
 
+function reportRuntimeName(config, rootPath) {
+  const runtimePath = config.__runtimeDir || path.join(rootPath, '.squad');
+  return runtimeDirName(runtimePath);
+}
+
 function main() {
   const options = parseArgs(process.argv.slice(2));
   const squadDir = path.resolve(options.squadDir);
+  const runtimeName = runtimeDirName(squadDir);
   const repoRoot = path.dirname(squadDir);
   const configPath = path.join(squadDir, 'config.json');
   const outputPath = path.resolve(options.output);
@@ -313,11 +331,12 @@ function main() {
   }
 
   const config = readJson(configPath);
+  config.__runtimeDir = squadDir;
   const structurePath = path.join(squadDir, 'org', 'structure.json');
   if (!config.orgMode || !fs.existsSync(structurePath)) {
     const result = {
       enabled: false,
-      reason: 'orgMode disabled or .squad/org/structure.json missing',
+      reason: `orgMode disabled or ${runtimeName}/org/structure.json missing`,
       departments: [],
     };
     ensureDirectory(outputPath);

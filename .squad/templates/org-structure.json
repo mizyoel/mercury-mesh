@@ -25,9 +25,9 @@
         "maxParallelism": 3,
         "claimLeaseMinutes": 30,
         "heartbeatMinutes": 15,
-        "backlogPath": ".squad/org/frontend/backlog.md",
-        "statePath": ".squad/org/frontend/state.json",
-        "contracts": [".squad/org/contracts/ui-api.md"]
+        "backlogPath": ".mesh/org/frontend/backlog.md",
+        "statePath": ".mesh/org/frontend/state.json",
+        "contracts": [".mesh/org/contracts/ui-api.md"]
       }
     }
   ],

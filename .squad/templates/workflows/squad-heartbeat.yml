@@ -31,30 +31,57 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check triage script
-        id: check-script
+      - name: Resolve runtime
+        id: resolve-runtime
         run: |
-          if [ -f ".squad/templates/ralph-triage.js" ]; then
+          runtime_dir=""
+          for candidate in .mesh .mercury .squad; do
+            if [ -f "$candidate/templates/ralph-triage.js" ]; then
+              runtime_dir="$candidate"
+              break
+            fi
+          done
+
+          if [ -n "$runtime_dir" ]; then
+            echo "runtime_dir=$runtime_dir" >> $GITHUB_OUTPUT
+            echo "templates_dir=$runtime_dir/templates" >> $GITHUB_OUTPUT
+            if [ "$runtime_dir" = ".squad" ]; then
+              echo "runtime_arg=--squad-dir" >> $GITHUB_OUTPUT
+            else
+              echo "runtime_arg=--mesh-dir" >> $GITHUB_OUTPUT
+            fi
             echo "has_script=true" >> $GITHUB_OUTPUT
+            if [ -f "$runtime_dir/templates/org-runtime-reconcile.js" ] && [ -f "$runtime_dir/org/structure.json" ]; then
+              echo "has_org_runtime=true" >> $GITHUB_OUTPUT
+            else
+              echo "has_org_runtime=false" >> $GITHUB_OUTPUT
+            fi
+            if [ -f "$runtime_dir/templates/org-backlog-from-triage.js" ] && [ -f "$runtime_dir/org/structure.json" ]; then
+              echo "has_backlog_bridge=true" >> $GITHUB_OUTPUT
+            else
+              echo "has_backlog_bridge=false" >> $GITHUB_OUTPUT
+            fi
           else
             echo "has_script=false" >> $GITHUB_OUTPUT
+            echo "has_org_runtime=false" >> $GITHUB_OUTPUT
+            echo "has_backlog_bridge=false" >> $GITHUB_OUTPUT
             echo "⚠️ ralph-triage.js not found — run 'squad upgrade' to install (legacy CLI command)"
           fi
 
       - name: Ralph — Smart triage
-        if: steps.check-script.outputs.has_script == 'true'
+        if: steps.resolve-runtime.outputs.has_script == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          node .squad/templates/ralph-triage.js \
-            --squad-dir .squad \
+          node ${{ steps.resolve-runtime.outputs.templates_dir }}/ralph-triage.js \
+            ${{ steps.resolve-runtime.outputs.runtime_arg }} ${{ steps.resolve-runtime.outputs.runtime_dir }} \
             --output triage-results.json
 
       - name: Ralph — Org runtime reconcile report
-        if: steps.check-script.outputs.has_script == 'true' && hashFiles('.squad/templates/org-runtime-reconcile.js', '.squad/org/structure.json') != ''
+        if: steps.resolve-runtime.outputs.has_org_runtime == 'true'
         run: |
-          node .squad/templates/org-runtime-reconcile.js \
-            --squad-dir .squad \
+          node ${{ steps.resolve-runtime.outputs.templates_dir }}/org-runtime-reconcile.js \
+            ${{ steps.resolve-runtime.outputs.runtime_arg }} ${{ steps.resolve-runtime.outputs.runtime_dir }} \
             --output org-runtime-results.json
 
       - name: Ralph — Show org runtime reconcile report
@@ -64,10 +91,10 @@ jobs:
           cat org-runtime-results.json
 
       - name: Ralph — Org backlog packet preview
-        if: steps.check-script.outputs.has_script == 'true' && hashFiles('.squad/templates/org-backlog-from-triage.js', '.squad/org/structure.json', 'triage-results.json') != ''
+        if: steps.resolve-runtime.outputs.has_backlog_bridge == 'true' && hashFiles('triage-results.json') != ''
         run: |
-          node .squad/templates/org-backlog-from-triage.js \
-            --squad-dir .squad \
+          node ${{ steps.resolve-runtime.outputs.templates_dir }}/org-backlog-from-triage.js \
+            ${{ steps.resolve-runtime.outputs.runtime_arg }} ${{ steps.resolve-runtime.outputs.runtime_dir }} \
             --triage-file triage-results.json \
             --output org-backlog-results.json
 
@@ -78,7 +105,7 @@ jobs:
           cat org-backlog-results.json
 
       - name: Ralph — Apply triage decisions
-        if: steps.check-script.outputs.has_script == 'true' && hashFiles('triage-results.json') != ''
+        if: steps.resolve-runtime.outputs.has_script == 'true' && hashFiles('triage-results.json') != ''
         uses: actions/github-script@v7
         with:
           script: |
@@ -120,7 +147,7 @@ jobs:
                     `**Source:** ${decision.source}`,
                     '',
                     '> Ralph auto-triaged this issue using Mercury Mesh routing rules.',
-                    '> To reassign, swap the `squad:*` compatibility label. Keep any `dept:*` labels aligned with the new routing.'
+                    '> To reassign, swap the assigned `mesh:*` or `squad:*` label. Keep any `dept:*` labels aligned with the new routing.'
                   ].join('\n')
                 });
                 
@@ -140,12 +167,19 @@ jobs:
           github-token: ${{ secrets.COPILOT_ASSIGN_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
+            const runtimeCandidates = ['.mesh', '.mercury', '.squad', '.ai-team'];
+            const stateCandidates = ['.mesh', '.mercury', '.squad'];
+            const findFirst = (candidates) => candidates.find((candidate) => fs.existsSync(candidate)) || null;
 
-            let teamFile = '.squad/team.md';
-            if (!fs.existsSync(teamFile)) {
-              teamFile = '.ai-team/team.md';
-            }
-            if (!fs.existsSync(teamFile)) return;
+            const teamFile = findFirst(runtimeCandidates.map((candidate) => `${candidate}/team.md`));
+            if (!teamFile || !fs.existsSync(teamFile)) return;
+
+            const runtimeDir = teamFile.slice(0, teamFile.lastIndexOf('/'));
+            const stateDir = runtimeDir !== '.ai-team'
+              ? runtimeDir
+              : (findFirst(stateCandidates.map((candidate) => `${candidate}/config.json`)) || '.squad/config.json').replace(/\/config\.json$/, '');
+            const routingFile = findFirst([`${runtimeDir}/routing.md`, '.ai-team/routing.md']) || `${runtimeDir}/routing.md`;
+            const structurePath = `${stateDir}/org/structure.json`;
 
             const content = fs.readFileSync(teamFile, 'utf8');
 
@@ -154,14 +188,20 @@ jobs:
             const autoAssign = content.includes('<!-- copilot-auto-assign: true -->');
             if (!hasCopilot || !autoAssign) return;
 
-            // Find issues labeled squad:copilot with no assignee. The label name is legacy for compatibility.
+            // Find issues labeled mesh:copilot or squad:copilot with no assignee.
             try {
-              const { data: copilotIssues } = await github.rest.issues.listForRepo({
+              const { data: openIssues } = await github.rest.issues.listForRepo({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                labels: 'squad:copilot',
                 state: 'open',
-                per_page: 5
+                per_page: 100
+              });
+
+              const copilotIssues = openIssues.filter((issue) => {
+                const labels = Array.isArray(issue.labels)
+                  ? issue.labels.map((item) => typeof item === 'string' ? item : item && item.name).filter(Boolean)
+                  : [];
+                return labels.includes('mesh:copilot') || labels.includes('squad:copilot');
               });
 
               const unassigned = copilotIssues.filter(i =>
@@ -169,7 +209,7 @@ jobs:
               );
 
               if (unassigned.length === 0) {
-                core.info('No unassigned compatibility-label squad:copilot issues');
+                core.info('No unassigned mesh:copilot or squad:copilot issues');
                 return;
               }
 
@@ -189,7 +229,7 @@ jobs:
                     agent_assignment: {
                       target_repo: `${context.repo.owner}/${context.repo.repo}`,
                       base_branch: repoData.default_branch,
-                       custom_instructions: `Read .squad/team.md (or .ai-team/team.md) for team context, .squad/routing.md (or .ai-team/routing.md) for routing rules, and if orgMode is enabled read .squad/org/structure.json for department context.`
+                       custom_instructions: `Read ${teamFile} for team context, ${routingFile} for routing rules, and if orgMode is enabled read ${structurePath} for department context.`
                      }
                    });
                   core.info(`Assigned copilot-swe-agent[bot] to #${issue.number}`);
@@ -198,5 +238,5 @@ jobs:
                 }
               }
             } catch (e) {
-              core.info(`No compatibility label squad:copilot found or error: ${e.message}`);
+              core.info(`No compatible copilot label found or error: ${e.message}`);
             }

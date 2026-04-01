@@ -15,6 +15,20 @@ The repo now presents itself as Mercury Mesh at the narrative layer, but the run
 
 These are not just names. They are referenced by workflows, templates, scripts, and parsing logic.
 
+## Implemented In Phase 1
+
+The repo now has partial dual-resolution support in the active automation surface:
+
+- Active GitHub workflows resolve `.mesh`, `.mercury`, or `.squad` before falling back to older paths.
+- Active GitHub workflows accept both `mesh` and `squad` base labels and both `mesh:{member}` and `squad:{member}` assignment labels.
+- Label sync creates both label families during the compatibility phase.
+- Ralph and org helper scripts accept both `--mesh-dir` and `--squad-dir`.
+- Helper scripts use runtime-aware default paths when the runtime root is `.mesh` or `.mercury`.
+- Schedule and seeded org templates now default to `.mesh` paths instead of reintroducing `.squad` in new installs.
+- Seed-facing instructions and charters now describe `.mesh` as the primary runtime root while keeping `.squad` documented as a compatibility alias.
+
+Phase 1 in this repo is therefore active on the main workflow path and now extends into the seed/runtime scaffolding layer, but it is not complete across every downstream package or documentation artifact.
+
 ## Safe Now
 
 These surfaces can be rebranded immediately without changing runtime behavior:
@@ -37,6 +51,14 @@ These surfaces cannot be renamed safely in one pass because automation currently
 | `squad/{issue}` branch prefix | Docs, branch lifecycle, cleanup logic | Medium | Needs workflow and helper updates before changing |
 | `--squad-dir` CLI arg | Helper scripts and workflow invocations | High | Requires script interface migration or alias support |
 | `## Members` section in `.squad/team.md` | Workflow parsing logic | High | Header must remain until parsing logic is expanded |
+
+## Still Pending After Phase 1
+
+These areas are not fully migrated yet and still need follow-up work before a default flip:
+
+- Any downstream CLI package or external source templates outside this workspace
+- Remaining docs that still describe legacy runtime locations as the primary examples where compatibility is no longer the main point
+- Branch lifecycle and helper surfaces that still treat `squad/{issue}` as the only canonical default
 
 ## Required Migration Strategy
 
@@ -99,6 +121,8 @@ Only after all repos and automation have migrated:
 - `.squad/templates/copilot-instructions.md`
 - `.squad/templates/issue-lifecycle.md`
 - `.squad/templates/charter.md`
+- `.squad/templates/schedule.json`
+- `.squad/templates/org-structure.json`
 - `.squad/templates/*` files that mention labels, branch names, or CLI commands
 
 ### State And Parsing Layer
@@ -126,4 +150,4 @@ If the runtime is fully renamed, these are the cleanest replacements:
 
 Do not perform the full runtime rename as a search-and-replace.
 
-Do it as a compatibility migration with dual-support first. The current repo is now in the right state for that work: product language is mostly Mercury Mesh, while the remaining Squad terms are identifiable as runtime compatibility surfaces.
+Phase 1 dual-support is now in place on the repo's active automation path and the remaining schedule/seed templates. The next safe step is to propagate those defaults into any downstream template mirrors, then flip branch and label defaults only after the new runtime names have proven stable.

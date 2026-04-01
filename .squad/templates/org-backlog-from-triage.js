@@ -4,9 +4,19 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
+const RUNTIME_DIR_CANDIDATES = ['.mesh', '.mercury', '.squad'];
+
+function defaultRuntimeDir() {
+  return RUNTIME_DIR_CANDIDATES.find((candidate) => fs.existsSync(candidate)) || '.squad';
+}
+
+function runtimeDirName(runtimeDir) {
+  return path.basename(path.resolve(runtimeDir));
+}
+
 function parseArgs(argv) {
   const options = {
-    squadDir: '.squad',
+    squadDir: defaultRuntimeDir(),
     triageFile: 'triage-results.json',
     output: 'org-backlog-results.json',
     apply: false,
@@ -14,7 +24,7 @@ function parseArgs(argv) {
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === '--squad-dir') {
+    if (arg === '--squad-dir' || arg === '--mesh-dir') {
       options.squadDir = argv[index + 1];
       index += 1;
       continue;
@@ -44,7 +54,7 @@ function parseArgs(argv) {
 }
 
 function printUsage() {
-  console.log('Usage: node .squad/templates/org-backlog-from-triage.js --squad-dir .squad --triage-file triage-results.json --output org-backlog-results.json [--apply]');
+  console.log('Usage: node <runtime>/org/backlog-from-triage.js [--mesh-dir .mesh | --squad-dir .squad] --triage-file triage-results.json --output org-backlog-results.json [--apply]');
 }
 
 function readJson(filePath) {
@@ -121,6 +131,7 @@ function updateBacklogFile(backlogPath, addRows, apply) {
 function main() {
   const options = parseArgs(process.argv.slice(2));
   const squadDir = path.resolve(options.squadDir);
+  const runtimeName = runtimeDirName(squadDir);
   const repoRoot = path.dirname(squadDir);
   const configPath = path.join(squadDir, 'config.json');
   const structurePath = path.join(squadDir, 'org', 'structure.json');
@@ -155,7 +166,7 @@ function main() {
     }
 
     const runtime = department.runtime || {};
-    const backlogPath = path.resolve(repoRoot, runtime.backlogPath || `.squad/org/${department.id}/backlog.md`);
+    const backlogPath = path.resolve(repoRoot, runtime.backlogPath || `${runtimeName}/org/${department.id}/backlog.md`);
     if (!fs.existsSync(backlogPath)) {
       report.warnings.push(`Backlog missing for department ${department.id}: ${path.relative(repoRoot, backlogPath)}`);
       continue;

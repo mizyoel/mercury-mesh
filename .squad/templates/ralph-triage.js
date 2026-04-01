@@ -18,13 +18,35 @@ const path = require('node:path');
 const https = require('node:https');
 const { execSync } = require('node:child_process');
 
+const RUNTIME_DIR_CANDIDATES = ['.mesh', '.mercury', '.squad'];
+
+function defaultRuntimeDir() {
+  return RUNTIME_DIR_CANDIDATES.find((candidate) => fs.existsSync(candidate)) || '.squad';
+}
+
+function runtimeDirName(runtimeDir) {
+  return path.basename(path.resolve(runtimeDir));
+}
+
+function primaryLabelPrefix(runtimeDir) {
+  return runtimeDirName(runtimeDir) === '.squad' ? 'squad' : 'mesh';
+}
+
+function normalizeRuntimeRelativePath(relativePath) {
+  return String(relativePath || '').replace(/^\.(?:mesh|mercury|squad)[\\/]/, '');
+}
+
+function buildMemberLabel(name, labelPrefix) {
+  return `${labelPrefix}:${String(name).toLowerCase()}`;
+}
+
 function parseArgs(argv) {
-  let squadDir = '.squad';
+  let squadDir = defaultRuntimeDir();
   let output = 'triage-results.json';
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
-    if (arg === '--squad-dir') {
+    if (arg === '--squad-dir' || arg === '--mesh-dir') {
       squadDir = argv[i + 1];
       i += 1;
       continue;
@@ -41,14 +63,14 @@ function parseArgs(argv) {
     throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (!squadDir) throw new Error('--squad-dir requires a value');
+  if (!squadDir) throw new Error('--mesh-dir/--squad-dir requires a value');
   if (!output) throw new Error('--output requires a value');
 
   return { squadDir, output };
 }
 
 function printUsage() {
-  console.log('Usage: node .squad/templates/ralph-triage.js --squad-dir .squad --output triage-results.json');
+  console.log('Usage: node .squad/templates/ralph-triage.js [--mesh-dir .mesh | --squad-dir .squad] --output triage-results.json');
 }
 
 function normalizeEol(content) {
@@ -101,7 +123,7 @@ function parseModuleOwnership(routingMd) {
   return modules;
 }
 
-function parseRoster(teamMd) {
+function parseRoster(teamMd, labelPrefix) {
   const table =
     parseTableSection(teamMd, /^##\s*members\b/i) ||
     parseTableSection(teamMd, /^##\s*team\s*roster\b/i);
@@ -126,7 +148,7 @@ function parseRoster(teamMd) {
       name,
       role,
       department: departmentIndex >= 0 ? cleanCell(row[departmentIndex] || '') : '',
-      label: `squad:${name.toLowerCase()}`,
+      label: buildMemberLabel(name, labelPrefix),
     });
   }
 
@@ -151,7 +173,7 @@ function loadOrgContext(squadDir) {
     (config.orgConfig && config.orgConfig.structurePath
       ? config.orgConfig.structurePath
       : '.squad/org/structure.json'
-    ).replace(/^\.squad[\\/]/, 'org/'),
+    ).replace(/^\.(?:mesh|mercury|squad)[\\/]/, 'org/'),
   );
 
   if (!config.orgMode || !fs.existsSync(structurePath)) {
@@ -562,7 +584,7 @@ function githubRequestJson(pathname, token) {
         headers: {
           Accept: 'application/vnd.github+json',
           Authorization: `Bearer ${token}`,
-          'User-Agent': 'squad-ralph-triage',
+          'User-Agent': 'mercury-mesh-ralph-triage',
           'X-GitHub-Api-Version': '2022-11-28',
         },
       },
@@ -590,7 +612,7 @@ function githubRequestJson(pathname, token) {
   });
 }
 
-async function fetchSquadIssues(owner, repo, token) {
+async function fetchIssuesForLabel(owner, repo, token, label) {
   const all = [];
   let page = 1;
   const perPage = 100;
@@ -598,7 +620,7 @@ async function fetchSquadIssues(owner, repo, token) {
   for (;;) {
     const query = new URLSearchParams({
       state: 'open',
-      labels: 'squad',
+      labels: label,
       per_page: String(perPage),
       page: String(page),
     });
@@ -612,6 +634,17 @@ async function fetchSquadIssues(owner, repo, token) {
   return all;
 }
 
+async function fetchBridgeIssues(owner, repo, token) {
+  const issuesByNumber = new Map();
+  for (const label of ['mesh', 'squad']) {
+    const issues = await fetchIssuesForLabel(owner, repo, token, label);
+    for (const issue of issues) {
+      issuesByNumber.set(issue.number, issue);
+    }
+  }
+  return [...issuesByNumber.values()];
+}
+
 function issueHasLabel(issue, labelName) {
   const target = labelName.toLowerCase();
   return (issue.labels || []).some((label) => {
@@ -623,7 +656,7 @@ function issueHasLabel(issue, labelName) {
 
 function isUntriagedIssue(issue, memberLabels) {
   if (issue.pull_request) return false;
-  if (!issueHasLabel(issue, 'squad')) return false;
+  if (!issueHasLabel(issue, 'squad') && !issueHasLabel(issue, 'mesh')) return false;
   return !memberLabels.some((label) => issueHasLabel(issue, label));
 }
 
@@ -635,18 +668,22 @@ async function main() {
   }
 
   const squadDir = path.resolve(process.cwd(), args.squadDir);
+  const labelPrefix = primaryLabelPrefix(squadDir);
   const teamMd = fs.readFileSync(path.join(squadDir, 'team.md'), 'utf8');
   const routingMd = fs.readFileSync(path.join(squadDir, 'routing.md'), 'utf8');
 
-  const roster = parseRoster(teamMd);
+  const roster = parseRoster(teamMd, labelPrefix);
   const rules = parseRoutingRules(routingMd);
   const modules = parseModuleOwnership(routingMd);
   const orgContext = loadOrgContext(squadDir);
 
   const { owner, repo } = getOwnerRepoFromGit();
-  const openSquadIssues = await fetchSquadIssues(owner, repo, token);
+  const openSquadIssues = await fetchBridgeIssues(owner, repo, token);
 
-  const memberLabels = roster.map((member) => member.label);
+  const memberLabels = roster.flatMap((member) => [
+    buildMemberLabel(member.name, 'mesh'),
+    buildMemberLabel(member.name, 'squad'),
+  ]);
   const untriaged = openSquadIssues.filter((issue) => isUntriagedIssue(issue, memberLabels));
 
   const results = [];
@@ -665,12 +702,13 @@ async function main() {
     );
 
     if (!decision) continue;
+    const memberLabel = buildMemberLabel(decision.agent.name, labelPrefix);
     results.push({
       issueNumber: issue.number,
       issueTitle: issue.title || '',
       assignTo: decision.agent.name,
-      label: decision.agent.label,
-      labels: [decision.agent.label, decision.deptLabel].filter(Boolean),
+      label: memberLabel,
+      labels: [memberLabel, decision.deptLabel].filter(Boolean),
       reason: decision.reason,
       source: decision.source,
       departmentId: decision.departmentId || null,

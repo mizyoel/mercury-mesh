@@ -4,9 +4,19 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
+const RUNTIME_DIR_CANDIDATES = ['.mesh', '.mercury', '.squad'];
+
+function defaultRuntimeDir() {
+  return RUNTIME_DIR_CANDIDATES.find((candidate) => fs.existsSync(candidate)) || '.squad';
+}
+
+function runtimeDirName(runtimeDir) {
+  return path.basename(path.resolve(runtimeDir));
+}
+
 function parseArgs(argv) {
   const options = {
-    squadDir: '.squad',
+    squadDir: defaultRuntimeDir(),
     output: 'org-seed-results.json',
     apply: false,
     force: false,
@@ -14,7 +24,7 @@ function parseArgs(argv) {
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === '--squad-dir') {
+    if (arg === '--squad-dir' || arg === '--mesh-dir') {
       options.squadDir = argv[index + 1];
       index += 1;
       continue;
@@ -43,7 +53,7 @@ function parseArgs(argv) {
 }
 
 function printUsage() {
-  console.log('Usage: node .squad/templates/org-seed-runtime.js --squad-dir .squad --output org-seed-results.json [--apply] [--force]');
+  console.log('Usage: node <runtime>/org/seed-runtime.js [--mesh-dir .mesh | --squad-dir .squad] --output org-seed-results.json [--apply] [--force]');
 }
 
 function readJson(filePath) {
@@ -113,7 +123,7 @@ function buildCharterContent(template, department) {
     'list of triggers': normalizeList(authority.mustEscalate, 'Define escalation triggers.'),
     'department-id': department.id,
     'number of packets that may run concurrently': String(runtime.maxParallelism || 3),
-    'list of `.squad/org/contracts/*.md` files this department depends on': normalizeList(runtime.contracts, 'none'),
+    'list of `.mesh/org/contracts/*.md` files this department depends on': normalizeList(runtime.contracts, 'none'),
     minutes: String(runtime.claimLeaseMinutes || 30),
     'Department-specific conventions, coding standards, patterns': 'Document local conventions, packet ownership, and review expectations.',
   });
@@ -153,6 +163,7 @@ function buildContractContent(template, contractPath, owners) {
 function main() {
   const options = parseArgs(process.argv.slice(2));
   const squadDir = path.resolve(options.squadDir);
+  const runtimeName = runtimeDirName(squadDir);
   const repoRoot = path.dirname(squadDir);
   const configPath = path.join(squadDir, 'config.json');
   const structurePath = path.join(squadDir, 'org', 'structure.json');
@@ -208,8 +219,8 @@ function main() {
     const runtime = department.runtime || {};
     const departmentRoot = path.join(squadDir, 'org', department.id);
     const charterPath = path.join(departmentRoot, 'charter.md');
-    const backlogPath = path.resolve(repoRoot, runtime.backlogPath || `.squad/org/${department.id}/backlog.md`);
-    const statePath = path.resolve(repoRoot, runtime.statePath || `.squad/org/${department.id}/state.json`);
+    const backlogPath = path.resolve(repoRoot, runtime.backlogPath || `${runtimeName}/org/${department.id}/backlog.md`);
+    const statePath = path.resolve(repoRoot, runtime.statePath || `${runtimeName}/org/${department.id}/state.json`);
 
     seedFile(report, charterPath, buildCharterContent(charterTemplate, department), options.apply, options.force);
     seedFile(report, backlogPath, buildBacklogContent(backlogTemplate, department), options.apply, options.force);

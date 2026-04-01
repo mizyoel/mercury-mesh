@@ -18,17 +18,19 @@ How to decide who handles what.
 
 | Label | Action | Who |
 |-------|--------|-----|
-| `squad` | Triage: analyze issue, assign `squad:{member}` label | Lead |
-| `squad:{name}` | Pick up issue and complete the work | Named member |
+| `mesh` | Triage: analyze issue, assign `mesh:{member}` label | Lead |
+| `mesh:{name}` | Pick up issue and complete the work | Named member |
+| `squad`, `squad:{name}` | Legacy compatibility labels; trigger the same routing during migration | Coordinator + workflows |
 | `dept:{department}` | Add routing metadata for org-mode triage | Coordinator + workflows |
 
 ### How Issue Assignment Works
 
-1. When a GitHub issue gets the `squad` label, the **Lead** triages it — analyzing content, assigning the right `squad:{member}` label, and commenting with triage notes.
-2. When a `squad:{member}` label is applied, that member picks up the issue in their next session.
-3. `dept:{department}` labels are additive metadata only. They never replace `squad:{member}` as the workflow trigger.
-4. Members can reassign by removing their label and adding another member's label.
-5. The `squad` label is the "inbox" — untriaged issues waiting for Lead review.
+1. When a GitHub issue gets the `mesh` label, the **Lead** triages it — analyzing content, assigning the right `mesh:{member}` label, and commenting with triage notes.
+2. When a `mesh:{member}` label is applied, that member picks up the issue in their next session.
+3. Legacy `squad` and `squad:{member}` labels continue to trigger the same workflow path during the compatibility phase.
+4. `dept:{department}` labels are additive metadata only. They never replace `mesh:{member}` as the primary workflow trigger.
+5. Members can reassign by removing their label and adding another member's label.
+6. The `mesh` label is the primary inbox. The `squad` label remains a compatibility alias until the default flip is complete.
 
 ## Rules
 
@@ -38,11 +40,11 @@ How to decide who handles what.
 4. **When two agents could handle it**, pick the one whose domain is the primary concern.
 5. **"Team, ..." → fan-out.** Spawn all relevant agents in parallel as `mode: "background"`.
 6. **Anticipate downstream work.** If a feature is being built, spawn the tester to write test cases from requirements simultaneously.
-7. **Issue-labeled work** — when a `squad:{member}` label is applied to an issue, route to that member. The Lead handles all `squad` (base label) triage.
+7. **Issue-labeled work** — when a `mesh:{member}` label is applied to an issue, route to that member. The Lead handles all `mesh` (base label) triage, while `squad` labels remain compatible.
 
 ## Hierarchical Routing (Org Mode)
 
-Active when `orgMode: true` in `.squad/config.json`. When disabled, all routing falls back to the flat rules above.
+Active when `orgMode: true` in `.mesh/config.json`. If the runtime still lives under `.squad/config.json`, the same rules apply through the compatibility layer. When disabled, all routing falls back to the flat rules above.
 
 ### Department Routing
 
@@ -56,15 +58,15 @@ Active when `orgMode: true` in `.squad/config.json`. When disabled, all routing 
 |---------|----------|--------|
 | Member blocked | {Department lead} | Advise, unblock, or re-route within the department |
 | Cross-department conflict | {Involved leads} | Run one alignment round, then parallel fan-out |
-| Authority exceeded | Squad | Coordinator decides at org scope |
+| Authority exceeded | Mesh | Coordinator decides at org scope |
 
 ### Cross-Department Work
 
 When work touches multiple departments:
-1. The coordinator matches all relevant departments from `.squad/org/structure.json`.
+1. The coordinator matches all relevant departments from `.mesh/org/structure.json`.
 2. Members from each matched department are spawned in parallel.
 3. Leads are only spawned when conventions conflict or an escalation rule triggers.
-4. `squad:{member}` remains the assignment trigger. `dept:{department}` labels are routing metadata only.
+4. `mesh:{member}` is the primary assignment trigger. `squad:{member}` remains a compatibility alias, and `dept:{department}` labels are routing metadata only.
 
 ## Work Type → Agent
 

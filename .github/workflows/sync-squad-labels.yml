@@ -3,6 +3,10 @@ name: Sync Mercury Mesh Labels
 on:
   push:
     paths:
+      - '.mesh/team.md'
+      - '.mesh/org/structure.json'
+      - '.mercury/team.md'
+      - '.mercury/org/structure.json'
       - '.squad/team.md'
       - '.squad/org/structure.json'
       - '.ai-team/team.md'
@@ -23,20 +27,24 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            let teamFile = '.squad/team.md';
-            if (!fs.existsSync(teamFile)) {
-              teamFile = '.ai-team/team.md';
-            }
+            const runtimeCandidates = ['.mesh', '.mercury', '.squad', '.ai-team'];
+            const stateCandidates = ['.mesh', '.mercury', '.squad'];
+            const findFirst = (candidates) => candidates.find((candidate) => fs.existsSync(candidate)) || null;
+            const teamFile = findFirst(runtimeCandidates.map((candidate) => `${candidate}/team.md`));
 
-            if (!fs.existsSync(teamFile)) {
-              core.info('No .squad/team.md or .ai-team/team.md found — skipping Mercury Mesh label sync');
+            if (!teamFile || !fs.existsSync(teamFile)) {
+              core.info('No runtime roster found — skipping Mercury Mesh label sync');
               return;
             }
 
+            const runtimeDir = teamFile.slice(0, teamFile.lastIndexOf('/'));
+            const stateDir = runtimeDir !== '.ai-team'
+              ? runtimeDir
+              : (findFirst(stateCandidates.map((candidate) => `${candidate}/config.json`)) || '.squad/config.json').replace(/\/config\.json$/, '');
             const content = fs.readFileSync(teamFile, 'utf8');
             const lines = content.split('\n');
             let orgStructure = null;
-            const orgStructurePath = '.squad/org/structure.json';
+            const orgStructurePath = `${stateDir}/org/structure.json`;
             if (fs.existsSync(orgStructurePath)) {
               try {
                 orgStructure = JSON.parse(fs.readFileSync(orgStructurePath, 'utf8'));
@@ -116,25 +124,36 @@ jobs:
               { name: 'priority:p2', color: 'FBCA04', description: 'Next sprint' }
             ];
 
-            // Ensure the base "squad" triage label exists. The name stays legacy for workflow compatibility.
+            // Create both active and legacy label families during the compatibility phase.
             const labels = [
+              { name: 'mesh', color: SQUAD_COLOR, description: 'Mercury Mesh triage inbox — primary label family' },
               { name: 'squad', color: SQUAD_COLOR, description: 'Mercury Mesh triage inbox — legacy compatibility label for Lead routing' }
             ];
 
             for (const member of members) {
               labels.push({
-                name: `squad:${member.name.toLowerCase()}`,
+                name: `mesh:${member.name.toLowerCase()}`,
                 color: MEMBER_COLOR,
                 description: `Assigned to ${member.name} (${member.role})`
+              });
+              labels.push({
+                name: `squad:${member.name.toLowerCase()}`,
+                color: MEMBER_COLOR,
+                description: `Assigned to ${member.name} (${member.role}) — legacy compatibility label`
               });
             }
 
             // Add @copilot label if coding agent is on the team
             if (hasCopilot) {
               labels.push({
-                name: 'squad:copilot',
+                name: 'mesh:copilot',
                 color: COPILOT_COLOR,
                 description: 'Assigned to @copilot (Coding Agent) for Mercury Mesh autonomous work'
+              });
+              labels.push({
+                name: 'squad:copilot',
+                color: COPILOT_COLOR,
+                description: 'Assigned to @copilot (Coding Agent) for Mercury Mesh autonomous work — legacy compatibility label'
               });
             }
 
