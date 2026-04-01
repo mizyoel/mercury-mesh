@@ -1,4 +1,4 @@
-name: Squad Issue Assign
+name: Mercury Mesh Issue Assign
 
 on:
   issues:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   assign-work:
-    # Only trigger on squad:{member} labels (not the base "squad" label)
+    # Only trigger on squad:{member} labels. These labels remain legacy compatibility triggers.
     if: startsWith(github.event.label.name, 'squad:')
     runs-on: ubuntu-latest
     steps:
@@ -24,7 +24,7 @@ jobs:
             const issue = context.payload.issue;
             const label = context.payload.label.name;
 
-            // Extract member name from label (e.g., "squad:ripley" → "ripley")
+            // Extract member name from label (e.g., "squad:ripley" → "ripley"). Label stays legacy for compatibility.
             const memberName = label.replace('squad:', '').toLowerCase();
 
             // Read team roster — check .squad/ first, fall back to .ai-team/
@@ -33,7 +33,7 @@ jobs:
               teamFile = '.ai-team/team.md';
             }
             if (!fs.existsSync(teamFile)) {
-              core.warning('No .squad/team.md or .ai-team/team.md found — cannot assign work');
+              core.warning('No .squad/team.md or .ai-team/team.md found — cannot route Mercury Mesh work');
               return;
             }
 
@@ -121,7 +121,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
-                body: `⚠️ No squad member found matching label \`${label}\`. Check \`.squad/team.md\` (or \`.ai-team/team.md\`) for valid member names.`
+                body: `⚠️ No Mercury Mesh member found matching compatibility label \`${label}\`. Check \`.squad/team.md\` (or \`.ai-team/team.md\`) for valid member names.`
               });
               return;
             }
@@ -138,10 +138,10 @@ jobs:
                 `**Issue:** #${issue.number} — ${issue.title}`,
                 departmentLine,
                 '',
-                `@copilot has been assigned and will pick this up automatically.`,
+                `@copilot has been assigned and will pick this up automatically on the bridge.`,
                 '',
                 `> The coding agent will create a \`copilot/*\` branch and open a draft PR.`,
-                `> Review the PR as you would any team member's work.`,
+                `> Review the PR as you would any Mercury Mesh specialist's work.`,
               ].join('\n');
             } else {
               comment = [
@@ -150,7 +150,7 @@ jobs:
                 `**Issue:** #${issue.number} — ${issue.title}`,
                 departmentLine,
                 '',
-                `${assignedMember.name} will pick this up in the next Copilot session.`,
+                `${assignedMember.name} will pick this up in the next Copilot session on the bridge.`,
                 '',
                 `> **For Copilot coding agent:** If enabled, this issue will be worked automatically.`,
                 `> Otherwise, start a Copilot session and say:`,

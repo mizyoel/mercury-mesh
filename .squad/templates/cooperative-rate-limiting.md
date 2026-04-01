@@ -225,5 +225,5 @@ See [keda-copilot-scaler](https://github.com/tamirdresher/keda-copilot-scaler) f
 ## References
 
 - [Circuit Breaker Template](ralph-circuit-breaker.md) — Foundation patterns
-- [Squad on AKS](https://github.com/tamirdresher/squad-on-aks) — Production K8s deployment
+- [Mercury Mesh on AKS (legacy repo name: squad-on-aks)](https://github.com/tamirdresher/squad-on-aks) — Production K8s deployment
 - [KEDA Copilot Scaler](https://github.com/tamirdresher/keda-copilot-scaler) — Custom KEDA external scaler

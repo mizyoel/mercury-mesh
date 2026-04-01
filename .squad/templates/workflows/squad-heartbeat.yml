@@ -1,17 +1,17 @@
-name: Squad Heartbeat (Ralph)
+name: Mercury Mesh Heartbeat (Ralph)
 # ⚠️ SYNC: This workflow is maintained in 4 locations. Changes must be applied to all:
 #   - templates/workflows/squad-heartbeat.yml (source template)
 #   - packages/squad-cli/templates/workflows/squad-heartbeat.yml (CLI package)
 #   - .squad/templates/workflows/squad-heartbeat.yml (installed template)
 #   - .github/workflows/squad-heartbeat.yml (active workflow)
-# Run 'squad upgrade' to sync installed copies from source templates.
+# Run 'squad upgrade' to sync installed copies from source templates. The CLI command is still legacy-named.
 
 on:
   schedule:
     # Every 30 minutes — adjust via cron expression as needed
     - cron: '*/30 * * * *'
 
-  # React to completed work or new squad work
+  # React to completed work or new bridge work
   issues:
     types: [closed, labeled]
   pull_request:
@@ -38,7 +38,7 @@ jobs:
             echo "has_script=true" >> $GITHUB_OUTPUT
           else
             echo "has_script=false" >> $GITHUB_OUTPUT
-            echo "⚠️ ralph-triage.js not found — run 'squad upgrade' to install"
+            echo "⚠️ ralph-triage.js not found — run 'squad upgrade' to install (legacy CLI command)"
           fi
 
       - name: Ralph — Smart triage
@@ -119,8 +119,8 @@ jobs:
                     `**Reason:** ${decision.reason}`,
                     `**Source:** ${decision.source}`,
                     '',
-                    '> Ralph auto-triaged this issue using routing rules.',
-                    '> To reassign, swap the `squad:*` label. Keep any `dept:*` labels aligned with the new routing.'
+                    '> Ralph auto-triaged this issue using Mercury Mesh routing rules.',
+                    '> To reassign, swap the `squad:*` compatibility label. Keep any `dept:*` labels aligned with the new routing.'
                   ].join('\n')
                 });
                 
@@ -154,7 +154,7 @@ jobs:
             const autoAssign = content.includes('<!-- copilot-auto-assign: true -->');
             if (!hasCopilot || !autoAssign) return;
 
-            // Find issues labeled squad:copilot with no assignee
+            // Find issues labeled squad:copilot with no assignee. The label name is legacy for compatibility.
             try {
               const { data: copilotIssues } = await github.rest.issues.listForRepo({
                 owner: context.repo.owner,
@@ -169,7 +169,7 @@ jobs:
               );
 
               if (unassigned.length === 0) {
-                core.info('No unassigned squad:copilot issues');
+                core.info('No unassigned compatibility-label squad:copilot issues');
                 return;
               }
 
@@ -198,5 +198,5 @@ jobs:
                 }
               }
             } catch (e) {
-              core.info(`No squad:copilot label found or error: ${e.message}`);
+              core.info(`No compatibility label squad:copilot found or error: ${e.message}`);
             }

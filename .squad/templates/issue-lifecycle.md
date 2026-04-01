@@ -1,10 +1,10 @@
 # Issue Lifecycle — Repo Connection & PR Flow
 
-Reference for connecting Squad to a repository and managing the issue→branch→PR→merge lifecycle.
+Reference for connecting Mercury Mesh to a repository and managing the issue→branch→PR→merge lifecycle.
 
 ## Repo Connection Format
 
-When connecting Squad to an issue tracker, store the connection in `.squad/team.md`:
+When connecting Mercury Mesh to an issue tracker, store the connection in `.squad/team.md`:
 
 ```markdown
 ## Issue Source
@@ -25,11 +25,11 @@ When connecting Squad to an issue tracker, store the connection in `.squad/team.
 
 ## Platform-Specific Issue States
 
-Each platform tracks issue lifecycle differently. Squad normalizes these into a common board state.
+Each platform tracks issue lifecycle differently. Mercury Mesh normalizes these into a common board state.
 
 ### GitHub
 
-| GitHub State | GitHub API Fields | Squad Board State |
+| GitHub State | GitHub API Fields | Mercury Mesh Board State |
 |--------------|-------------------|-------------------|
 | Open, no assignee | `state: open`, `assignee: null` | `untriaged` |
 | Open, assigned, no branch | `state: open`, `assignee: @user`, no linked PR | `assigned` |
@@ -40,9 +40,9 @@ Each platform tracks issue lifecycle differently. Squad normalizes these into a 
 | Open, CI failure | `state: open`, PR `statusCheckRollup: FAILURE` | `ciFailure` |
 | Closed | `state: closed` | `done` |
 
-**Issue labels used by Squad:**
-- `squad` — Issue is in Squad backlog
-- `squad:{member}` — Assigned to specific agent
+**Issue labels used by Mercury Mesh:**
+- `squad` — Mercury Mesh triage inbox. Legacy compatibility label.
+- `squad:{member}` — Assigned to a specific specialist. Legacy compatibility label.
 - `dept:{department}` — Department metadata used for hierarchy-aware routing
 - `escalate:lead` — Routed upward for department guidance
 - `escalate:coordinator` — Routed upward for org-level decision
@@ -57,9 +57,11 @@ squad/{issue-number}-{kebab-case-slug}
 ```
 Example: `squad/42-fix-login-validation`
 
+This branch prefix is legacy-compatible and remains in place until the runtime migration is complete.
+
 ### Azure DevOps
 
-| ADO State | Squad Board State |
+| ADO State | Mercury Mesh Board State |
 |-----------|-------------------|
 | New | `untriaged` |
 | Active, no branch | `assigned` |
@@ -69,9 +71,9 @@ Example: `squad/42-fix-login-validation`
 | Resolved | `done` |
 | Closed | `done` |
 
-**Work item tags used by Squad:**
-- `squad` — Work item is in Squad backlog
-- `squad:{member}` — Assigned to specific agent
+**Work item tags used by Mercury Mesh:**
+- `squad` — Work item is in the Mercury Mesh backlog. Legacy compatibility tag.
+- `squad:{member}` — Assigned to a specific specialist. Legacy compatibility tag.
 
 **Branch naming convention:**
 ```
@@ -81,9 +83,9 @@ Example: `squad/1234-add-auth-module`
 
 ### Microsoft Planner
 
-Planner does not have native Git integration. Squad uses Planner for task tracking and GitHub/ADO for code management.
+Planner does not have native Git integration. Mercury Mesh uses Planner for task tracking and GitHub or ADO for code management.
 
-| Planner Status | Squad Board State |
+| Planner Status | Mercury Mesh Board State |
 |----------------|-------------------|
 | Not Started | `untriaged` |
 | In Progress, no PR | `inProgress` |
@@ -124,7 +126,7 @@ az boards work-item show --id {id} --output json
 
 **Actions:**
 1. Ensure working on latest base branch (usually `main` or `dev`)
-2. Create feature branch using Squad naming convention
+2. Create feature branch using the legacy squad naming convention
 3. Transition issue to `inProgress` state
 
 **Branch creation commands:**
@@ -211,11 +213,11 @@ Closes #{issue-number}
 ## Testing
 {how this was tested}
 
-{If working as a squad member:}
+{If working as a Mercury Mesh member:}
 Working as {member} ({role})
 
 {If needs human review:}
-⚠️ This task was flagged as "needs review" — please have a squad member review before merging.
+⚠️ This task was flagged as "needs review" — please have a Mercury Mesh member review before merging.
 ```
 
 ### 5. PR Review & Updates
@@ -268,7 +270,7 @@ az repos pr update --id {pr-id} --status completed --delete-source-branch true
 **Post-merge actions:**
 1. Issue automatically closes (if "Closes #{number}" is in PR description)
 2. Feature branch is deleted
-3. Squad board state transitions to `done`
+3. Mercury Mesh board state transitions to `done`
 4. Worktree cleanup (if worktree was used — #525)
 
 ### 7. Cleanup
@@ -307,7 +309,7 @@ When spawning an agent to work on an issue, include this context block:
 **Acceptance Criteria:**
 {criteria if present in issue}
 
-**Branch:** `squad/{issue-number}-{slug}`
+**Branch:** `squad/{issue-number}-{slug}` (legacy compatibility branch)
 
 **Your task:**
 {specific directive to the agent}
@@ -326,7 +328,7 @@ When spawning an agent to work on an issue, include this context block:
 
 Ralph (the work monitor) continuously checks issue and PR state:
 
-1. **Triage:** Detects untriaged issues, assigns `squad:{member}` labels
+1. **Triage:** Detects untriaged issues, assigns `squad:{member}` compatibility labels
 2. **Spawn:** Launches agents for assigned issues
 3. **Monitor:** Tracks PR state transitions (needsReview → changesRequested → readyToMerge)
 4. **Merge:** Automatically merges approved PRs
@@ -358,10 +360,10 @@ If the project requires human approval:
 4. If approved + CI passes, Ralph merges
 5. If changes requested, agent addresses feedback
 
-### Squad Member Review
+### Mercury Mesh Member Review
 
-If the issue was assigned to a squad member and they authored the PR:
-1. Another squad member reviews (conflict of interest avoidance)
+If the issue was assigned to a Mercury Mesh member and they authored the PR:
+1. Another Mercury Mesh member reviews (conflict of interest avoidance)
 2. Original author is locked out from re-working rejected code (rejection lockout)
 3. Reviewer can approve edits or reject outright
 
@@ -402,7 +404,7 @@ All PRs reviewed → All PRs merged → Epic closed
 - ❌ Merging PRs before CI passes
 - ❌ Leaving feature branches undeleted after merge
 - ❌ Using `checkout -b` when parallel agents are active (causes working directory conflicts)
-- ❌ Manually transitioning issue states — let the platform and Squad automation handle it
+- ❌ Manually transitioning issue states — let the platform and Mercury Mesh automation handle it
 - ❌ Skipping the branch naming convention — breaks Ralph's tracking logic
 
 ## Migration Notes

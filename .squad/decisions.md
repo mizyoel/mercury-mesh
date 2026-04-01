@@ -1,4 +1,4 @@
-# Squad Decisions
+# Mercury Mesh Decisions
 
 ## Active Decisions
 

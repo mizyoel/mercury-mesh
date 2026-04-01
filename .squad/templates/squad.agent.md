@@ -531,7 +531,7 @@ The `sql` tool is **CLI-only**. It does not exist on VS Code, JetBrains, or GitH
 
 ### MCP Integration
 
-MCP (Model Context Protocol) servers extend Squad with tools for external services — Trello, Aspire dashboards, Azure, Notion, and more. The user configures MCP servers in their environment; Squad discovers and uses them.
+MCP (Model Context Protocol) servers extend Mercury Mesh with tools for external services — Trello, Aspire dashboards, Azure, Notion, and more. The user configures MCP servers in their environment; Mercury Mesh discovers and uses them.
 
 > **Full patterns:** Read `.squad/skills/mcp-tool-discovery/SKILL.md` for discovery patterns, domain-specific usage, graceful degradation. Read `.squad/templates/mcp-config.md` for config file locations, sample configs, and authentication notes.
 
@@ -936,7 +936,7 @@ prompt: |
 
 ### Ceremonies
 
-Ceremonies are structured team meetings where agents align before or after work. Each squad configures its own ceremonies in `.squad/ceremonies.md`.
+Ceremonies are structured team meetings where agents align before or after work. Each bridge configures its own ceremonies in `.squad/ceremonies.md`.
 
 **On-demand reference:** Read `.squad/templates/ceremony-reference.md` for config format, facilitator spawn template, and execution rules.
 
@@ -1170,7 +1170,7 @@ Ralph is a built-in squad member whose job is keeping tabs on work. **Ralph trac
 
 **⚡ CRITICAL BEHAVIOR: When Ralph is active, the coordinator MUST NOT stop and wait for user input between work items. Ralph runs a continuous loop — scan for work, do the work, scan again, repeat — until the board is empty or the user explicitly says "idle" or "stop". This is not optional. If work exists, keep going. When empty, Ralph enters idle-watch (auto-recheck every {poll_interval} minutes, default: 10).**
 
-**Between checks:** Ralph's in-session loop runs while work exists. For persistent polling when the board is clear, use `npx @bradygaster/squad-cli watch --interval N` — a standalone local process that checks GitHub every N minutes and triggers triage/assignment. See [Watch Mode](#watch-mode-squad-watch).
+**Between checks:** Ralph's in-session loop runs while work exists. For persistent polling when the board is clear, use `npx @bradygaster/squad-cli watch --interval N` — a standalone local process that checks GitHub every N minutes and triggers triage/assignment. See the Watch Mode section below.
 
 **On-demand reference:** Read `.squad/templates/ralph-reference.md` for the full work-check cycle, idle-watch mode, board format, and integration details.
 
@@ -1241,9 +1241,9 @@ After every 3-5 rounds, pause and report before continuing:
 
 **Do NOT ask for permission to continue.** Just report and keep going. The user must explicitly say "idle" or "stop" to break the loop. If the user provides other input during a round, process it and then resume the loop.
 
-### Watch Mode (`squad watch`)
+### Watch Mode
 
-Ralph's in-session loop processes work while it exists, then idles. For **persistent polling** between sessions or when you're away from the keyboard, use the `squad watch` CLI command:
+Ralph's in-session loop processes work while it exists, then idles. For **persistent polling** between sessions or when you're away from the keyboard, use the `squad watch` CLI command. The command name is still legacy-named during the compatibility phase:
 
 ```bash
 npx @bradygaster/squad-cli watch                    # polls every 10 minutes (default)

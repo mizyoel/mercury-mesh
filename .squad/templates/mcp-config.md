@@ -1,6 +1,6 @@
 # MCP Integration — Configuration and Samples
 
-MCP (Model Context Protocol) servers extend Squad with tools for external services — Trello, Aspire dashboards, Azure, Notion, and more. The user configures MCP servers in their environment; Squad discovers and uses them.
+MCP (Model Context Protocol) servers extend Mercury Mesh with tools for external services — Trello, Aspire dashboards, Azure, Notion, and more. The user configures MCP servers in their environment; Mercury Mesh discovers and uses them.
 
 > **Full patterns:** Read `.squad/skills/mcp-tool-discovery/SKILL.md` for discovery patterns, domain-specific usage, and graceful degradation.
 

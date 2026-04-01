@@ -1,6 +1,6 @@
 # Casting Reference
 
-On-demand reference for Squad's casting system. Loaded during Init Mode or when adding team members.
+On-demand reference for Mercury Mesh's casting system. Loaded during Init Mode or when adding team members.
 
 ## Universe Table
 

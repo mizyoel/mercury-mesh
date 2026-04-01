@@ -1,14 +1,14 @@
-# Squad Team
+# Mercury Mesh Roster
 
-## Coordinator
+## Bridge Control
 
 | Name | Role | Notes |
 |------|------|-------|
-| Squad | Coordinator | Routes work, enforces handoffs and reviewer gates. Does not generate domain artifacts. |
+| Mercury Mesh | Ship's Computer | Maintains the Bridge, routes missions, enforces handoffs and reviewer gates. Does not generate domain artifacts. |
 
 ## Members
 
-> **Status values:** `shadow` (read-only, observing) → `probation` (executes, Lead reviews all outputs) → `active` (full autonomy within charter). Phase transitions require Tier-1 human approval.
+> **Status values:** `shadow` (Shadowing Phase, read-only observation) → `probation` (executes, Mission Prime reviews outputs) → `active` (full autonomy within charter). Phase transitions require Tier-1 human approval.
 
 | Name | Role | Department | Charter | Status |
 |------|------|------------|---------|--------|

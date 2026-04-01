@@ -4,7 +4,7 @@
 
 ## Overview
 
-When running Squad across multiple machines (laptops, DevBoxes, GPU servers, Kubernetes nodes), each machine has different tooling. The capability system lets you declare what each machine can do, and Ralph automatically routes work accordingly.
+When running Mercury Mesh across multiple machines (laptops, DevBoxes, GPU servers, Kubernetes nodes), each machine has different tooling. The capability system lets you declare what each machine can do, and Ralph automatically routes work accordingly.
 
 ## Setup
 
@@ -44,6 +44,8 @@ Custom capabilities are supported — any `needs:X` label works if `X` is in the
 squad watch --interval 5
 ```
 
+The CLI command is still legacy-named during the compatibility phase.
+
 Ralph will log skipped issues:
 ```
 ⏭️ Skipping #42 "Train ML model" — missing: gpu
@@ -72,4 +74,4 @@ spec:
     node.squad.dev/gpu: "true"
 ```
 
-A DaemonSet can run capability discovery on each node and maintain labels automatically. See the [squad-on-aks](https://github.com/tamirdresher/squad-on-aks) project for a complete Kubernetes deployment example.
+A DaemonSet can run capability discovery on each node and maintain labels automatically. See the [Mercury Mesh on AKS (legacy repo name: squad-on-aks)](https://github.com/tamirdresher/squad-on-aks) project for a complete Kubernetes deployment example.

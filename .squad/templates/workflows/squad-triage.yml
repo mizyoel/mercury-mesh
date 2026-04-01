@@ -1,4 +1,4 @@
-name: Squad Triage
+name: Mercury Mesh Triage
 
 on:
   issues:
@@ -28,7 +28,7 @@ jobs:
               teamFile = '.ai-team/team.md';
             }
             if (!fs.existsSync(teamFile)) {
-              core.warning('No .squad/team.md or .ai-team/team.md found — cannot triage');
+              core.warning('No .squad/team.md or .ai-team/team.md found — cannot run Mercury Mesh triage');
               return;
             }
 
@@ -237,7 +237,7 @@ jobs:
               } else if (isNeedsReview) {
                 copilotTier = 'needs-review';
                 assignedMember = { name: '@copilot', role: 'Coding Agent' };
-                triageReason = '🟡 Routing to @copilot (needs review) — a squad member should review the PR';
+                triageReason = '🟡 Routing to @copilot (needs review) — a Mercury Mesh member should review the PR';
               } else if (isNotSuitable) {
                 copilotTier = 'not-suitable';
                 // Fall through to normal routing
@@ -347,28 +347,28 @@ jobs:
               if (copilotTier === 'not-suitable') {
                 copilotNote = `\n\n**@copilot evaluation:** 🔴 Not suitable — issue involves work outside the coding agent's capability profile.`;
               } else {
-                copilotNote = `\n\n**@copilot evaluation:** No strong capability match — routed to squad member.`;
+                copilotNote = `\n\n**@copilot evaluation:** No strong capability match — routed to a Mercury Mesh specialist.`;
               }
             }
 
             // Post triage comment
             const comment = [
-              `### 🏗️ Squad Triage — ${lead.name} (${lead.role})`,
+              `### 🏗️ Mercury Mesh Triage — ${lead.name} (${lead.role})`,
               '',
               `**Issue:** #${issue.number} — ${issue.title}`,
               `**Assigned to:** ${assignedMember.name} (${assignedMember.role})`,
               assignedDepartment ? `**Department:** ${assignedDepartment.name}` : '',
               `**Reason:** ${triageReason}`,
-              copilotTier === 'needs-review' ? `\n⚠️ **PR review recommended** — a squad member should review @copilot's work on this one.` : '',
+              copilotTier === 'needs-review' ? `\n⚠️ **PR review recommended** — a Mercury Mesh member should review @copilot's work on this one.` : '',
               copilotNote,
               '',
               `---`,
               '',
-              `**Team roster:**`,
+              `**Bridge roster:**`,
               memberList,
               hasCopilot ? `- **@copilot** (Coding Agent) → label: \`squad:copilot\`` : '',
               '',
-              `> To reassign, remove the current \`squad:*\` label and add the correct one. Keep any \`dept:*\` labels as metadata unless the routing changes.`,
+              `> To reassign, remove the current \`squad:*\` compatibility label and add the correct one. Keep any \`dept:*\` labels as metadata unless the routing changes.`,
             ].filter(Boolean).join('\n');
 
             await github.rest.issues.createComment({

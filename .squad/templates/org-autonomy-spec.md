@@ -4,7 +4,7 @@ This spec defines the first minimal runtime for concurrent, semi-autonomous depa
 
 ## Design Goal
 
-Departments should work concurrently and with local initiative, while remaining inside Squad's coordinator-led control plane.
+Departments should work concurrently and with local initiative, while remaining inside Mercury Mesh's coordinator-led control plane.
 
 The coordinator remains the global control plane.
 Department leads act as local schedulers inside an approved authority envelope.

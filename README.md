@@ -1,56 +1,70 @@
-# Squad Org
+# Mercury Mesh
 
-A clean [Squad](https://github.com/features/copilot) organization repo — ready for Init Mode.
+The Bridge Protocol for a liquid organizational OS.
 
 ## What Is This?
 
-This repo contains the **Squad framework**: an AI team orchestration system that lives in your repository. When you start a session, Squad will propose a team of specialist agents tailored to your project, then coordinate their work.
+This repo presents the existing Squad runtime as **Mercury Mesh**: a zero-gravity bridge where human **Commanders** and specialist AI **Wings** operate as one drifting organism. Projects become **Missions** or **Sorties**, departments become **Wings** or **Decks**, and progress is read through **Telemetry** instead of status theater.
+
+The implementation still keeps `.squad/`, `squad:*` labels, and related workflow hooks intact. That compatibility layer preserves the current automation while the product language, agent voice, and documentation shift to Mercury Mesh.
 
 ## Getting Started
 
 1. Open this repo in VS Code with GitHub Copilot enabled.
-2. Start a chat with `@squad` — it will detect the empty roster and enter **Init Mode**.
-3. Describe what you're building. Squad will propose a team.
-4. Confirm the roster, and the team is hired.
+2. Start a chat with the Mercury Mesh agent. If the roster is empty, the bridge enters Init Mode.
+3. Describe the mission: language, stack, and what the system must accomplish.
+4. Confirm the bridge cast, and the crew is hired.
 
 ## Structure
 
 ```
 .github/
-  agents/squad.agent.md   # Coordinator governance (the brain)
+  agents/squad.agent.md   # Bridge governance for the Mercury Mesh control plane
   workflows/               # GitHub Actions for issue triage, labels, heartbeat
 .squad/
-  config.json              # Version & feature flags
-  team.md                  # Team roster (empty = Init Mode)
-  routing.md               # Work routing rules
-  ceremonies.md            # Design review & retro triggers
-  decisions.md             # Decision log
-  org/                     # Org-mode runtime: departments, backlog/state, contracts
-  templates/               # Framework templates for agents, skills, workflows
+  config.json              # Runtime flags and bridge state
+  team.md                  # Bridge roster (empty = Init Mode)
+  routing.md               # Mission routing rules
+  ceremonies.md            # Review and retro triggers
+  decisions.md             # The Black Box decision ledger
+  org/                     # Wing runtime: departments, backlog/state, contracts
+  templates/               # Templates for agents, skills, and workflows
 .copilot/
   mcp-config.json          # MCP server configuration
 ```
 
-## How It Works
+## Operating Model
 
-- **Init Mode** — No team yet. Squad interviews you, casts a team, and scaffolds agent charters.
-- **Team Mode** — Team exists. Squad routes tasks to the right agents, enforces review gates, and keeps a decision log.
-- **Org Mode** — Optional hierarchical routing with departments. Enable via `orgMode: true` in `.squad/config.json`.
-- **Org Runtime** — In Org Mode, departments use scoped backlog/state files and contract-first parallel work under coordinator supervision.
+- **Zero-Gravity Hierarchy**: there is no up or down. Missions act as gravity wells that pull the right Wings into orbit until the sortie is complete.
+- **Liquid Logic**: the Mesh can shard into small specialist droplets for micro-tasks, then reform into a heavier strike shape for multi-domain work.
+- **The Intent Bridge**: the Commander defines the Flight Path and monitors Telemetry. The Mesh handles decomposition, iteration, and coordination.
 
-### Org Runtime Helper
+## Structural Equivalents
 
-Org Mode includes a zero-dependency reconcile helper template at `.squad/templates/org-runtime-reconcile.js`.
-When installed into a live org repo as `.squad/org/reconcile.js`, it can scan department state for expired claims, stale heartbeats, and parallelism breaches, and optionally requeue expired packets.
+| Standard Concept | Mercury Mesh Equivalent | Function |
+|------------------|-------------------------|----------|
+| Department | Wing / Deck | Domain-scoped execution group such as the Forge Wing or Sensory Deck |
+| Project | Mission / Sortie | Focused deployment into a defined problem space |
+| Project Lead | Mission Prime | Local lead coordinating the gravity well |
+| Documentation | The Black Box | Immutable ledger of decisions, learnings, and telemetry |
+| Data Strategy | The Flight Path | Long-range direction captured in `.squad/manifesto.md` |
+| Task Status | Telemetry | Live readout of progress, quality, and resource drift |
 
-Org Mode also includes a zero-dependency seeding helper at `.squad/templates/org-seed-runtime.js`.
-When installed into a live org repo as `.squad/org/seed-runtime.js`, it can generate per-department `charter.md`, `backlog.md`, `state.json`, and declared contract files from `.squad/org/structure.json`.
+## Vocal Signatures
 
-To bridge GitHub issue triage into department work queues, use `.squad/templates/org-backlog-from-triage.js`.
-When installed into a live org repo as `.squad/org/backlog-from-triage.js`, it converts triaged issues into queued department backlog packets.
+- **Ship's Computer**: analytical, objective, slightly cold. This is the coordinator voice.
+- **Tactical Officer**: brief, urgent, mission-oriented. Use for routing, triage, and escalation.
+- **Specialist**: focused, adaptive, immersed in execution. Use for builders, researchers, and creatives.
 
-For a single snapshot across all departments, use `.squad/templates/org-status.js`.
-When installed into a live org repo as `.squad/org/status.js`, it reports backlog counts, active claims, stale heartbeat flags, and known contracts in one JSON summary.
+## Operational Protocols
+
+- **HALT Sentinel**: emergency override that freezes all agent spawns and write operations.
+- **Shadowing Phase**: new agents observe and analyze before they are allowed to fire thrusters.
+- **The Loom**: shared knowledge fabric where one agent's learning becomes bridge knowledge.
+
+## Compatibility Layer
+
+Mercury Mesh currently preserves `.squad/` storage, `squad:*` issue labels, and the `squad/{issue-number}-{slug}` branch convention. Those mechanics are already wired into workflows, so the bridge identity is layered on top rather than forced through a risky runtime rename.
 
 ## License
 

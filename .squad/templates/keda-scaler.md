@@ -1,16 +1,18 @@
-# KEDA External Scaler for GitHub Issue-Driven Agent Autoscaling
+# KEDA External Scaler for GitHub Issue-Driven Mercury Mesh Autoscaling
 
 > Scale agent pods to zero when idle, up when work arrives — driven by GitHub Issues.
 
 ## Overview
 
-When running Squad on Kubernetes, agent pods sit idle when no work exists. [KEDA](https://keda.sh) (Kubernetes Event-Driven Autoscaler) solves this for queue-based workloads, but GitHub Issues isn't a native KEDA trigger.
+When running Mercury Mesh on Kubernetes, agent pods sit idle when no work exists. [KEDA](https://keda.sh) (Kubernetes Event-Driven Autoscaler) solves this for queue-based workloads, but GitHub Issues is not a native KEDA trigger.
 
 The `keda-copilot-scaler` is a KEDA External Scaler (gRPC) that bridges this gap:
-1. Polls GitHub API for issues matching specific labels (e.g., `squad:copilot`)
+1. Polls GitHub API for issues matching specific labels (for now, compatibility labels such as `squad:copilot`)
 2. Reports queue depth as a KEDA metric
 3. Handles rate limits gracefully (Retry-After, exponential backoff)
 4. Supports composite scaling decisions
+
+Examples below still use the legacy label, namespace, and node-label scheme until the runtime rename lands.
 
 ## Quick Start
 
@@ -91,7 +93,7 @@ The scaler tracks GitHub API rate limits:
 - Reports rate limit metrics as secondary KEDA triggers
 - Never exhausts API quota from polling
 
-## Integration with Squad
+## Integration with Mercury Mesh
 
 ### Machine Capabilities (#514)
 
@@ -159,6 +161,6 @@ The scaler is maintained as a standalone project. PRs and issues welcome.
 ## References
 
 - [KEDA External Scalers](https://keda.sh/docs/latest/concepts/external-scalers/) — KEDA documentation
-- [Squad on AKS](https://github.com/tamirdresher/squad-on-aks) — Full Kubernetes deployment example
+- [Mercury Mesh on AKS (legacy repo name: squad-on-aks)](https://github.com/tamirdresher/squad-on-aks) — Full Kubernetes deployment example
 - [Machine Capabilities](machine-capabilities.md) — Capability-based routing (#514)
 - [Cooperative Rate Limiting](cooperative-rate-limiting.md) — Multi-agent rate management (#515)

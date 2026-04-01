@@ -1,4 +1,4 @@
-name: Sync Squad Labels
+name: Sync Mercury Mesh Labels
 
 on:
   push:
@@ -29,7 +29,7 @@ jobs:
             }
 
             if (!fs.existsSync(teamFile)) {
-              core.info('No .squad/team.md or .ai-team/team.md found — skipping label sync');
+              core.info('No .squad/team.md or .ai-team/team.md found — skipping Mercury Mesh label sync');
               return;
             }
 
@@ -67,12 +67,12 @@ jobs:
               }
             }
 
-            core.info(`Found ${members.length} squad members: ${members.map(m => m.name).join(', ')}`);
+            core.info(`Found ${members.length} Mercury Mesh members: ${members.map(m => m.name).join(', ')}`);
 
             // Check if @copilot is on the team
             const hasCopilot = content.includes('🤖 Coding Agent');
 
-            // Define label color palette for squad labels
+            // Define color palette for Mercury Mesh compatibility labels
             const SQUAD_COLOR = '9B8FCC';
             const MEMBER_COLOR = '9B8FCC';
             const COPILOT_COLOR = '10b981';
@@ -116,9 +116,9 @@ jobs:
               { name: 'priority:p2', color: 'FBCA04', description: 'Next sprint' }
             ];
 
-            // Ensure the base "squad" triage label exists
+            // Ensure the base "squad" triage label exists. The name stays legacy for workflow compatibility.
             const labels = [
-              { name: 'squad', color: SQUAD_COLOR, description: 'Squad triage inbox — Lead will assign to a member' }
+              { name: 'squad', color: SQUAD_COLOR, description: 'Mercury Mesh triage inbox — legacy compatibility label for Lead routing' }
             ];
 
             for (const member of members) {
@@ -134,7 +134,7 @@ jobs:
               labels.push({
                 name: 'squad:copilot',
                 color: COPILOT_COLOR,
-                description: 'Assigned to @copilot (Coding Agent) for autonomous work'
+                description: 'Assigned to @copilot (Coding Agent) for Mercury Mesh autonomous work'
               });
             }
 

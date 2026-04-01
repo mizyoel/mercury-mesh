@@ -1,6 +1,6 @@
 # Ceremonies
 
-> Team meetings that happen before or after work. Each squad configures their own.
+> Team meetings that happen before or after work. Each bridge configures its own.
 
 ## Design Review
 
