@@ -37,6 +37,20 @@
     "heartbeatMinutes": 15,
     "requeueExpiredClaims": true
   },
+  "missionControl": {
+    "breakWorkIntoMissions": true,
+    "defaultRoadmapDepth": 4,
+    "headerStyle": "ascii-art",
+    "reportStyle": "ascii-command-deck",
+    "showRoadmapInReplies": true,
+    "telemetryCadence": "per-batch",
+    "requiredFields": [
+      "mission",
+      "status",
+      "next",
+      "risks"
+    ]
+  },
   "humanTiers": {
     "tier1": [],
     "tier2": [],

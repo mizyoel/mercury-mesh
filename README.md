@@ -211,11 +211,32 @@ SCHEMA :: v2
 | `orgConfig.claimLeaseMinutes` | `number` | How long an agent holds an issue claim before it expires. |
 | `orgConfig.heartbeatMinutes` | `number` | Interval at which active agents report progress. |
 | `orgConfig.requeueExpiredClaims` | `boolean` | `true` returns expired claims to the backlog for reassignment. |
+| `missionControl.breakWorkIntoMissions` | `boolean` | `true` forces non-trivial work to be decomposed into explicit missions before execution. |
+| `missionControl.defaultRoadmapDepth` | `number` | Target number of mission checkpoints in the commander-facing Flight Path when task shape is unclear. |
+| `missionControl.headerStyle` | `string` | `"ascii-art"` renders deck headers as ASCII banner text instead of plain labels. |
+| `missionControl.reportStyle` | `string` | `"ascii-command-deck"` renders commander-facing reports as ASCII console panels with boxed modules and aligned telemetry streams. |
+| `missionControl.showRoadmapInReplies` | `boolean` | `true` makes the Flight Path visible in commander-facing updates instead of only in logs. |
+| `missionControl.telemetryCadence` | `string` | `"per-batch"` reports after each meaningful work batch. `"on-change"` only reports when the roadmap materially changes. |
+| `missionControl.requiredFields` | `string[]` | Telemetry fields that must always be surfaced in updates. Recommended: `mission`, `status`, `next`, `risks`. |
 | `humanTiers.tier1` | `string[]` | Full authority. Promotes agents, approves architecture, overrides any gate. |
 | `humanTiers.tier2` | `string[]` | Approves routine work and review gates. Cannot promote agent lifecycle phases. |
 | `humanTiers.tier3` | `string[]` | Read-only observers. No approval authority. |
 | `onboarding.defaultPhase` | `string` | `"shadow"`: read-only observation. `"probation"`: execution under review. |
 | `onboarding.autoPromoteThreshold` | `boolean\|number` | `false` requires Tier-1 approval. A number auto-promotes after that many successful tasks. |
+
+Recommended for a commander who wants continuous status visibility:
+
+```json
+"missionControl": {
+  "breakWorkIntoMissions": true,
+  "defaultRoadmapDepth": 4,
+  "headerStyle": "ascii-art",
+  "reportStyle": "ascii-command-deck",
+  "showRoadmapInReplies": true,
+  "telemetryCadence": "per-batch",
+  "requiredFields": ["mission", "status", "next", "risks"]
+}
+```
 
 ---
 

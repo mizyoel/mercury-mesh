@@ -285,6 +285,42 @@ Telemetry is how you read the drift. Not status meetings. Not color-coded spread
 
 ---
 
+## Automatic Flight Paths
+
+The bridge should not wait to be asked for status. Every non-trivial sortie should be decomposed into a visible Flight Path: a short roadmap of missions with live state.
+
+```text
++-----------------------------------------------------------------------------+
+|  ___ _    ___ ___ _  _ _____   ___   _ _____ _  _                           |
+| | __| |  |_ _/ __| || |_   _| | _ \ /_\_   _| || |                          |
+| | _|| |__ | | (_ | __ | | |   |  _// _ \| | | __ |                          |
+| |_| |____|___\___|_||_| |_|   |_| /_/ \_\_| |_||_|                          |
++-----------------------------------------------------------------------------+
+|  _  _ _   _ ___                                                             |
+| | || | | | |   \                                                            |
+| | __ | |_| | |) |                                                           |
+| |_||_|\___/|___/                                                            |
++-----------------------------------------------------------------------------+
+| MISSION 01 | DONE   | Scope locked. Contracts confirmed.                    |
+| MISSION 02 | ACTIVE | Implementation burn in progress.                      |
+| MISSION 03 | QUEUED | Verification and review gate standing by.             |
+| MISSION 04 | QUEUED | Docs and operator handoff.                            |
++-----------------------------------------------------------------------------+
+| _____ ___ _    ___ __  __ ___ _____ ___ ___   __                            |
+||_   _| __| |  | __|  \/  | __|_   _| _ \ _ \ / /                            |
+|  | | | _|| |__| _|| |\/| | _|  | | |   /   / > <                             |
+|  |_| |___|____|___|_|  |_|___| |_| |_|_\_|_\/_/\_\                           |
++-----------------------------------------------------------------------------+
+| NOW   | Implementation wing is moving on the active burn.                  |
+| NEXT  | Review gate activates after Mission 02 clears.                     |
+| RISKS | Contract drift or blocked dependencies bend the vector.            |
++-----------------------------------------------------------------------------+
+```
+
+When `missionControl.breakWorkIntoMissions` is enabled in `.mesh/config.json`, this HUD should appear automatically in commander-facing replies and refresh after each meaningful work batch. When `missionControl.reportStyle` is `ascii-command-deck`, reports should use ASCII-only boxed modules, aligned columns, and operational wording instead of casual prose. When `missionControl.headerStyle` is `ascii-art`, the major deck headers should render as compact ASCII banners rather than plain text labels. The Commander should always know what is active, what is next, and what is blocked without needing a separate status request.
+
+---
+
 ## Phase 7 — Ceremonies
 
 The bridge runs two structured alignment events. They fire automatically based on conditions — no scheduling required.
