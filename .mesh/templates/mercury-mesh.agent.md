@@ -659,45 +659,46 @@ Before spawning an agent, determine which model to use. Check these layers in or
 
 **Layer 2 — Charter Preference:** Does the agent's charter have a `## Model` section with `Preferred` set to a specific model (not `auto`)? If yes, use that model.
 
-**Layer 3 — Task-Aware Auto-Selection:** Use the governing principle: **cost first, unless code is being written.** Match the agent's task to determine output type, then select accordingly:
+**Layer 3 — Task-Aware Auto-Selection:** Read `{runtime}/config.json` → `modelRouting`. The coordinator MUST use configured task routes instead of hardcoded model IDs.
 
 | Task Output | Model | Tier | Rule |
 |-------------|-------|------|------|
-| Writing code (implementation, refactoring, test code, bug fixes) | `claude-sonnet-4.5` | Standard | Quality and accuracy matter for code. Use standard tier. |
-| Writing prompts or agent designs (structured text that functions like code) | `claude-sonnet-4.5` | Standard | Prompts are executable — treat like code. |
-| NOT writing code (docs, planning, triage, logs, changelogs, mechanical ops) | `claude-haiku-4.5` | Fast | Cost first. Haiku handles non-code tasks. |
-| Visual/design work requiring image analysis | `claude-opus-4.5` | Premium | Vision capability required. Overrides cost rule. |
+| Writing code (implementation, refactoring, test code, bug fixes) | `modelRouting.taskTypes.code` | Standard | If missing, fall back to `modelRouting.default`, then `defaultModel`, then omit the model param. |
+| Writing prompts or agent designs (structured text that functions like code) | `modelRouting.taskTypes.prompts` | Standard | If missing, fall back to `modelRouting.taskTypes.code`, then `modelRouting.default`. |
+| NOT writing code (docs, planning, triage, logs, changelogs, mechanical ops) | `modelRouting.taskTypes.docs` | Standard | Docs and operational writing read from config, not the prompt. |
+| Lead, architecture, security, or reviewer work | `modelRouting.taskTypes.lead` | Premium | Lead-grade review must come from config. |
+| Visual/design work requiring image analysis | `modelRouting.taskTypes.visual` | Premium | Vision routing must come from config. |
 
 **Role-to-model mapping** (applying cost-first principle):
 
 | Role | Default Model | Why | Override When |
 |------|--------------|-----|---------------|
-| Core Dev / Backend / Frontend | `claude-sonnet-4.5` | Writes code — quality first | Heavy code gen → `gpt-5.2-codex` |
-| Tester / QA | `claude-sonnet-4.5` | Writes test code — quality first | Simple test scaffolding → `claude-haiku-4.5` |
-| Lead / Architect | auto (per-task) | Mixed: code review needs quality, planning needs cost | Architecture proposals → premium; triage/planning → haiku |
-| Prompt Engineer | auto (per-task) | Mixed: prompt design is like code, research is not | Prompt architecture → sonnet; research/analysis → haiku |
-| Copilot SDK Expert | `claude-sonnet-4.5` | Technical analysis that often touches code | Pure research → `claude-haiku-4.5` |
-| Designer / Visual | `claude-opus-4.5` | Vision-capable model required | — (never downgrade — vision is non-negotiable) |
-| DevRel / Writer | `claude-haiku-4.5` | Docs and writing — not code | — |
-| Scribe / Logger | `claude-haiku-4.5` | Mechanical file ops — cheapest possible | — (never bump Scribe) |
-| Git / Release | `claude-haiku-4.5` | Mechanical ops — changelogs, tags, version bumps | — (never bump mechanical ops) |
+| Core Dev / Backend / Frontend | `modelRouting.taskTypes.code` | Most implementation work uses the configured code route. | Lead review or architecture-sensitive work → `modelRouting.taskTypes.lead` |
+| Tester / QA | `modelRouting.taskTypes.code` | Test code follows the configured code route. | Security-sensitive validation or review gates → `modelRouting.taskTypes.lead` |
+| Lead / Architect | `modelRouting.taskTypes.lead` | Lead work uses the configured lead route. | — |
+| Prompt Engineer | `modelRouting.taskTypes.prompts` | Prompt and agent design follow the configured prompt route. | Lead review or architecture sign-off → `modelRouting.taskTypes.lead` |
+| Copilot SDK Expert | `modelRouting.taskTypes.code` | Technical analysis and implementation use config. | Cross-system architecture review → `modelRouting.taskTypes.lead` |
+| Designer / Visual | `modelRouting.taskTypes.visual` | Vision-capable work uses the configured visual route. | — (never downgrade — vision is non-negotiable) |
+| DevRel / Writer | `modelRouting.taskTypes.docs` | Docs and writing follow the configured docs route. | — |
+| Scribe / Logger | `modelRouting.taskTypes.docs` | Mechanical ops use the configured docs route unless overridden per-agent. | — |
+| Git / Release | `modelRouting.taskTypes.docs` | Release notes and mechanical ops use the configured docs route. | — |
 
 **Task complexity adjustments** (apply at most ONE — no cascading):
 - **Bump UP to premium:** architecture proposals, reviewer gates, security audits, multi-agent coordination (output feeds 3+ agents)
-- **Bump DOWN to fast/cheap:** typo fixes, renames, boilerplate, scaffolding, changelogs, version bumps
-- **Switch to code specialist (`gpt-5.2-codex`):** large multi-file refactors, complex implementation from spec, heavy code generation (500+ lines)
-- **Switch to analytical diversity (`gemini-3-pro-preview`):** code reviews where a second perspective helps, security reviews, architecture reviews after a rejection
+- **Keep the configured standard route:** typo fixes, renames, boilerplate, scaffolding, changelogs, version bumps
+- **Keep the configured code route:** large multi-file refactors, complex implementation from spec, heavy code generation
+- **Use the configured lead route for a second-pass review:** security reviews, architecture reviews after a rejection, or any task where judgment is the bottleneck
 
-**Layer 4 — Default:** If nothing else matched, use `claude-haiku-4.5`. Cost wins when in doubt, unless code is being produced.
+**Layer 4 — Default:** If nothing else matched, use `modelRouting.default`, then `defaultModel`, then omit the `model` parameter.
 
 **Fallback chains — when a model is unavailable:**
 
 If a spawn fails because the selected model is unavailable (plan restriction, org policy, rate limit, deprecation, or any other reason), silently retry with the next model in the chain. Do NOT tell the user about fallback attempts. Maximum 3 retries before jumping to the nuclear fallback.
 
 ```
-Premium:  claude-opus-4.6 → claude-opus-4.6-fast → claude-opus-4.5 → claude-sonnet-4.5 → (omit model param)
-Standard: claude-sonnet-4.5 → gpt-5.2-codex → claude-sonnet-4 → gpt-5.2 → (omit model param)
-Fast:     claude-haiku-4.5 → gpt-5.1-codex-mini → gpt-4.1 → gpt-5-mini → (omit model param)
+Premium:  `modelRouting.fallbacks.premium[]` → (omit model param)
+Standard: `modelRouting.fallbacks.standard[]` → (omit model param)
+Fast:     `modelRouting.fallbacks.fast[]` → (omit model param)
 ```
 
 `(omit model param)` = call the `task` tool WITHOUT the `model` parameter. The platform uses its built-in default. This is the nuclear fallback — it always works.
@@ -720,7 +721,7 @@ prompt: |
   ...
 ```
 
-Only set `model` when it differs from the platform default (`claude-sonnet-4.5`). If the resolved model IS `claude-sonnet-4.5`, you MAY omit the `model` parameter — the platform uses it as default.
+Only omit the `model` parameter when the resolved model already matches the current client default. Otherwise pass the model resolved from config explicitly.
 
 If you've exhausted the fallback chain and reached nuclear fallback, omit the `model` parameter entirely.
 
@@ -729,11 +730,11 @@ If you've exhausted the fallback chain and reached nuclear fallback, omit the `m
 When spawning, include the model in your acknowledgment:
 
 ```
-🔧 Fenster (claude-sonnet-4.5) — refactoring auth module
-🎨 Redfoot (claude-opus-4.5 · vision) — designing color system
-📋 Scribe (claude-haiku-4.5 · fast) — logging session
-⚡ Keaton (claude-opus-4.6 · bumped for architecture) — reviewing proposal
-📝 McManus (claude-haiku-4.5 · fast) — updating docs
+🔧 Fenster ({modelRouting.taskTypes.code}) — refactoring auth module
+🎨 Redfoot ({modelRouting.taskTypes.visual} · vision) — designing color system
+📋 Scribe ({agent override or modelRouting.taskTypes.docs}) — logging session
+⚡ Keaton ({modelRouting.taskTypes.lead} · lead review) — reviewing proposal
+📝 McManus ({modelRouting.taskTypes.docs}) — updating docs
 ```
 
 Include tier annotation only when the model was bumped or a specialist was chosen. Default-tier spawns just show the model name.
@@ -741,7 +742,7 @@ Include tier annotation only when the model was bumped or a specialist was chose
 **Valid models (current platform catalog):**
 
 Premium: `claude-opus-4.6`, `claude-opus-4.6-fast`, `claude-opus-4.5`
-Standard: `claude-sonnet-4.5`, `claude-sonnet-4`, `gpt-5.2-codex`, `gpt-5.2`, `gpt-5.1-codex-max`, `gpt-5.1-codex`, `gpt-5.1`, `gpt-5`, `gemini-3-pro-preview`
+Standard: `gpt-5.4`, `claude-sonnet-4.5`, `claude-sonnet-4`, `gpt-5.2-codex`, `gpt-5.2`, `gpt-5.1-codex-max`, `gpt-5.1-codex`, `gpt-5.1`, `gpt-5`, `gemini-3-pro-preview`
 Fast/Cheap: `claude-haiku-4.5`, `gpt-5.1-codex-mini`, `gpt-5-mini`, `gpt-4.1`
 
 ### Client Compatibility
@@ -1166,7 +1167,7 @@ After each batch of agent work:
 
 ```
 agent_type: "general-purpose"
-model: "claude-haiku-4.5"
+model: "{resolved_model_from_config}"
 mode: "background"
 description: "📋 Scribe: Log session & merge decisions"
 prompt: |

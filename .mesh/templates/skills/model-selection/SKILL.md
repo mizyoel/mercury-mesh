@@ -1,3 +1,7 @@
+---
+name: "model-selection"
+description: "Determines which LLM model to use for each agent spawn based on a 5-layer resolution hierarchy, including user preferences, session directives, charter specifications, task-aware defaults, and a hardcoded fallback."
+---
 # Model Selection
 
 > Determines which LLM model to use for each agent spawn.
@@ -28,8 +32,8 @@ Resolution is **first-match-wins** — the highest layer with a value wins.
 | **0b** | Global Config | `.mesh/config.json` → `defaultModel` | Persistent (survives sessions) |
 | **1** | Session Directive | User said "use X" in current session | Session-only |
 | **2** | Charter Preference | Agent's `charter.md` → `## Model` section | Persistent (in charter) |
-| **3** | Task-Aware Auto | Code → sonnet, docs → haiku, visual → opus | Computed per-spawn |
-| **4** | Default | `claude-haiku-4.5` | Hardcoded fallback |
+| **3** | Task-Aware Auto | `.mesh/config.json` → `modelRouting.taskTypes` | Computed per-spawn |
+| **4** | Default | `.mesh/config.json` → `modelRouting.default`, then `defaultModel`, then omit model param | Configured fallback |
 
 **Key principle:** Layer 0 (persistent config) beats everything. If the user said "always use opus" and it was saved to config.json, every agent gets opus regardless of role or task type. This is intentional — the user explicitly chose quality over cost.
 
@@ -48,12 +52,13 @@ Resolution is **first-match-wins** — the highest layer with a value wins.
 2. CHECK Layer 0b: Is there a `defaultModel` in config.json? → Use it.
 3. CHECK Layer 1: Did the user give a session directive? → Use it.
 4. CHECK Layer 2: Does the agent's charter have a `## Model` section? → Use it.
-5. CHECK Layer 3: Determine task type:
-   - Code (implementation, tests, refactoring, bug fixes) → `claude-sonnet-4.6`
-   - Prompts, agent designs → `claude-sonnet-4.6`
-   - Visual/design with image analysis → `claude-opus-4.6`
-   - Non-code (docs, planning, triage, changelogs) → `claude-haiku-4.5`
-6. FALLBACK Layer 4: `claude-haiku-4.5`
+5. CHECK Layer 3: Read `.mesh/config.json` → `modelRouting.taskTypes`:
+  - Code (implementation, tests, refactoring, bug fixes) → `taskTypes.code`
+  - Prompts, agent designs → `taskTypes.prompts` or `taskTypes.code`
+  - Lead, architecture, reviewer, or security work → `taskTypes.lead`
+  - Visual/design with image analysis → `taskTypes.visual`
+  - Non-code (docs, planning, triage, changelogs) → `taskTypes.docs`
+6. FALLBACK Layer 4: `modelRouting.default`, then `defaultModel`, then omit the model param
 7. INCLUDE model in spawn acknowledgment: `🔧 {Name} ({resolved_model}) — {task}`
 
 ### When User Sets a Preference
@@ -69,6 +74,12 @@ Resolution is **first-match-wins** — the highest layer with a value wins.
 1. VALIDATE model ID
 2. WRITE to `agentModelOverrides.{agent}` in `.mesh/config.json`
 3. ACKNOWLEDGE: `✅ {Agent} will always use {model} — saved to config.`
+
+**Per-category trigger:** "use X for code" / "use X for docs" / "use X for lead reviews"
+
+1. VALIDATE model ID
+2. WRITE to `.mesh/config.json` → `modelRouting.taskTypes.{category}`
+3. ACKNOWLEDGE: `✅ {category} tasks now route to {model}.`
 
 ### When User Clears a Preference
 
@@ -92,26 +103,37 @@ After resolving the model and including it in the spawn template, this skill is 
 ```json
 {
   "version": 1,
-  "defaultModel": "claude-opus-4.6",
-  "agentModelOverrides": {
-    "fenster": "claude-sonnet-4.6",
-    "mcmanus": "claude-haiku-4.5"
+  "modelRouting": {
+    "default": "gpt-5.4",
+    "taskTypes": {
+      "code": "gpt-5.4",
+      "prompts": "gpt-5.4",
+      "docs": "gpt-5.4",
+      "lead": "claude-opus-4.6",
+      "visual": "claude-opus-4.6"
+    },
+    "fallbacks": {
+      "premium": ["claude-opus-4.6", "gpt-5.4"],
+      "standard": ["gpt-5.4"],
+      "fast": ["gpt-5.4"]
+    }
   }
 }
 ```
 
-- `defaultModel` — applies to ALL agents unless overridden by `agentModelOverrides`
-- `agentModelOverrides` — per-agent overrides that take priority over `defaultModel`
-- Both fields are optional. When absent, Layers 1-4 apply normally.
+- `modelRouting.default` — default model for task-aware routing when no category-specific route matches
+- `modelRouting.taskTypes` — config-driven category routing for Layer 3
+- `modelRouting.fallbacks` — ordered fallback lists per tier, filtered by `allowedModels` when present
+- `defaultModel` and `agentModelOverrides` remain valid explicit overrides above task routing
 
 ## Fallback Chains
 
 If a model is unavailable (rate limit, plan restriction), retry within the same tier:
 
 ```
-Premium:  claude-opus-4.6 → claude-opus-4.6-fast → claude-opus-4.5 → claude-sonnet-4.6
-Standard: claude-sonnet-4.6 → gpt-5.4 → claude-sonnet-4.5 → gpt-5.3-codex → claude-sonnet-4
-Fast:     claude-haiku-4.5 → gpt-5.1-codex-mini → gpt-4.1 → gpt-5-mini
+Premium:  `modelRouting.fallbacks.premium[]`
+Standard: `modelRouting.fallbacks.standard[]`
+Fast:     `modelRouting.fallbacks.fast[]`
 ```
 
-**Never fall UP in tier.** A fast task won't land on a premium model via fallback.
+**Keep fallbacks inside the repo allowlist when `allowedModels` is active.** If no allowed fallback exists, omit the model parameter.

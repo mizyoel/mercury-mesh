@@ -6,9 +6,31 @@
     "gpt-5.4",
     "claude-opus-4.6"
   ],
+  "modelRouting": {
+    "default": "gpt-5.4",
+    "taskTypes": {
+      "code": "gpt-5.4",
+      "prompts": "gpt-5.4",
+      "docs": "gpt-5.4",
+      "lead": "claude-opus-4.6",
+      "visual": "claude-opus-4.6"
+    },
+    "fallbacks": {
+      "premium": [
+        "claude-opus-4.6",
+        "gpt-5.4"
+      ],
+      "standard": [
+        "gpt-5.4"
+      ],
+      "fast": [
+        "gpt-5.4"
+      ]
+    }
+  },
   "orgConfig": {
-    "autonomyMode": "delegated",
-    "crossDeptStrategy": "contract-first",
+    "autonomyMode": "autonomous",
+    "crossDeptStrategy": "ad-hoc",
     "escalationBehavior": "advisory",
     "maxParallelismPerDepartment": 3,
     "claimLeaseMinutes": 30,

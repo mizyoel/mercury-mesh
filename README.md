@@ -201,6 +201,9 @@ SCHEMA :: v2
 | `orgMode` | `boolean` | `true` enables Wing/Deck departmental structure with leads, contracts, and cross-department routing. `false` runs the bridge as a flat team. |
 | `halted` | `boolean` | **HALT Sentinel.** `true` freezes all agent spawns and write operations. |
 | `allowedModels` | `string[]` | Model allowlist. Non-empty restricts all agents to listed models. Empty or absent allows all. |
+| `modelRouting.default` | `string` | Default model for task-aware auto-selection when no more specific task route matches. |
+| `modelRouting.taskTypes` | `object` | Category routing for task-aware auto-selection. Recommended keys: `code`, `prompts`, `docs`, `lead`, `visual`. |
+| `modelRouting.fallbacks` | `object` | Ordered fallback chains used by task-aware auto-selection. Recommended keys: `premium`, `standard`, `fast`. |
 | `orgConfig.autonomyMode` | `string` | `"delegated"`: bridge assigns. `"autonomous"`: wings self-select. |
 | `orgConfig.crossDeptStrategy` | `string` | `"contract-first"`: formal interface contracts. `"ad-hoc"`: Airbridges on demand. |
 | `orgConfig.escalationBehavior` | `string` | `"advisory"`: suggest resolution. `"blocking"`: halt until resolved. |
