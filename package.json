@@ -1,0 +1,38 @@
+{
+  "name": "@f-os/mercury-mesh",
+  "version": "0.9.4",
+  "description": "Mercury Mesh runtime templates, prompts, workflows, and skills for Fluid OS autonomous operations.",
+  "type": "commonjs",
+  "main": "index.cjs",
+  "exports": {
+    ".": "./index.cjs",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "README.md",
+    "docs/",
+    "index.cjs",
+    ".copilot/",
+    ".github/agents/",
+    ".mesh/manifesto.md",
+    ".mesh/templates/"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "pack:dry-run": "npm pack --dry-run"
+  },
+  "keywords": [
+    "mercury-mesh",
+    "f-os",
+    "copilot",
+    "agents",
+    "templates",
+    "workflows"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
