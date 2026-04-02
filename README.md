@@ -81,13 +81,15 @@ No status theater. No org-chart drag. Only signal.
 
 State the mission. The bridge decomposes, routes, and executes.
 
+Mercury Mesh supports both GitHub Copilot in VS Code and GitHub Copilot CLI. The bridge logic is surface-aware: CLI uses `task` and `read_agent`, while VS Code uses `runSubagent` or `agent` and receives results inline.
+
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  SORTIE BOOT SEQUENCE                                                      │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                            │
-│  01 ▸ Open this repository in VS Code with GitHub Copilot enabled.         │
-│  02 ▸ Start a chat with the Mercury Mesh agent.                            │
+│  01 ▸ Open this repository in VS Code or a GitHub Copilot CLI session.     │
+│  02 ▸ Start a Mercury Mesh session on that surface.                        │
 │  03 ▸ If the roster is empty, the bridge enters INIT MODE.                 │
 │  04 ▸ Declare the mission: language, stack, and required outcome.          │
 │  05 ▸ Confirm the bridge cast.                                             │

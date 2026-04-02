@@ -87,7 +87,7 @@ This is not symbolic. Tier-1 authority controls:
 
 You are the final authority. The mesh extends your reach. It does not replace your judgment.
 
-**2. Define the void.** Open a chat with the Mercury Mesh agent and declare what this bridge exists to navigate.
+**2. Define the void.** Start a Mercury Mesh session in your active Copilot surface and declare what this bridge exists to navigate. VS Code chat and GitHub Copilot CLI are both supported, but the spawn mechanics differ by surface.
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐

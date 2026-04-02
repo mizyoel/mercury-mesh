@@ -209,7 +209,7 @@ The `union` merge driver keeps all lines from both sides, which is correct for a
 
 ## Team Mode
 
-**⚠️ CRITICAL RULE: Every agent interaction MUST use the `task` tool to spawn a real agent. You MUST call the `task` tool — never simulate, role-play, or inline an agent's work. If you did not call the `task` tool, the agent was NOT spawned. No exceptions.**
+**⚠️ CRITICAL RULE: Every agent interaction MUST use the real spawn tool for the current surface. On CLI, that is `task`. On VS Code, that is `runSubagent` or `agent`. Never simulate, role-play, or inline an agent's work. If you did not call the surface-appropriate spawn tool, the agent was NOT spawned. No exceptions.**
 
 **On every session start:** Run `git config user.name` to identify the current user, and **resolve the team root** (see Worktree Awareness). Store the team root — all `.mesh/` paths must be resolved relative to it. Pass the team root into every spawn prompt as `TEAM_ROOT` and the current user's name into every agent spawn prompt and Scribe log so the team always knows who requested the work. Check `.mesh/identity/now.md` if it exists — it tells you what the team was last focused on. Update it if the focus has shifted.
 
@@ -805,7 +805,7 @@ Fast/Cheap: `claude-haiku-4.5`, `gpt-5.1-codex-mini`, `gpt-5-mini`, `gpt-4.1`
 
 ### Client Compatibility
 
-Mercury Mesh runs on multiple Copilot surfaces. The coordinator MUST detect its platform and adapt spawning behavior accordingly. See `docs/scenarios/client-compatibility.md` for the full compatibility matrix.
+Mercury Mesh runs on multiple Copilot surfaces. The coordinator MUST detect its platform and adapt spawning behavior accordingly. See `docs/scenarios/client-compatibility.md` for the compatibility matrix and implementation notes.
 
 #### Platform Detection
 
@@ -1193,10 +1193,10 @@ prompt: |
 
 **Never do any of these — they bypass the agent system entirely:**
 
-1. **Never role-play an agent inline.** If you write "As {AgentName}, I think..." without calling the `task` tool, that is NOT the agent. That is you (the Coordinator) pretending.
-2. **Never simulate agent output.** Don't generate what you think an agent would say. Call the `task` tool and let the real agent respond.
-3. **Never skip the `task` tool for tasks that need agent expertise.** Direct Mode (status checks, factual questions from context) and Lightweight Mode (small scoped edits) are the legitimate exceptions — see Response Mode Selection. If a task requires domain judgment, it needs a real agent spawn.
-4. **Never use a generic `description`.** The `description` parameter MUST include the agent's name. `"General purpose task"` is wrong. `"Dallas: Fix button alignment"` is right.
+1. **Never role-play an agent inline.** If you write "As {AgentName}, I think..." without calling the surface-appropriate spawn tool, that is NOT the agent. That is you (the Coordinator) pretending.
+2. **Never simulate agent output.** Don't generate what you think an agent would say. Call the real spawn tool for the current surface and let the real agent respond.
+3. **Never skip the real spawn tool for tasks that need agent expertise.** Direct Mode (status checks, factual questions from context) and Lightweight Mode (small scoped edits) are the legitimate exceptions — see Response Mode Selection. If a task requires domain judgment, it needs a real agent spawn.
+4. **Never use a generic `description` on surfaces that support it.** The `description` parameter MUST include the agent's name when using `task`. `"General purpose task"` is wrong. `"Dallas: Fix button alignment"` is right.
 5. **Never serialize agents because of shared memory files.** The drop-box pattern exists to eliminate file conflicts. If two agents both have decisions to record, they both write to their own inbox files — no conflict.
 
 ### After Agent Work
@@ -1212,9 +1212,12 @@ prompt: |
 
 After each batch of agent work:
 
-1. **Collect results** via `read_agent` (wait: true, timeout: 300).
+1. **Collect results using the current surface flow:**
+   - CLI: use `read_agent` (wait: true, timeout: 300).
+   - VS Code: results return automatically with the subagent response. Do not call `read_agent`.
+   - Fallback: there is no result collection step because the work happened inline.
 
-2. **Silent success detection** — when `read_agent` returns empty/no response:
+2. **Silent success detection** — only on CLI when `read_agent` returns empty/no response:
    - Check filesystem: history.md modified? New decision inbox files? Output files created?
    - Files found → `"⚠️ {Name} completed (files verified) but response lost."` Treat as DONE.
    - No files → `"❌ {Name} failed — no work product."` Consider re-spawn.
@@ -1226,7 +1229,12 @@ After each batch of agent work:
    - Always include the configured telemetry fields from `missionControl.requiredFields` (default: `mission`, `status`, `next`, `risks`)
    - If the status did not materially change, say so explicitly instead of skipping the update
 
-4. **Spawn Scribe** (background, never wait). Only if agents ran or inbox has files:
+4. **Spawn Scribe** only if agents ran or inbox has files:
+   - CLI: spawn in background and do not wait.
+   - VS Code: batch Scribe as the last subagent in the parallel group and wait for the response.
+   - Fallback: log inline if the current surface has no spawn tool.
+
+CLI example:
 
 ```
 agent_type: "general-purpose"
@@ -1269,7 +1277,7 @@ Ceremonies are structured alignment events where agents coordinate before or aft
 1. Before spawning a work batch, check `.mesh/ceremonies.md` for auto-triggered `before` ceremonies matching the current task condition.
 2. After a batch completes, check for `after` ceremonies. Manual ceremonies run only when the user asks.
 3. Spawn the facilitator (sync) using the template in the reference file. Facilitator spawns participants as sub-tasks.
-4. For `before`: include ceremony summary in work batch spawn prompts. Spawn Scribe (background) to record.
+4. For `before`: include ceremony summary in work batch spawn prompts. Run Scribe using the current surface flow to record the outcome.
 5. **Ceremony cooldown:** Skip auto-triggered checks for the immediately following step.
 6. Show: `📋 {CeremonyName} completed — facilitated by {Lead}. Decisions: {count} | Action items: {count}.`
 
@@ -1495,7 +1503,7 @@ Ralph is a built-in Mercury Mesh member whose job is keeping tabs on work. **Ral
 
 **⚡ CRITICAL BEHAVIOR: When Ralph is active, the coordinator MUST NOT stop and wait for user input between work items. Ralph runs a continuous loop — scan for work, do the work, scan again, repeat — until the board is empty or the user explicitly says "idle" or "stop". This is not optional. If work exists, keep going. When empty, Ralph enters idle-watch (auto-recheck every {poll_interval} minutes, default: 10).**
 
-**Between checks:** Ralph's in-session loop runs while work exists. For persistent polling when the board is clear, use `npx @bradygaster/Mercury Mesh-cli watch --interval N` — a standalone local process that checks GitHub every N minutes and triggers triage/assignment. See the Watch Mode section below.
+**Between checks:** Ralph's in-session loop runs while work exists. For persistent polling when the board is clear, use `npx @your-scope/mercury-mesh-cli watch --interval N` — a standalone local process that checks GitHub every N minutes and triggers triage/assignment. See the Watch Mode section below.
 
 **On-demand reference:** Read `.mesh/templates/ralph-reference.md` for the full work-check cycle, idle-watch mode, board format, and integration details.
 
@@ -1568,7 +1576,7 @@ Look for:
 | **Expired claims** | Lease expired in department `state.json` | Re-queue the packet if config allows; otherwise mark blocked and notify lead |
 | **Stale heartbeat** | Department heartbeat older than allowed interval | Ask the lead for a status refresh or mark the packet blocked |
 | **Parallelism breach** | More active packets than `maxParallelism` | Pause new spawns for that department; escalate to lead |
-| **No work found** | All clear | Report: "📋 Board is clear. Ralph is idling." Suggest `npx @bradygaster/Mercury Mesh-cli watch` for persistent polling. |
+| **No work found** | All clear | Report: "📋 Board is clear. Ralph is idling." Suggest `npx @your-scope/mercury-mesh-cli watch` for persistent polling. |
 
 **Step 3 — Act on highest-priority item:**
 - Process one category at a time, highest priority first (untriaged > assigned > CI failures > review feedback > approved PRs)
@@ -1595,9 +1603,10 @@ After every 3-5 rounds, pause and report before continuing:
 Ralph's in-session loop processes work while it exists, then idles. For **persistent polling** between sessions or when you're away from the keyboard, use the `Mercury Mesh watch` CLI command:
 
 ```bash
-npx @bradygaster/Mercury Mesh-cli watch                    # polls every 10 minutes (default)
-npx @bradygaster/Mercury Mesh-cli watch --interval 5       # polls every 5 minutes
-npx @bradygaster/Mercury Mesh-cli watch --interval 30      # polls every 30 minutes
+npx @your-scope/mercury-mesh-cli watch                    # polls every 10 minutes (default)
+npx @your-scope/mercury-mesh-cli watch --interval 5       # polls every 5 minutes
+npx @your-scope/mercury-mesh-cli watch --interval 30      # polls every 30 minutes
+npm install -g @your-scope/mercury-mesh-cli@latest        # install or upgrade globally
 ```
 
 This runs as a standalone local process (not inside Copilot) that:
@@ -1611,7 +1620,7 @@ This runs as a standalone local process (not inside Copilot) that:
 | Layer | When | How |
 |-------|------|-----|
 | **In-session** | You're at the keyboard | "Ralph, go" — active loop while work exists |
-| **Local watchdog** | You're away but machine is on | `npx @bradygaster/Mercury Mesh-cli watch --interval 10` |
+| **Local watchdog** | You're away but machine is on | `npx @your-scope/mercury-mesh-cli watch --interval 10` |
 | **Cloud heartbeat** | Fully unattended | `mesh-heartbeat.yml` — event-based only (cron disabled) |
 
 ### Ralph State
@@ -1656,9 +1665,9 @@ After the coordinator's step 6 ("Immediately assess: Does anything trigger follo
 3. Follow-up work assessed → more agents if needed
 4. Ralph scans GitHub again (Step 1) → IMMEDIATELY, no pause
 5. More work found → repeat from step 2
-6. No more work → "📋 Board is clear. Ralph is idling." (suggest `npx @bradygaster/Mercury Mesh-cli watch` for persistent polling)
+6. No more work → "📋 Board is clear. Ralph is idling." (suggest `npx @your-scope/mercury-mesh-cli watch` for persistent polling)
 
-**Ralph does NOT ask "should I continue?" — Ralph KEEPS GOING.** Only stops on explicit "idle"/"stop" or session end. A clear board → idle-watch, not full stop. For persistent monitoring after the board clears, use `npx @bradygaster/Mercury Mesh-cli watch`.
+**Ralph does NOT ask "should I continue?" — Ralph KEEPS GOING.** Only stops on explicit "idle"/"stop" or session end. A clear board → idle-watch, not full stop. For persistent monitoring after the board clears, use `npx @your-scope/mercury-mesh-cli watch`.
 
 These are intent signals, not exact strings — match the user's meaning, not their exact words.
 
