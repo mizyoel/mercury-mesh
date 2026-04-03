@@ -755,9 +755,14 @@ function isUntriagedIssue(issue, memberLabels) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const token = process.env.GITHUB_TOKEN;
-  if (!token) {
-    throw new Error('GITHUB_TOKEN is required');
+  let token = '';
+  try {
+    token = cp.execFileSync('gh', ['auth', 'token'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }).trim();
+  } catch {
+    throw new Error('GitHub CLI auth required. Install `gh` and run `gh auth login`.');
   }
 
   const meshDir = path.resolve(process.cwd(), args.meshDir);

@@ -24,7 +24,7 @@ When the nervous system is online (`config.json` → `nervousSystem.enabled: tru
 | Provider | Config Value | Description |
 |----------|-------------|-------------|
 | TF-IDF (built-in) | `"tfidf"` | Zero-dependency fallback. Uses term frequency–inverse document frequency vectors. |
-| OpenRouter | `"openrouter"` | OpenRouter embeddings API. Set `OPENROUTER_API_KEY` or `MESH_EMBEDDING_KEY`. |
+| OpenRouter | `"openrouter"` | OpenRouter embeddings API. Set `nervousSystem.embeddingApiKey` in `.mesh/local.json` (git-ignored by the CLI scaffold). |
 
 Compatibility note: `"llm"` remains available as a legacy alias for the older OpenAI-compatible endpoint path.
 

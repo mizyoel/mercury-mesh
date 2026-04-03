@@ -3,6 +3,7 @@
 .mesh/log/
 .mesh/decisions/inbox/
 .mesh/sessions/
+.mesh/local.json
 # Mercury Mesh: local workstream activation file (local to this machine)
 .mesh-workstream
 

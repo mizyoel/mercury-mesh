@@ -36,10 +36,7 @@ Users configure MCP servers at these locations (checked in priority order):
   "mcpServers": {
     "github": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": {
-        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
-      }
+      "args": ["mercury-mesh", "github-mcp"]
     }
   }
 }
@@ -82,9 +79,9 @@ Users configure MCP servers at these locations (checked in priority order):
 
 ## Authentication Notes
 
-- **GitHub MCP requires a separate token** from the `gh` CLI auth. Generate at https://github.com/settings/tokens
+- **GitHub MCP uses `gh` CLI auth locally**. Install `gh` from https://cli.github.com/ and run `gh auth login`.
 - **Trello requires API key + token** from https://trello.com/power-ups/admin
 - **Azure requires service principal credentials** — see Azure docs for setup
 - **Aspire uses the dashboard URL** — typically `http://localhost:18888` during local dev
 
-Auth is a real blocker for some MCP servers. Users need separate tokens for GitHub MCP, Azure MCP, Trello MCP, etc. This is a documentation problem, not a code problem.
+Auth is a real blocker for some MCP servers. GitHub can use `gh` CLI auth locally, while Azure, Trello, and others still need their own credentials.

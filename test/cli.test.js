@@ -33,6 +33,7 @@ test("cli: no command prints usage", () => {
     encoding: "utf-8",
   });
   assert.ok(out.includes("Usage:"));
+  assert.ok(out.includes("github-mcp"));
 });
 
 test("cli: init scaffolds expected files", () => {
@@ -64,10 +65,21 @@ test("cli: init scaffolds expected files", () => {
     "skills dir missing"
   );
 
+  const mcpConfig = fs.readFileSync(
+    path.join(FIXTURE_DIR, ".copilot", "mcp-config.json"),
+    "utf-8"
+  );
+  assert.ok(mcpConfig.includes('"github-mcp"'), "mcp config did not use github-mcp wrapper");
+
   // Config
   assert.ok(
     fs.existsSync(path.join(FIXTURE_DIR, ".mesh", "config.json")),
     "config.json missing"
+  );
+
+  assert.ok(
+    fs.existsSync(path.join(FIXTURE_DIR, ".mesh", "local.json")),
+    "local.json missing"
   );
 
   // Manifesto
@@ -82,6 +94,7 @@ test("cli: init scaffolds expected files", () => {
     "utf-8"
   );
   assert.ok(gi.includes(".mesh/log/"), ".gitignore not patched");
+  assert.ok(gi.includes(".mesh/local.json"), ".mesh/local.json not ignored");
 
   cleanFixture();
 });

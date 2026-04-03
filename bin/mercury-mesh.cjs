@@ -3,6 +3,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
+const { execFileSync, spawn } = require("node:child_process");
 
 const PACKAGE_ROOT = path.resolve(__dirname, "..");
 const VERSION = require(path.join(PACKAGE_ROOT, "package.json")).version;
@@ -54,6 +55,12 @@ const SCAFFOLD_MANIFEST = [
     dest: ".mesh/ceremonies.md",
     type: "file",
   },
+  // Local machine overrides (git-ignored)
+  {
+    src: ".mesh/templates/local.json",
+    dest: ".mesh/local.json",
+    type: "file",
+  },
   // GitHub workflows
   {
     src: ".mesh/templates/workflows",
@@ -69,6 +76,7 @@ const GITIGNORE_LINES = [
   ".mesh/log/",
   ".mesh/decisions/inbox/",
   ".mesh/sessions/",
+  ".mesh/local.json",
   ".mesh-workstream",
 ];
 
@@ -220,8 +228,9 @@ function runInit(targetRoot, flags) {
   log("Existing files were preserved (use --force to overwrite).\n");
   log("Next steps:");
   log("  1. Open VS Code in this project");
-  log('  2. Chat with @mercury-mesh — say "declare the mission"');
-  log("  3. The bridge will cast your crew and scaffold team.md\n");
+  log("  2. Add your OpenRouter key to .mesh/local.json if you want semantic routing");
+  log('  3. Chat with @mercury-mesh — say "declare the mission"');
+  log("  4. The bridge will cast your crew and scaffold team.md\n");
 }
 
 function runUpdate(targetRoot) {
@@ -259,18 +268,58 @@ function runUpdate(targetRoot) {
   log(`${filesWritten} file(s) updated (agent prompt + skills + instructions).\n`);
 }
 
+function resolveGitHubCliToken() {
+  try {
+    return execFileSync("gh", ["auth", "token"], {
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }).trim();
+  } catch {
+    throw new Error(
+      "GitHub CLI auth required locally. Install `gh` and run `gh auth login` before starting the GitHub MCP server."
+    );
+  }
+}
+
+function runGitHubMcp() {
+  const token = resolveGitHubCliToken();
+  const npxCommand = process.platform === "win32" ? "npx.cmd" : "npx";
+  const child = spawn(npxCommand, ["-y", "@anthropic/github-mcp-server"], {
+    stdio: "inherit",
+    env: {
+      ...process.env,
+      GITHUB_TOKEN: token,
+    },
+  });
+
+  child.on("error", (error) => {
+    console.error(`Failed to start GitHub MCP server: ${error.message}`);
+    process.exit(1);
+  });
+
+  child.on("exit", (code, signal) => {
+    if (signal) {
+      process.kill(process.pid, signal);
+      return;
+    }
+    process.exit(code ?? 0);
+  });
+}
+
 function printUsage() {
   console.log(`
 Mercury Mesh v${VERSION} — CLI
 
 Usage:
   npx @mizyoel/mercury-mesh init    [--force] [--target <path>]
+  npx @mizyoel/mercury-mesh github-mcp
   npx @mizyoel/mercury-mesh update  [--target <path>]
   npx @mizyoel/mercury-mesh version
 
 Commands:
   init     Scaffold Copilot agent, skills, workflows, and .mesh/ runtime
            into the target project. Existing files are preserved unless --force.
+  github-mcp  Start the GitHub MCP server using gh auth token for local auth.
   update   Overwrite agent prompt, skills, and copilot-instructions with the
            latest from this package version. Config and team files are untouched.
   version  Print package version.
@@ -301,6 +350,9 @@ function main() {
   switch (command) {
     case "init":
       runInit(targetRoot, flags);
+      break;
+    case "github-mcp":
+      runGitHubMcp();
       break;
     case "update":
       runUpdate(targetRoot);

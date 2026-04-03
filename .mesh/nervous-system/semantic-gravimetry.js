@@ -111,10 +111,10 @@ function cosineSimilarity(a, b) {
 
 function resolveEmbeddingProviderConfig(provider, config = {}) {
   if (provider === 'openrouter') {
-    const apiKey = config.embeddingApiKey || process.env.OPENROUTER_API_KEY || process.env.MESH_EMBEDDING_KEY;
+    const apiKey = config.embeddingApiKey;
 
     if (!apiKey) {
-      throw new Error('Semantic Gravimetry: No OpenRouter API key. Set OPENROUTER_API_KEY, MESH_EMBEDDING_KEY, or configure embeddingApiKey.');
+      throw new Error('Semantic Gravimetry: No OpenRouter API key. Configure nervousSystem.embeddingApiKey in .mesh/local.json.');
     }
 
     const headers = {
@@ -136,10 +136,10 @@ function resolveEmbeddingProviderConfig(provider, config = {}) {
   }
 
   if (provider === 'llm') {
-    const apiKey = config.embeddingApiKey || process.env.OPENAI_API_KEY || process.env.MESH_EMBEDDING_KEY;
+    const apiKey = config.embeddingApiKey;
 
     if (!apiKey) {
-      throw new Error('Semantic Gravimetry: No embedding API key. Set OPENAI_API_KEY, MESH_EMBEDDING_KEY, or configure embeddingApiKey.');
+      throw new Error('Semantic Gravimetry: No embedding API key. Configure nervousSystem.embeddingApiKey in .mesh/local.json.');
     }
 
     return {

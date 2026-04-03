@@ -30,6 +30,33 @@ const { createConstellationStore } = require('./constellation-memory.js');
 
 const RUNTIME_DIR_CANDIDATES = ['.mesh', '.mercury'];
 
+function loadRuntimeConfig(meshDir) {
+  const configPath = path.join(meshDir, 'config.json');
+  if (!fs.existsSync(configPath)) {
+    throw new Error(`config.json not found: ${configPath}`);
+  }
+
+  const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  const localConfigPath = path.join(meshDir, 'local.json');
+  let localConfig = {};
+
+  if (fs.existsSync(localConfigPath)) {
+    localConfig = JSON.parse(fs.readFileSync(localConfigPath, 'utf8'));
+  }
+
+  return {
+    configPath,
+    localConfigPath,
+    config: {
+      ...config,
+      nervousSystem: {
+        ...(config.nervousSystem || {}),
+        ...(localConfig.nervousSystem || {}),
+      },
+    },
+  };
+}
+
 // ─── Configuration Schema ───────────────────────────────────────────────────
 
 const NERVOUS_SYSTEM_DEFAULTS = {
@@ -91,11 +118,7 @@ async function bootNervousSystem(options = {}) {
   const emitter = new EventEmitter();
 
   // Load config
-  const configPath = path.join(meshDir, 'config.json');
-  if (!fs.existsSync(configPath)) {
-    throw new Error(`config.json not found: ${configPath}`);
-  }
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  const { config } = loadRuntimeConfig(meshDir);
   const nsConfig = mergeDefaults(config);
 
   if (!nsConfig.enabled) {
@@ -115,6 +138,7 @@ async function bootNervousSystem(options = {}) {
     provider: nsConfig.embeddingProvider,
     llmConfig: {
       provider: nsConfig.embeddingProvider,
+      embeddingApiKey: nsConfig.embeddingApiKey,
       embeddingEndpoint: nsConfig.embeddingEndpoint,
       embeddingModel: nsConfig.embeddingModel,
       embeddingAppName: nsConfig.embeddingAppName,
@@ -166,6 +190,7 @@ async function bootNervousSystem(options = {}) {
       embedFn = async (text) => {
         const [vector] = await llmEmbed([text], {
           provider: nsConfig.embeddingProvider,
+          embeddingApiKey: nsConfig.embeddingApiKey,
           embeddingEndpoint: nsConfig.embeddingEndpoint,
           embeddingModel: nsConfig.embeddingModel,
           embeddingAppName: nsConfig.embeddingAppName,
@@ -413,6 +438,7 @@ if (require.main === module) {
 
 module.exports = {
   bootNervousSystem,
+  loadRuntimeConfig,
   mergeDefaults,
   NERVOUS_SYSTEM_DEFAULTS,
 };

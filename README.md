@@ -42,87 +42,101 @@
 
 ## Installation
 
-Add Mercury Mesh to any existing project. It scaffolds the Copilot agent, skills, workflows, and `.mesh/` runtime into your project root.
-
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  DOCKING SEQUENCE                                                          │
+├──────────────────────┬──────────────────────────────────────────────────────┤
+│  REQUIRES            │  Node ≥22 · Git · GitHub Copilot (VS Code or CLI)  │
+├──────────────────────┴──────────────────────────────────────────────────────┤
+│                                                                            │
+│  01 ▸ cd your-project                                                     │
+│  02 ▸ npm install @mizyoel/mercury-mesh                                   │
+│  03 ▸ npx mercury-mesh init                                               │
+│  04 ▸ gh auth login              # GitHub access for MCP (one-time)       │
+│  05 ▸ Open in VS Code — or — launch Copilot CLI                           │
+│                                                                            │
+│  Existing files are never overwritten unless --force is passed.            │
+│                                                                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  SCAFFOLDED PAYLOAD                                                        │
+├──────────────────────────────┬──────────────────────────────────────────────┤
+│  .github/agents/*.agent.md   │  Copilot custom agent prompt               │
+│  .github/copilot-instruct…   │  Coding agent instructions                 │
+│  .github/workflows/          │  GitHub Actions workflows                   │
+│  .copilot/skills/            │  All Mercury Mesh skills                    │
+│  .copilot/mcp-config.json    │  MCP server config                         │
+│  .mesh/config.json           │  Runtime config (defaults)                  │
+│  .mesh/local.json            │  Git-ignored secrets & local overrides      │
+│  .mesh/manifesto.md          │  The Flight Path                            │
+│  .mesh/routing.md            │  Mission routing rules                      │
+│  .mesh/ceremonies.md         │  Ceremonies & rituals                       │
+├──────────────────────────────┴──────────────────────────────────────────────┤
+│  UPGRADE                                                                   │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                            │
-│  01 ▸ Install Node.js 22 or newer.                                        │
-│  02 ▸ Install the package into your project.                              │
-│  03 ▸ Run `npx mercury-mesh init` to scaffold Copilot-facing files.       │
-│  04 ▸ Create `.env.local` from `.env.example` (optional).                 │
-│  05 ▸ Open the project in VS Code — @mercury-mesh is live.                │
+│  npm update @mizyoel/mercury-mesh                                          │
+│  npx mercury-mesh update          # refreshes agent, skills, instructions  │
+│                                   # config + state files untouched         │
+│                                                                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  SEMANTIC EMBEDDINGS (optional)                                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  .mesh/local.json   →  { "nervousSystem":                                 │
+│                            { "embeddingApiKey": "<openrouter-key>" } }     │
+│                                                                            │
+│  .mesh/config.json  →  { "nervousSystem":                                 │
+│                            { "enabled": true,                              │
+│                              "embeddingProvider": "openrouter",            │
+│                              "embeddingModel":                             │
+│                                "openai/text-embedding-3-small" } }        │
+│                                                                            │
+│  init creates local.json and adds it to .gitignore automatically.          │
+│                                                                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  CLI REFERENCE                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  npx mercury-mesh init    [--force] [--target <path>]   scaffold project   │
+│  npx mercury-mesh update  [--target <path>]             upgrade agent      │
+│  npx mercury-mesh version                               print version      │
 │                                                                            │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Prerequisites
+### GitHub Copilot CLI — Quick Start
 
-- Node.js `>=22`
-- Git
-- GitHub Copilot in VS Code or GitHub Copilot CLI
-
-### Install into an existing project
-
-```bash
-cd your-project
-npm install @mizyoel/mercury-mesh
-npx mercury-mesh init
-```
-
-This scaffolds:
-
-| Path | What it does |
-|---|---|
-| `.github/agents/mercury-mesh.agent.md` | Copilot custom agent prompt |
-| `.github/copilot-instructions.md` | Coding agent instructions |
-| `.copilot/skills/` | All Mercury Mesh skills |
-| `.copilot/mcp-config.json` | MCP server config (example) |
-| `.mesh/manifesto.md` | The Flight Path |
-| `.mesh/routing.md` | Mission routing rules |
-| `.mesh/ceremonies.md` | Ceremonies & rituals |
-| `.mesh/config.json` | Runtime config (defaults) |
-| `.github/workflows/mesh-*.yml` | GitHub Actions workflows |
-
-Existing files are **never overwritten** unless you pass `--force`.
-
-### Upgrade to a new version
-
-```bash
-npm update @mizyoel/mercury-mesh
-npx mercury-mesh update
-```
-
-`update` overwrites the agent prompt, skills, and copilot-instructions with the latest version. Config, team, and runtime state files are left untouched.
-
-### Optional: Semantic embeddings
-
-If you want the nervous system's semantic gravimetry (LLM-based routing), set an OpenRouter API key:
-
-```bash
-# copy the template
-copy .env.example .env.local   # cmd
-# or
-cp .env.example .env.local     # bash
-```
-
-Then edit `.env.local`:
-
-```dotenv
-OPENROUTER_API_KEY=<your-key>
-GITHUB_TOKEN=<optional-for-issue-triage>
-```
-
-And switch `.mesh/config.json` → `nervousSystem.embeddingProvider` from `"tfidf"` to `"openrouter"`.
-
-### CLI reference
-
-```
-npx mercury-mesh init    [--force] [--target <path>]   # scaffold into project
-npx mercury-mesh update  [--target <path>]             # upgrade agent + skills
-npx mercury-mesh version                               # print version
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  COPILOT CLI DOCKING                                                       │
+├──────────────────────┬──────────────────────────────────────────────────────┤
+│  REQUIRES            │  GitHub CLI (gh) · Copilot extension · Node ≥22    │
+├──────────────────────┴──────────────────────────────────────────────────────┤
+│                                                                            │
+│  INSTALL CLI + EXTENSION                                                   │
+│  ─────────────────────                                                     │
+│  01 ▸ winget install GitHub.cli          # or brew install gh              │
+│  02 ▸ gh auth login                                                       │
+│  03 ▸ gh extension install github/gh-copilot                              │
+│                                                                            │
+│  VERIFY                                                                    │
+│  ──────                                                                    │
+│  04 ▸ gh copilot --version                                                │
+│                                                                            │
+│  LAUNCH MESH VIA CLI                                                       │
+│  ───────────────────                                                       │
+│  05 ▸ cd your-project                                                     │
+│  06 ▸ gh copilot                         # interactive Copilot session     │
+│  07 ▸ @mercury-mesh <mission>            # bridge is live                  │
+│                                                                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  SURFACE NOTES                                                             │
+├────────────────────────┬────────────────────────────────────────────────────┤
+│  VS Code               │  Uses runSubagent / agent — results inline        │
+│  Copilot CLI            │  Uses task / read_agent — same bridge logic       │
+│  Agent file             │  .github/agents/mercury-mesh.agent.md             │
+│  Auth                   │  gh auth login         │
+└────────────────────────┴────────────────────────────────────────────────────┘
 ```
 
 ## System Initialization
@@ -314,7 +328,7 @@ Two embedding providers are available:
 | Provider | Config | Dependencies | Use Case |
 |----------|--------|-------------|----------|
 | TF-IDF | `"tfidf"` | None | Zero-dependency default. Built-in vectorizer. |
-| OpenRouter | `"openrouter"` | `OPENROUTER_API_KEY` or `MESH_EMBEDDING_KEY` | Higher-fidelity intent resolution via OpenRouter embeddings. |
+| OpenRouter | `"openrouter"` | `nervousSystem.embeddingApiKey` in `.mesh/local.json` | Higher-fidelity intent resolution via OpenRouter embeddings. |
 
 Legacy note: `"llm"` remains supported as a compatibility alias for the older OpenAI-compatible endpoint path.
 
@@ -478,6 +492,7 @@ SCHEMA :: v2
 | `onboarding.autoPromoteThreshold` | `boolean\|number` | `false` requires Tier-1 approval. A number auto-promotes after that many successful tasks. |
 | `nervousSystem.enabled` | `boolean` | `true` activates the nervous system. All four phases boot on triage. |
 | `nervousSystem.embeddingProvider` | `string` | `"tfidf"`: built-in zero-dependency vectorizer. `"openrouter"`: OpenRouter embeddings API. `"llm"`: legacy OpenAI-compatible alias. |
+| `nervousSystem.embeddingApiKey` | `string\|null` | Preferred in `.mesh/local.json` for dependency installs. Used by `"openrouter"` and legacy `"llm"` providers. |
 | `nervousSystem.embeddingModel` | `string\|null` | Optional model override. Defaults by provider: OpenRouter uses `openai/text-embedding-3-small`; legacy `llm` uses `text-embedding-3-small`. |
 | `nervousSystem.embeddingEndpoint` | `string\|null` | Optional endpoint override. Defaults by provider. OpenRouter default: `https://openrouter.ai/api/v1/embeddings`. |
 | `nervousSystem.embeddingAppName` | `string\|null` | Optional OpenRouter attribution title. Sent as `X-OpenRouter-Title`. Default: `Mercury Mesh`. |
