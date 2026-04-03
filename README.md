@@ -40,11 +40,96 @@
 
 ---
 
+## Installation
+
+Add Mercury Mesh to any existing project. It scaffolds the Copilot agent, skills, workflows, and `.mesh/` runtime into your project root.
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  DOCKING SEQUENCE                                                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  01 ▸ Install Node.js 22 or newer.                                        │
+│  02 ▸ Install the package into your project.                              │
+│  03 ▸ Run `npx mercury-mesh init` to scaffold Copilot-facing files.       │
+│  04 ▸ Create `.env.local` from `.env.example` (optional).                 │
+│  05 ▸ Open the project in VS Code — @mercury-mesh is live.                │
+│                                                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Prerequisites
+
+- Node.js `>=22`
+- Git
+- GitHub Copilot in VS Code or GitHub Copilot CLI
+
+### Install into an existing project
+
+```bash
+cd your-project
+npm install @mizyoel/mercury-mesh
+npx mercury-mesh init
+```
+
+This scaffolds:
+
+| Path | What it does |
+|---|---|
+| `.github/agents/mercury-mesh.agent.md` | Copilot custom agent prompt |
+| `.github/copilot-instructions.md` | Coding agent instructions |
+| `.copilot/skills/` | All Mercury Mesh skills |
+| `.copilot/mcp-config.json` | MCP server config (example) |
+| `.mesh/manifesto.md` | The Flight Path |
+| `.mesh/routing.md` | Mission routing rules |
+| `.mesh/ceremonies.md` | Ceremonies & rituals |
+| `.mesh/config.json` | Runtime config (defaults) |
+| `.github/workflows/mesh-*.yml` | GitHub Actions workflows |
+
+Existing files are **never overwritten** unless you pass `--force`.
+
+### Upgrade to a new version
+
+```bash
+npm update @mizyoel/mercury-mesh
+npx mercury-mesh update
+```
+
+`update` overwrites the agent prompt, skills, and copilot-instructions with the latest version. Config, team, and runtime state files are left untouched.
+
+### Optional: Semantic embeddings
+
+If you want the nervous system's semantic gravimetry (LLM-based routing), set an OpenRouter API key:
+
+```bash
+# copy the template
+copy .env.example .env.local   # cmd
+# or
+cp .env.example .env.local     # bash
+```
+
+Then edit `.env.local`:
+
+```dotenv
+OPENROUTER_API_KEY=<your-key>
+GITHUB_TOKEN=<optional-for-issue-triage>
+```
+
+And switch `.mesh/config.json` → `nervousSystem.embeddingProvider` from `"tfidf"` to `"openrouter"`.
+
+### CLI reference
+
+```
+npx mercury-mesh init    [--force] [--target <path>]   # scaffold into project
+npx mercury-mesh update  [--target <path>]             # upgrade agent + skills
+npx mercury-mesh version                               # print version
+```
+
 ## System Initialization
 
 Welcome to the bridge, Commander.
 
-This repository boots **Mercury Mesh** — a zero-gravity bridge where human intent and specialist AI wings operate as one fluid organism. You define trajectory. The mesh handles thrust, decomposition, coordination, and course correction.
+This repository boots **Mercury Mesh** — a zero-gravity bridge where human intent and specialist AI wings operate as one fluid organism. You define trajectory. The mesh handles thrust, decomposition, coordination, and course correction. A living nervous system routes work by gravitational intent, monitors drift autonomously, grows new Wings from the Void, and remembers every maneuver in spatial coordinates.
 
 There is no org chart here. There is no hierarchy to climb. Structure is a responsive medium that forms, shards, and reforms around whatever mission is pulling the most gravity. Wings drift toward the work. The work gets done. The mesh reforms.
 
@@ -139,6 +224,12 @@ Missions act as gravity wells — pulling the right wings into orbit, holding th
 │    decisions.md                   :: The Black Box                         │
 │    org/                           :: wing runtime, contracts, state        │
 │    templates/                     :: agent, skill, and workflow templates  │
+│    nervous-system/                :: the organism's living nervous system   │
+│      index.js                     :: unified orchestrator (spinal cord)    │
+│      semantic-gravimetry.js       :: intent-based gravitational routing    │
+│      autonomic-core.js            :: persistent metabolism + drift patrol  │
+│      ghost-wing.js                :: emergent topology from the Void       │
+│      constellation-memory.js      :: spatial vector memory + RAG           │
 │                                                                            │
 │  .copilot/                                                                 │
 │    mcp-config.json                :: MCP server configuration              │
@@ -163,13 +254,169 @@ Missions act as gravity wells — pulling the right wings into orbit, holding th
 
 ---
 
+## The Nervous System
+
+The mesh is not a framework. It is a living organism. The nervous system is what makes it breathe.
+
+Four subsystems compose the organism's autonomic layer. Each can operate independently and degrades gracefully when unavailable. Together, they replace static conventions with biological responses to the problem space.
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  NERVOUS SYSTEM ARCHITECTURE                                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐      │
+│  │  I. SEMANTIC      │    │ II. AUTONOMIC    │    │ III. GHOST WING  │      │
+│  │  GRAVIMETRY       │    │ CORE             │    │ SYNTHESIS        │      │
+│  │                   │    │                  │    │                  │      │
+│  │  Intent → Vector  │    │  Pulse → Scan    │    │  Void → Grow     │      │
+│  │  Vector → Gravity │    │  Scan → Correct  │    │  Grow → Prove    │      │
+│  │  Gravity → Wing   │    │  Correct → Log   │    │  Prove → Solid   │      │
+│  └────────┬─────────┘    └────────┬─────────┘    └────────┬─────────┘      │
+│           │                       │                       │                │
+│           └───────────┬───────────┴───────────┬───────────┘                │
+│                       ▼                       ▼                            │
+│              ┌──────────────────────────────────────┐                      │
+│              │  IV. CONSTELLATION MEMORY             │                      │
+│              │                                       │                      │
+│              │  Every decision, every correction,    │                      │
+│              │  every Ghost Wing outcome — embedded   │                      │
+│              │  as spatial coordinates. The mesh      │                      │
+│              │  remembers in dimensions, not pages.   │                      │
+│              └──────────────────────────────────────┘                      │
+│                                                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Phase I — Semantic Gravimetry
+
+The death of keyword routing.
+
+Every Wing's domain, authority scope, and routing keywords are embedded into a high-dimensional signature vector. When a Sortie enters the mesh, its intent is projected into the same space. Cosine similarity between the Sortie vector and all Wing vectors produces a **gravity field** — a spatial map of which Wings resonate with the work.
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  GRAVITY FIELD RESOLUTION                                                  │
+├───────────────────────┬────────────────────────────────────────────────────┤
+│  Single Wing ≥ 70%    │  Direct route. One Wing is the clear attractor.   │
+│  gravity share        │                                                    │
+├───────────────────────┼────────────────────────────────────────────────────┤
+│  Multiple Wings each  │  Airbridge. Gravity is distributed — temporary    │
+│  ≥ 20% share          │  cross-Wing link formed automatically.            │
+├───────────────────────┼────────────────────────────────────────────────────┤
+│  No Wing ≥ 15%        │  The Void. Uncharted territory. Ghost Wing        │
+│  similarity           │  synthesis may trigger.                            │
+└───────────────────────┴────────────────────────────────────────────────────┘
+```
+
+Two embedding providers are available:
+
+| Provider | Config | Dependencies | Use Case |
+|----------|--------|-------------|----------|
+| TF-IDF | `"tfidf"` | None | Zero-dependency default. Built-in vectorizer. |
+| OpenRouter | `"openrouter"` | `OPENROUTER_API_KEY` or `MESH_EMBEDDING_KEY` | Higher-fidelity intent resolution via OpenRouter embeddings. |
+
+Legacy note: `"llm"` remains supported as a compatibility alias for the older OpenAI-compatible endpoint path.
+
+Keyword routing is fully preserved as a fallback when the nervous system is offline.
+
+### Phase II — The Autonomic Core
+
+The death of CI-driven state.
+
+A persistent metabolism loop that continuously pulses, reading Drift Weather across all department state files. It does not wait for webhooks or human triggers.
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  METABOLISM CYCLE                                                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  pulse ──▶ scan drift weather ──▶ detect anomalies ──▶ fire corrections    │
+│    │                                                        │              │
+│    │         ┌────────────────────┐                          │              │
+│    │         │  ANOMALY SENSORS   │                          │              │
+│    │         │  • Expired leases  │                          ▼              │
+│    │         │  • Stale heartbeat │                   record in Black Box   │
+│    │         │  • Parallelism     │                          │              │
+│    │         │    breach          │                          │              │
+│    │         │  • Context decay   │                          │              │
+│    │         └────────────────────┘                          │              │
+│    │                                                        │              │
+│    ◀────────────────── wait pulseMs ────────────────────────┘              │
+│                                                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+Expired claim leases are automatically re-queued. Stale heartbeats and parallelism breaches are logged as corrections. The Core also monitors file system changes and fires immediate pulses on state mutations.
+
+### Phase III — Ghost Wing Synthesis
+
+The death of static templates.
+
+When a Sortie possesses a gravitational signature that matches none of the existing Wings, the mesh no longer routes to a fallback lead. It synthesizes a **Ghost Wing** — a transient department with an auto-generated charter, backlog, and state files.
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  GHOST WING LIFECYCLE                                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  Void detected ──▶ Infer domain ──▶ Synthesize blueprint                   │
+│                                           │                                │
+│                             ┌─────────────┴─────────────┐                  │
+│                             ▼                           ▼                  │
+│                     autoMaterialize?              await Commander           │
+│                        │                          approval                 │
+│                        ▼                              │                    │
+│                   materialize                         ▼                    │
+│                        │                         materialize               │
+│                        ▼                              │                    │
+│               ┌────────┴────────┐                     │                    │
+│               ▼                 ▼                     │                    │
+│          N successes       N failures                 │                    │
+│               │                 │                     │                    │
+│               ▼                 ▼                     │                    │
+│           SOLIDIFY          DISSOLVE                  │                    │
+│        (permanent)       (archive +                   │                    │
+│                           reclaim)                    │                    │
+│                                                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+Ghost Wings default to Commander approval before materialization (`autoMaterialize: false`). Structure becomes a biological response to the problem space.
+
+### Phase IV — Constellation Memory
+
+The death of flat files.
+
+The Loom is upgraded into a spatial vector index. Every decision, every Ghost Wing outcome, every Autonomic Core correction is embedded as a coordinate in Constellation space.
+
+When a new Sortie is declared, the Constellation is queried for **structural resonance** — retrieving tactical context from previous missions. This context is formatted as a RAG block and pre-loaded into Wing context windows before they fire thrusters.
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  CONSTELLATION MEMORY                                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  Storage   :: .mesh/nervous-system/constellation/                          │
+│  Index     :: index.json (embedded vectors + metadata)                     │
+│  Manifest  :: manifest.json (stats, schema version)                        │
+│  Ingestion :: Black Box decisions, Ghost Wing outcomes, corrections         │
+│  Query     :: Cosine similarity → top-k → RAG context block               │
+│                                                                            │
+│  Upgrade path: LanceDB or Chroma for production-scale deployments.         │
+│                                                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## The Liquid Interface
 
 Structure flows to fit the work. The mercury in the name is literal.
 
 The mesh shards into specialist droplets for surgical micro-tasks. It converges into heavier strike shapes for multi-domain execution. Data and agent-logic circulate like liquid metal — never sitting, never siloed, always in motion toward the point of highest mission-impact.
 
-Three forces hold the liquid together:
+Four forces hold the liquid together:
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -183,6 +430,10 @@ Three forces hold the liquid together:
 ├───────────────────────┼────────────────────────────────────────────────────┤
 │  The Intent           │  Commander defines trajectory and reads           │
 │  Bridge               │  telemetry. The mesh handles the rest.            │
+├───────────────────────┼────────────────────────────────────────────────────┤
+│  The Nervous          │  Semantic gravimetry routes by intent. The        │
+│  System               │  Autonomic Core breathes. Ghost Wings grow from   │
+│                       │  the Void. Constellation Memory remembers.        │
 └───────────────────────┴────────────────────────────────────────────────────┘
 ```
 
@@ -225,6 +476,26 @@ SCHEMA :: v2
 | `humanTiers.tier3` | `string[]` | Read-only observers. No approval authority. |
 | `onboarding.defaultPhase` | `string` | `"shadow"`: read-only observation. `"probation"`: execution under review. |
 | `onboarding.autoPromoteThreshold` | `boolean\|number` | `false` requires Tier-1 approval. A number auto-promotes after that many successful tasks. |
+| `nervousSystem.enabled` | `boolean` | `true` activates the nervous system. All four phases boot on triage. |
+| `nervousSystem.embeddingProvider` | `string` | `"tfidf"`: built-in zero-dependency vectorizer. `"openrouter"`: OpenRouter embeddings API. `"llm"`: legacy OpenAI-compatible alias. |
+| `nervousSystem.embeddingModel` | `string\|null` | Optional model override. Defaults by provider: OpenRouter uses `openai/text-embedding-3-small`; legacy `llm` uses `text-embedding-3-small`. |
+| `nervousSystem.embeddingEndpoint` | `string\|null` | Optional endpoint override. Defaults by provider. OpenRouter default: `https://openrouter.ai/api/v1/embeddings`. |
+| `nervousSystem.embeddingAppName` | `string\|null` | Optional OpenRouter attribution title. Sent as `X-OpenRouter-Title`. Default: `Mercury Mesh`. |
+| `nervousSystem.embeddingAppUrl` | `string\|null` | Optional OpenRouter attribution URL. Sent as `HTTP-Referer` when set. |
+| `nervousSystem.gravimetry.minimumGravity` | `number` | Minimum cosine similarity for a Wing to exert any pull. Default: `0.15`. |
+| `nervousSystem.gravimetry.airbridgeThreshold` | `number` | If top Wing gravity share ≥ this, route directly. Below triggers Airbridge. Default: `0.70`. |
+| `nervousSystem.gravimetry.airbridgeMinShare` | `number` | Minimum gravity share for a Wing to join an Airbridge. Default: `0.20`. |
+| `nervousSystem.autonomic.pulseMs` | `number` | Metabolism pulse interval in milliseconds. Default: `30000`. |
+| `nervousSystem.autonomic.contextDecayMinutes` | `number` | Minutes before untouched state files are flagged as decayed. Default: `60`. |
+| `nervousSystem.autonomic.applyCorrections` | `boolean` | `true` writes corrections (lease requeue, decisions). `false` is read-only. |
+| `nervousSystem.ghostWings.enabled` | `boolean` | `true` enables Ghost Wing synthesis when Sorties fall into the Void. |
+| `nervousSystem.ghostWings.autoMaterialize` | `boolean` | `true` materializes Ghost Wings without Commander approval. Default: `false`. |
+| `nervousSystem.ghostWings.solidificationThreshold` | `number` | Successful tasks before a Ghost Wing becomes permanent. Default: `3`. |
+| `nervousSystem.ghostWings.dissolutionThreshold` | `number` | Failed tasks before a Ghost Wing is dissolved. Default: `2`. |
+| `nervousSystem.ghostWings.maxLifespanHours` | `number` | Maximum hours a Ghost Wing can exist before forced dissolution. Default: `72`. |
+| `nervousSystem.constellation.enabled` | `boolean` | `true` activates spatial vector memory and RAG context. |
+| `nervousSystem.constellation.ragMaxEntries` | `number` | Maximum Constellation entries returned per RAG query. Default: `5`. |
+| `nervousSystem.constellation.ragMinSimilarity` | `number` | Minimum similarity for a Constellation entry to appear in RAG. Default: `0.15`. |
 
 Recommended for a commander who wants continuous status visibility:
 
@@ -262,6 +533,21 @@ The mesh speaks its own physics. Every surface, every conversation, every commit
 │  Unknown Territory  │  The Void          │  Uncharted problem-space ahead   │
 │  Cross-Team Sync    │  Airbridge         │  Temporary wing-to-wing link     │
 │  Knowledge Base     │  The Loom          │  Shared knowledge fabric         │
+│  Routing Engine     │  Gravimetry        │  Semantic intent-to-Wing mapping │
+│  Gravity Score      │  Gravity Field     │  Spatial pull of a Sortie on     │
+│                     │                    │  all Wings simultaneously        │
+│  Health Monitor     │  Autonomic Core    │  Persistent metabolism + drift   │
+│                     │                    │  correction loop                 │
+│  Temporary Team     │  Ghost Wing        │  Emergent department from the    │
+│                     │                    │  Void — solidifies or dissolves  │
+│  Memory Index       │  Constellation     │  Spatial vector memory of every  │
+│                     │  Memory            │  decision and outcome            │
+│  Context Injection  │  RAG Context       │  Pre-loaded historical resonance │
+│                     │                    │  from the Constellation          │
+│  Internal Clock     │  Pulse             │  One metabolism cycle of the     │
+│                     │                    │  Autonomic Core                  │
+│  State Check        │  Drift Weather     │  Full sensor sweep of all Wing   │
+│                     │                    │  state files in one pulse        │
 └─────────────────────┴────────────────────┴──────────────────────────────────┘
 ```
 
@@ -301,8 +587,16 @@ Three voices operate on this bridge. Each has a purpose. Each has a frequency.
 │  AIRBRIDGE           │  READY — temporary link between autonomous wings.   │
 │  BLACK BOX           │  RECORDING — immutable. Every decision. Every       │
 │                      │  correction. Every lesson.                          │
+│  GRAVIMETRY          │  ONLINE — semantic routing replaces keyword         │
+│                      │  matching. TF-IDF or LLM embeddings.               │
+│  AUTONOMIC CORE      │  ONLINE — persistent metabolism. Drift weather      │
+│                      │  scanning, lease patrol, heartbeat monitoring.      │
+│  GHOST WING          │  ARMED — Void detection triggers emergent           │
+│  SYNTHESIS           │  topology. Commander approval required.             │
+│  CONSTELLATION       │  ONLINE — spatial vector memory. RAG context        │
+│  MEMORY              │  pre-loaded into Wing context windows.              │
 ├──────────────────────┴──────────────────────────────────────────────────────┤
-│  All protocols nominal. Bridge is live.                                    │
+│  All protocols nominal. Nervous system online. Bridge is live.             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -324,6 +618,8 @@ Everything the bridge learns is recorded here. Short. Sharp. Operational.
 │  ALT CHECK           │  .mercury/                                          │
 │  DECISION LEDGER     │  .mesh/decisions.md                                 │
 │  FLIGHT PATH         │  .mesh/manifesto.md                                 │
+│  NERVOUS SYSTEM      │  .mesh/nervous-system/                              │
+│  CONSTELLATION       │  .mesh/nervous-system/constellation/                │
 ├──────────────────────┴──────────────────────────────────────────────────────┤
 │  Helpers resolve .mesh/ first. .mercury/ as fallback.                      │
 └─────────────────────────────────────────────────────────────────────────────┘

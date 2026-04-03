@@ -2,7 +2,63 @@
 
 How the Mesh decides who handles what. Missions act as gravity wells — the routing table pulls the right Wings into orbit.
 
-## Routing Table
+## Nervous System Routing (Primary)
+
+When the nervous system is online (`config.json` → `nervousSystem.enabled: true`), triage uses **Semantic Gravimetry** — intent-based gravitational routing that replaces keyword matching.
+
+### How Semantic Gravimetry Works
+
+1. Each Wing's domain, keywords, and authority scope are embedded into a high-dimensional signature vector.
+2. When a Sortie arrives, its title and body are projected into the same space.
+3. Cosine similarity between the Sortie vector and all Wing vectors produces a **gravity field**.
+4. The gravity field determines the routing decision:
+
+| Gravity Pattern | Decision | Description |
+|----------------|----------|-------------|
+| Single Wing ≥ 70% gravity share | **Direct route** | One Wing is the clear attractor |
+| Multiple Wings each ≥ 20% share | **Airbridge** | Gravity is distributed — temporary cross-Wing link formed |
+| No Wing ≥ 15% similarity | **Void** | Sortie enters uncharted space — Ghost Wing synthesis may trigger |
+
+### Embedding Providers
+
+| Provider | Config Value | Description |
+|----------|-------------|-------------|
+| TF-IDF (built-in) | `"tfidf"` | Zero-dependency fallback. Uses term frequency–inverse document frequency vectors. |
+| OpenRouter | `"openrouter"` | OpenRouter embeddings API. Set `OPENROUTER_API_KEY` or `MESH_EMBEDDING_KEY`. |
+
+Compatibility note: `"llm"` remains available as a legacy alias for the older OpenAI-compatible endpoint path.
+
+### Gravity Thresholds
+
+Tunable in `config.json` → `nervousSystem.gravimetry`:
+
+| Threshold | Default | Effect |
+|-----------|---------|--------|
+| `minimumGravity` | `0.15` | Minimum similarity for a Wing to exert any pull |
+| `airbridgeThreshold` | `0.70` | If top Wing captures ≥ this share, route directly (no Airbridge) |
+| `airbridgeMinShare` | `0.20` | Minimum gravity share to participate in an Airbridge |
+
+### Ghost Wing Synthesis
+
+When a Sortie falls into the Void (no Wing resonates), the nervous system can synthesize a **Ghost Wing** — a temporary department with auto-generated charter, backlog, and state files.
+
+Ghost Wing lifecycle: `synthesis → probation → [solidify | dissolve]`
+
+- **Solidify:** After N successful tasks, the Ghost Wing becomes permanent topology.
+- **Dissolve:** After N failures or lifespan expiry, the Ghost Wing is archived and dissolved.
+- **Config:** `nervousSystem.ghostWings` controls thresholds and auto-materialization.
+
+### Constellation Memory (RAG)
+
+Every routing decision, Ghost Wing outcome, and Black Box entry is embedded into the Constellation — a spatial memory index. When a new Sortie arrives, the Constellation is queried for structural resonance, and matching tactical context is pre-loaded into Wing context windows.
+
+Stored at: `.mesh/nervous-system/constellation/`
+
+## Keyword Routing (Fallback)
+
+When the nervous system is offline, uncalibrated, or encounters an error, triage falls back to the keyword-based routing table below. This is the original routing mechanism and remains fully operational.
+
+### Routing Table
 
 | Work Type | Route To | Examples |
 |-----------|----------|----------|

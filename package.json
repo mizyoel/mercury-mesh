@@ -1,9 +1,12 @@
 {
-  "name": "@f-os/mercury-mesh",
-  "version": "0.9.4",
+  "name": "@mizyoel/mercury-mesh",
+  "version": "0.9.5",
   "description": "Mercury Mesh runtime templates, prompts, workflows, and skills for Fluid OS autonomous operations.",
   "type": "commonjs",
   "main": "index.cjs",
+  "bin": {
+    "mercury-mesh": "./bin/mercury-mesh.cjs"
+  },
   "exports": {
     ".": "./index.cjs",
     "./package.json": "./package.json"
@@ -12,6 +15,7 @@
     "README.md",
     "docs/",
     "index.cjs",
+    "bin/",
     ".copilot/",
     ".github/agents/",
     ".mesh/manifesto.md",
@@ -23,9 +27,18 @@
   },
   "keywords": [
     "mercury-mesh",
-    "f-os",
+    "mizyoel",
     "copilot",
+    "github-copilot",
     "agents",
+    "ai-agents",
+    "agentic",
+    "agentic-flows",
+    "agent-orchestration",
+    "multi-agent",
+    "multi-agent-systems",
+    "autonomous-agents",
+    "ai-workflows",
     "templates",
     "workflows"
   ],
@@ -33,6 +46,7 @@
     "node": ">=22"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

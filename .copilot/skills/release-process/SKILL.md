@@ -176,9 +176,9 @@ gh run view --log
 ```
 
 **Expected flow:**
-1. `publish-sdk` job runs → publishes `@f-os/mercury-mesh-sdk`
+1. `publish-sdk` job runs → publishes `@mizyoel/mercury-mesh-sdk`
 2. Verify step runs with retry loop (up to 5 attempts, 15s interval) to confirm SDK on npm registry
-3. `publish-cli` job runs → publishes `@f-os/mercury-mesh-cli`
+3. `publish-cli` job runs → publishes `@mizyoel/mercury-mesh-cli`
 4. Verify step runs with retry loop to confirm CLI on npm registry
 
 **If workflow fails:** Check the logs. Common issues:
@@ -194,17 +194,17 @@ Manually verify both packages are on npm with correct `latest` dist-tag.
 
 ```bash
 # Check SDK
-npm view @f-os/mercury-mesh-sdk version
+npm view @mizyoel/mercury-mesh-sdk version
 # Output: 0.8.22
 
-npm dist-tag ls @f-os/mercury-mesh-sdk
+npm dist-tag ls @mizyoel/mercury-mesh-sdk
 # Output should show: latest: 0.8.22
 
 # Check CLI
-npm view @f-os/mercury-mesh-cli version
+npm view @mizyoel/mercury-mesh-cli version
 # Output: 0.8.22
 
-npm dist-tag ls @f-os/mercury-mesh-cli
+npm dist-tag ls @mizyoel/mercury-mesh-cli
 # Output should show: latest: 0.8.22
 ```
 
@@ -222,28 +222,28 @@ mkdir /tmp/Mercury Mesh-release-test && cd /tmp/Mercury Mesh-release-test
 
 # Test SDK installation
 npm init -y
-npm install @f-os/mercury-mesh-sdk
-node -p "require('@f-os/mercury-mesh-sdk/package.json').version"
+npm install @mizyoel/mercury-mesh-sdk
+node -p "require('@mizyoel/mercury-mesh-sdk/package.json').version"
 # Output: 0.8.22
 
 # Test CLI installation
-npm install -g @f-os/mercury-mesh-cli
+npm install -g @mizyoel/mercury-mesh-cli
 mercury-mesh --version
 # Output: 0.8.22
 
 # Test CLI upgrade path
-npm install -g @f-os/mercury-mesh-cli@latest
+npm install -g @mizyoel/mercury-mesh-cli@latest
 mercury-mesh --version
 # Output: 0.8.22
 
 # Cleanup
 cd -
-npm install -g @f-os/mercury-mesh-cli
+npm install -g @mizyoel/mercury-mesh-cli
 mercury-mesh --version
 # Output: 0.8.22
 
 # Test CLI upgrade path
-npm install -g @f-os/mercury-mesh-cli@latest
+npm install -g @mizyoel/mercury-mesh-cli@latest
 mercury-mesh --version
 ```
 
@@ -310,8 +310,8 @@ If a release is broken and needs to be rolled back:
 
 ```bash
 # Unpublish (requires npm owner privileges)
-npm unpublish @f-os/mercury-mesh-sdk@0.8.22
-npm unpublish @f-os/mercury-mesh-cli@0.8.22
+npm unpublish @mizyoel/mercury-mesh-sdk@0.8.22
+npm unpublish @mizyoel/mercury-mesh-cli@0.8.22
 ```
 
 ### 2. Deprecate on npm (Preferred)
@@ -320,8 +320,8 @@ npm unpublish @f-os/mercury-mesh-cli@0.8.22
 
 ```bash
 # Deprecate broken version
-npm deprecate @f-os/mercury-mesh-sdk@0.8.22 "Broken release, use 0.8.22.1 instead"
-npm deprecate @f-os/mercury-mesh-cli@0.8.22 "Broken release, use 0.8.22.1 instead"
+npm deprecate @mizyoel/mercury-mesh-sdk@0.8.22 "Broken release, use 0.8.22.1 instead"
+npm deprecate @mizyoel/mercury-mesh-cli@0.8.22 "Broken release, use 0.8.22.1 instead"
 
 # Publish hotfix version
 # (Follow this runbook with version 0.8.22.1)
@@ -409,11 +409,11 @@ After GitHub Release:
 After workflow completes:
 
 - [ ] Both jobs succeeded: Workflow shows green checkmarks
-- [ ] SDK on npm: `npm view @f-os/mercury-mesh-sdk version` returns correct version
-- [ ] CLI on npm: `npm view @f-os/mercury-mesh-cli version` returns correct version
-- [ ] `latest` tags correct: `npm dist-tag ls @f-os/mercury-mesh-sdk` shows `latest: VERSION`
-- [ ] Packages install: `npm install -g @f-os/mercury-mesh-cli` succeeds
-- [ ] Packages upgrade: `npm install -g @f-os/mercury-mesh-cli@latest` succeeds
+- [ ] SDK on npm: `npm view @mizyoel/mercury-mesh-sdk version` returns correct version
+- [ ] CLI on npm: `npm view @mizyoel/mercury-mesh-cli version` returns correct version
+- [ ] `latest` tags correct: `npm dist-tag ls @mizyoel/mercury-mesh-sdk` shows `latest: VERSION`
+- [ ] Packages install: `npm install -g @mizyoel/mercury-mesh-cli` succeeds
+- [ ] Packages upgrade: `npm install -g @mizyoel/mercury-mesh-cli@latest` succeeds
 
 After dev sync:
 

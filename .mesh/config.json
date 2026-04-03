@@ -59,5 +59,34 @@
   "onboarding": {
     "defaultPhase": "shadow",
     "autoPromoteThreshold": false
+  },
+  "nervousSystem": {
+    "enabled": true,
+    "embeddingProvider": "openrouter",
+    "embeddingModel": "openai/text-embedding-3-small",
+    "embeddingEndpoint": "https://openrouter.ai/api/v1/embeddings",
+    "embeddingAppName": "Mercury Mesh",
+    "gravimetry": {
+      "minimumGravity": 0.15,
+      "airbridgeThreshold": 0.70,
+      "airbridgeMinShare": 0.20
+    },
+    "autonomic": {
+      "pulseMs": 30000,
+      "contextDecayMinutes": 60,
+      "applyCorrections": true
+    },
+    "ghostWings": {
+      "enabled": true,
+      "autoMaterialize": false,
+      "solidificationThreshold": 3,
+      "dissolutionThreshold": 2,
+      "maxLifespanHours": 72
+    },
+    "constellation": {
+      "enabled": true,
+      "ragMaxEntries": 5,
+      "ragMinSimilarity": 0.15
+    }
   }
 }

@@ -201,6 +201,99 @@ function loadOrgContext(meshDir) {
   return { enabled: true, departments, memberDepartment };
 }
 
+/**
+ * Attempt semantic gravimetry routing via the nervous system.
+ * Returns null if the nervous system is unavailable or uncalibrated,
+ * allowing fallback to keyword routing.
+ *
+ * @param {object} issue
+ * @param {Array} roster
+ * @param {object} orgContext
+ * @param {object} [nervousSystem] - Booted nervous system instance
+ * @returns {Promise<object|null>}
+ */
+async function semanticTriageAttempt(issue, roster, orgContext, nervousSystem) {
+  if (!nervousSystem || !nervousSystem.enabled) return null;
+
+  try {
+    const decision = await nervousSystem.semanticTriage(issue);
+    if (!decision || decision.type === 'fallback') return null;
+
+    // Map Wings back to roster members
+    if (decision.type === 'direct' && decision.wings.length > 0) {
+      const wing = decision.wings[0];
+      const agent = findMemberInWing(wing, roster);
+      if (!agent) return null;
+
+      return {
+        agent,
+        reason: decision.reason,
+        source: 'semantic-gravimetry',
+        confidence: decision.primaryGravity >= 0.5 ? 'high' : 'medium',
+        ragContext: decision.ragContext || null,
+        ...decorateDecision(agent, orgContext),
+      };
+    }
+
+    if (decision.type === 'airbridge' && decision.wings.length > 1) {
+      // Multi-Wing routing: return the primary wing's lead, annotate with Airbridge
+      const primaryWing = decision.wings[0];
+      const agent = findMemberInWing(primaryWing, roster);
+      if (!agent) return null;
+
+      return {
+        agent,
+        reason: decision.reason,
+        source: 'semantic-gravimetry-airbridge',
+        confidence: 'high',
+        airbridgeWings: decision.wings.map((w) => w.id || w.name),
+        gravityDistribution: decision.gravityDistribution,
+        ragContext: decision.ragContext || null,
+        ...decorateDecision(agent, orgContext),
+      };
+    }
+
+    if (decision.type === 'void' && decision.ghostWing) {
+      // The Sortie fell into the Void — Ghost Wing may have been synthesized
+      return {
+        agent: null,
+        reason: decision.reason,
+        source: 'semantic-gravimetry-void',
+        confidence: 'low',
+        ghostWing: decision.ghostWing,
+        ragContext: decision.ragContext || null,
+      };
+    }
+
+    return null;
+  } catch {
+    // Nervous system failure — fall through to keyword routing
+    return null;
+  }
+}
+
+/**
+ * Find the best roster member within a Wing (department).
+ */
+function findMemberInWing(wing, roster) {
+  const deptMembers = new Set(
+    [...(wing.members || []), wing.lead].filter(Boolean).map((n) => normalizeName(n)),
+  );
+
+  // Prefer the lead
+  if (wing.lead) {
+    const lead = roster.find((m) => normalizeName(m.name) === normalizeName(wing.lead));
+    if (lead) return lead;
+  }
+
+  // Fall back to any department member on the roster
+  for (const member of roster) {
+    if (deptMembers.has(normalizeName(member.name))) return member;
+  }
+
+  return null;
+}
+
 function triageIssue(issue, rules, modules, roster, orgContext) {
   const issueText = `${issue.title}\n${issue.body || ''}`.toLowerCase();
   const normalizedIssueText = normalizeTextForPathMatch(issueText);
@@ -677,6 +770,21 @@ async function main() {
   const modules = parseModuleOwnership(routingMd);
   const orgContext = loadOrgContext(meshDir);
 
+  // ── Nervous System Bootstrap ──────────────────────────────────────────
+  // Attempt to boot the nervous system for semantic gravimetry.
+  // Falls back gracefully to keyword routing if unavailable.
+  let nervousSystem = null;
+  try {
+    const nervousSystemPath = path.join(meshDir, 'nervous-system', 'index.js');
+    if (fs.existsSync(nervousSystemPath)) {
+      const { bootNervousSystem } = require(nervousSystemPath);
+      nervousSystem = await bootNervousSystem({ meshDir, daemon: false });
+    }
+  } catch {
+    // Nervous system unavailable — keyword routing proceeds
+    nervousSystem = null;
+  }
+
   const { owner, repo } = getOwnerRepoFromGit();
   const openBridgeIssues = await fetchBridgeIssues(owner, repo, token);
 
@@ -687,20 +795,22 @@ async function main() {
 
   const results = [];
   for (const issue of untriaged) {
-    const decision = triageIssue(
-      {
-        number: issue.number,
-        title: issue.title || '',
-        body: issue.body || '',
-        labels: [],
-      },
-      rules,
-      modules,
-      roster,
-      orgContext,
-    );
+    const issuePayload = {
+      number: issue.number,
+      title: issue.title || '',
+      body: issue.body || '',
+      labels: [],
+    };
 
-    if (!decision) continue;
+    // Phase I: Attempt semantic gravimetry routing first
+    let decision = await semanticTriageAttempt(issuePayload, roster, orgContext, nervousSystem);
+
+    // Fallback: keyword routing (original path)
+    if (!decision || !decision.agent) {
+      decision = triageIssue(issuePayload, rules, modules, roster, orgContext);
+    }
+
+    if (!decision || !decision.agent) continue;
     const memberLabel = buildMemberLabel(decision.agent.name, labelPrefix);
     results.push({
       issueNumber: issue.number,
@@ -710,9 +820,17 @@ async function main() {
       labels: [memberLabel, decision.deptLabel].filter(Boolean),
       reason: decision.reason,
       source: decision.source,
+      confidence: decision.confidence || null,
       departmentId: decision.departmentId || null,
       departmentName: decision.departmentName || null,
+      airbridgeWings: decision.airbridgeWings || null,
+      ghostWing: decision.ghostWing || null,
     });
+  }
+
+  // Shutdown nervous system if it was booted
+  if (nervousSystem && nervousSystem.shutdown) {
+    nervousSystem.shutdown();
   }
 
   const outputPath = path.resolve(process.cwd(), args.output);
