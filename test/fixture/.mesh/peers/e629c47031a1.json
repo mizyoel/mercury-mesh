@@ -1,0 +1,17 @@
+{
+  "nodeId": "e629c47031a1",
+  "hostname": "YOEL-DEV-PC",
+  "alias": "YOEL-DEV-PC",
+  "meshDir": "C:\\Projects\\mercury-mesh\\test\\fixture\\.mesh",
+  "platform": "win32",
+  "arch": "x64",
+  "nodeVersion": "v22.15.0",
+  "meshVersion": 2,
+  "halted": false,
+  "capabilities": [],
+  "departmentCount": 0,
+  "ghostCount": 0,
+  "registeredAt": "2026-04-03T18:11:14.428Z",
+  "lastHeartbeat": "2026-04-03T18:11:14.428Z",
+  "heartbeatTTLMinutes": 30
+}

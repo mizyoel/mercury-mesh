@@ -114,7 +114,7 @@ function resolveEmbeddingProviderConfig(provider, config = {}) {
     const apiKey = config.embeddingApiKey;
 
     if (!apiKey) {
-      throw new Error('Semantic Gravimetry: No OpenRouter API key. Configure nervousSystem.embeddingApiKey in .mesh/local.json.');
+      throw new Error('Semantic Gravimetry: No OpenRouter API key. Configure nervousSystem.embeddingApiKey in .mesh/local.json or set OPENROUTER_API_KEY env var.');
     }
 
     const headers = {
@@ -139,7 +139,7 @@ function resolveEmbeddingProviderConfig(provider, config = {}) {
     const apiKey = config.embeddingApiKey;
 
     if (!apiKey) {
-      throw new Error('Semantic Gravimetry: No embedding API key. Configure nervousSystem.embeddingApiKey in .mesh/local.json.');
+      throw new Error('Semantic Gravimetry: No embedding API key. Configure nervousSystem.embeddingApiKey in .mesh/local.json or set OPENAI_API_KEY env var.');
     }
 
     return {

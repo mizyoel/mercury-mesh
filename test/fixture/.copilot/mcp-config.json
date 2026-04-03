@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "EXAMPLE-github": {
+      "command": "npx",
+      "args": [
+        "mercury-mesh",
+        "github-mcp"
+      ]
+    }
+  }
+}

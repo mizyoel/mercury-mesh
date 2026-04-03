@@ -26,7 +26,9 @@ const { EventEmitter } = require('node:events');
 const { createGravimetryEngine } = require('./semantic-gravimetry.js');
 const { createAutonomicCore, scanDriftWeather } = require('./autonomic-core.js');
 const { synthesizeBlueprint, materialize, evaluateLifecycle, solidify, dissolve } = require('./ghost-wing.js');
-const { createConstellationStore } = require('./constellation-memory.js');
+const { reconcile: reconcileCoalescence } = require('./ghost-coalescence.js');
+const { registerSelf: registerPeer, heartbeat: peerHeartbeat, classifyPeers, syncWithPeers } = require('./mesh-peer.js');
+const { createConstellationStore, createConstellationStoreForProvider } = require('./constellation-memory.js');
 
 const RUNTIME_DIR_CANDIDATES = ['.mesh', '.mercury'];
 
@@ -44,15 +46,36 @@ function loadRuntimeConfig(meshDir) {
     localConfig = JSON.parse(fs.readFileSync(localConfigPath, 'utf8'));
   }
 
+  // Merge: config.json < local.json < environment variables (lowest priority wins last)
+  const merged = {
+    ...(config.nervousSystem || {}),
+    ...(localConfig.nervousSystem || {}),
+  };
+
+  // Auto-discover embedding API key from environment if not set in config files
+  if (!merged.embeddingApiKey) {
+    const provider = merged.embeddingProvider || 'tfidf';
+    if (provider === 'openrouter' && process.env.OPENROUTER_API_KEY) {
+      merged.embeddingApiKey = process.env.OPENROUTER_API_KEY;
+      merged._apiKeySource = 'env:OPENROUTER_API_KEY';
+    } else if (provider === 'llm' && process.env.OPENAI_API_KEY) {
+      merged.embeddingApiKey = process.env.OPENAI_API_KEY;
+      merged._apiKeySource = 'env:OPENAI_API_KEY';
+    } else if (process.env.OPENROUTER_API_KEY) {
+      merged.embeddingApiKey = process.env.OPENROUTER_API_KEY;
+      merged._apiKeySource = 'env:OPENROUTER_API_KEY';
+    } else if (process.env.OPENAI_API_KEY) {
+      merged.embeddingApiKey = process.env.OPENAI_API_KEY;
+      merged._apiKeySource = 'env:OPENAI_API_KEY';
+    }
+  }
+
   return {
     configPath,
     localConfigPath,
     config: {
       ...config,
-      nervousSystem: {
-        ...(config.nervousSystem || {}),
-        ...(localConfig.nervousSystem || {}),
-      },
+      nervousSystem: merged,
     },
   };
 }
@@ -82,11 +105,24 @@ const NERVOUS_SYSTEM_DEFAULTS = {
     solidificationThreshold: 3,
     dissolutionThreshold: 2,
     maxLifespanHours: 72,
+    coalescence: {
+      enabled: true,
+      autoCoalesce: false,            // Requires commander approval by default
+      autoThreshold: 0.65,
+      flagThreshold: 0.35,
+    },
   },
   constellation: {
     enabled: true,
+    provider: 'json',               // 'json' | 'lancedb'
     ragMaxEntries: 5,
     ragMinSimilarity: 0.15,
+  },
+  peers: {
+    enabled: false,                   // Opt-in: multi-machine coordination
+    heartbeatOnPulse: true,           // Send heartbeat on each autonomic pulse
+    syncOnPulse: false,               // Sync constellation on each pulse (expensive)
+    heartbeatTTLMinutes: 30,
   },
 };
 
@@ -97,8 +133,16 @@ function mergeDefaults(config) {
     ...ns,
     gravimetry: { ...NERVOUS_SYSTEM_DEFAULTS.gravimetry, ...(ns.gravimetry || {}) },
     autonomic: { ...NERVOUS_SYSTEM_DEFAULTS.autonomic, ...(ns.autonomic || {}) },
-    ghostWings: { ...NERVOUS_SYSTEM_DEFAULTS.ghostWings, ...(ns.ghostWings || {}) },
+    ghostWings: {
+      ...NERVOUS_SYSTEM_DEFAULTS.ghostWings,
+      ...(ns.ghostWings || {}),
+      coalescence: {
+        ...NERVOUS_SYSTEM_DEFAULTS.ghostWings.coalescence,
+        ...((ns.ghostWings || {}).coalescence || {}),
+      },
+    },
     constellation: { ...NERVOUS_SYSTEM_DEFAULTS.constellation, ...(ns.constellation || {}) },
+    peers: { ...NERVOUS_SYSTEM_DEFAULTS.peers, ...(ns.peers || {}) },
   };
 }
 
@@ -200,9 +244,10 @@ async function bootNervousSystem(options = {}) {
       };
     }
 
-    constellation = createConstellationStore({
+    constellation = await createConstellationStoreForProvider({
       meshDir,
       embedFn,
+      provider: nsConfig.constellation.provider,
     });
   }
 
@@ -277,6 +322,22 @@ async function bootNervousSystem(options = {}) {
         emitter.emit('ghost-dissolved', { ghostId: ghost.id, reason: evaluation.reason });
       }
     }
+
+    // Run coalescence scan after lifecycle evaluation
+    if (nsConfig.ghostWings.coalescence.enabled && ghostWings.length >= 2) {
+      const coalescenceReport = reconcileCoalescence(meshDir, {
+        apply: nsConfig.ghostWings.coalescence.autoCoalesce,
+        autoThreshold: nsConfig.ghostWings.coalescence.autoThreshold,
+        flagThreshold: nsConfig.ghostWings.coalescence.flagThreshold,
+      });
+
+      if (coalescenceReport.coalesced.length > 0) {
+        emitter.emit('ghosts-coalesced', coalescenceReport);
+      }
+      if (coalescenceReport.flagForReview > 0) {
+        emitter.emit('coalescence-review-needed', coalescenceReport.flagged);
+      }
+    }
   });
 
   // ── Unified Triage ────────────────────────────────────────────────────
@@ -342,6 +403,21 @@ async function bootNervousSystem(options = {}) {
   if (daemon) {
     core.boot();
     fsWatcher = core.watchFileSystem();
+
+    // Register peer and start heartbeat if peers are enabled
+    if (nsConfig.peers.enabled) {
+      registerPeer(meshDir, { heartbeatTTLMinutes: nsConfig.peers.heartbeatTTLMinutes });
+
+      core.on('pulse', () => {
+        if (nsConfig.peers.heartbeatOnPulse) {
+          peerHeartbeat(meshDir);
+        }
+        if (nsConfig.peers.syncOnPulse) {
+          syncWithPeers(meshDir);
+          emitter.emit('peers-synced');
+        }
+      });
+    }
   }
 
   // ── Public API ────────────────────────────────────────────────────────
@@ -362,9 +438,18 @@ async function bootNervousSystem(options = {}) {
     materializeGhostWing: (blueprint) => materialize(meshDir, blueprint, true),
     solidifyGhostWing: (ghostId) => solidify(meshDir, ghostId),
     dissolveGhostWing: (ghostId) => dissolve(meshDir, ghostId),
+    scanCoalescence: (opts) => reconcileCoalescence(meshDir, opts),
 
     // Phase IV
     constellation,
+
+    // Distributed Mesh
+    peers: {
+      register: (opts) => registerPeer(meshDir, { ...opts, heartbeatTTLMinutes: nsConfig.peers.heartbeatTTLMinutes }),
+      heartbeat: () => peerHeartbeat(meshDir),
+      classify: () => classifyPeers(meshDir),
+      sync: (opts) => syncWithPeers(meshDir, opts),
+    },
 
     // Events
     on: emitter.on.bind(emitter),
@@ -393,8 +478,10 @@ async function bootNervousSystem(options = {}) {
         ghostWings: {
           enabled: nsConfig.ghostWings.enabled,
           autoMaterialize: nsConfig.ghostWings.autoMaterialize,
+          coalescence: nsConfig.ghostWings.coalescence,
         },
-        constellation: constellation ? constellation.stats() : { enabled: false },
+        constellation: constellation ? { ...constellation.stats(), provider: nsConfig.constellation.provider } : { enabled: false },
+        peers: nsConfig.peers.enabled ? classifyPeers(meshDir) : { enabled: false },
       };
     },
   };

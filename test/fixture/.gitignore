@@ -1,0 +1,9 @@
+
+
+# Mercury Mesh: runtime state (logs, inbox, sessions)
+.mesh/orchestration-log/
+.mesh/log/
+.mesh/decisions/inbox/
+.mesh/sessions/
+.mesh/local.json
+.mesh-workstream

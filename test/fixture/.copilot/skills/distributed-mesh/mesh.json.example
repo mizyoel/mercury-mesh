@@ -1,0 +1,30 @@
+{
+  "meshes": {
+    "auth-mesh": {
+      "zone": "local",
+      "path": "../auth-mesh/.mesh"
+    },
+    "api-mesh": {
+      "zone": "local",
+      "path": "../api-mesh/.mesh"
+    },
+    "ci-mesh": {
+      "zone": "remote-trusted",
+      "source": "git@github.com:our-org/ci-mesh.git",
+      "ref": "main",
+      "sync_to": ".mesh/remotes/ci-mesh"
+    },
+    "data-mesh": {
+      "zone": "remote-trusted",
+      "source": "git@github.com:our-org/data-pipeline.git",
+      "ref": "main",
+      "sync_to": ".mesh/remotes/data-mesh"
+    },
+    "partner-fraud": {
+      "zone": "remote-opaque",
+      "source": "https://partner.example.com/mesh-contracts/fraud/SUMMARY.md",
+      "sync_to": ".mesh/remotes/partner-fraud",
+      "auth": "bearer"
+    }
+  }
+}

@@ -384,8 +384,66 @@ function createConstellationStore(options = {}) {
 
 // ─── Exports ────────────────────────────────────────────────────────────────
 
+/**
+ * Create a Constellation store using the configured provider.
+ *
+ * @param {object} options
+ * @param {string} options.meshDir
+ * @param {function} [options.embedFn]
+ * @param {string} [options.provider='json'] - 'json' or 'lancedb'
+ * @returns {Promise<object>} store instance
+ */
+async function createConstellationStoreForProvider(options = {}) {
+  const provider = options.provider || 'json';
+
+  if (provider === 'lancedb') {
+    const { createConstellationStoreLanceDB, isLanceDBAvailable } = require('./constellation-lancedb.js');
+
+    if (!(await isLanceDBAvailable())) {
+      throw new Error(
+        'Constellation provider "lancedb" configured but @lancedb/lancedb is not installed.\n' +
+        'Install it: npm install @lancedb/lancedb\n' +
+        'Or revert to JSON: set nervousSystem.constellation.provider to "json" in .mesh/config.json'
+      );
+    }
+
+    const lanceStore = await createConstellationStoreLanceDB({
+      meshDir: options.meshDir,
+      embedFn: options.embedFn,
+    });
+
+    // Auto-migrate from JSON if LanceDB store is empty and JSON index exists
+    if (lanceStore.entryCount === 0) {
+      const jsonIndexPath = require('node:path').join(
+        require('node:path').resolve(options.meshDir || '.mesh'),
+        'nervous-system', 'constellation', 'index.json'
+      );
+
+      if (require('node:fs').existsSync(jsonIndexPath)) {
+        try {
+          const raw = JSON.parse(require('node:fs').readFileSync(jsonIndexPath, 'utf8'));
+          if (Array.isArray(raw) && raw.length > 0) {
+            const { migrated, skipped } = await lanceStore.migrateFromJSON(raw);
+            if (typeof process !== 'undefined' && process.stderr) {
+              process.stderr.write(`[constellation] Migrated ${migrated} entries from JSON to LanceDB (${skipped} skipped)\n`);
+            }
+          }
+        } catch {
+          // Migration failure is non-fatal; LanceDB starts empty
+        }
+      }
+    }
+
+    return lanceStore;
+  }
+
+  // Default: JSON provider (synchronous creation, wrapped in resolved promise)
+  return createConstellationStore(options);
+}
+
 module.exports = {
   createConstellationStore,
+  createConstellationStoreForProvider,
   cosineSimilarity,
   contentHash,
 };
