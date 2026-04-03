@@ -1,6 +1,6 @@
 # Client Compatibility
 
-Mercury Mesh supports multiple GitHub Copilot surfaces. The coordinator must detect the active surface and adapt spawning, result collection, and logging behavior to match the available tools.
+Mercury Mesh runs across multiple GitHub Copilot surfaces. The bridge must detect the active surface and adapt spawning, result collection, and logging behavior to the tools actually on the console.
 
 ## Supported Surfaces
 
@@ -8,9 +8,9 @@ Mercury Mesh supports multiple GitHub Copilot surfaces. The coordinator must det
 |---------|------------|-------------------|-------|
 | GitHub Copilot CLI | `task` | `read_agent` | Full spawn controls, per-spawn model selection, and `sql` are available. |
 | GitHub Copilot in VS Code | `runSubagent` or `agent` | Inline subagent responses | No `read_agent`, no per-spawn model parameter, no `sql` tool. |
-| Other / fallback surfaces | None | Inline work only | If no spawn tool exists, work inline without pretending an agent was spawned. |
+| Other / fallback surfaces | None | Inline work only | If no spawn tool exists, work inline and never claim a Wing launched when nothing launched. |
 
-## Platform Detection
+## Surface Detection
 
 Determine the active surface by checking the available tools in this order:
 
@@ -27,14 +27,14 @@ If both CLI and VS Code spawn tools appear to be available, prefer `task` becaus
 - Use `task` with `agent_type`, `mode`, `model`, `description`, and `prompt`.
 - Collect background results with `read_agent`.
 - Use `sql` only in CLI-specific workflows.
-- Spawn Scribe in the background when appropriate.
+- Spawn Scribe in the background when the burn warrants it.
 
 ### VS Code Mode
 
 - Use `runSubagent` or `agent` with the full prompt.
 - Do not pass CLI-only parameters such as `agent_type`, `mode`, or `model`.
 - Collect results from the returned subagent response rather than `read_agent`.
-- Batch Scribe as the last subagent in a parallel group.
+- Batch Scribe as the last subagent in a parallel group so telemetry lands cleanly.
 
 ### Fallback Mode
 

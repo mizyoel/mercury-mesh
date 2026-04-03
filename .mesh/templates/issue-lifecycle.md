@@ -221,7 +221,7 @@ Closes #{issue-number}
 Working as {member} ({role})
 
 {If needs human review:}
-⚠️ This task was flagged as "needs review" — please have a Mercury Mesh member review before merging.
+⚠️ Review gate active. Route this through a Mercury Mesh reviewer before merge.
 ```
 
 ### 5. PR Review & Updates

@@ -38,7 +38,7 @@ When opening a PR:
 - Reference the issue: `Closes #{issue-number}`
 - If the issue had a `mesh:{member}` or `mesh:{member}` label, mention the member: `Working as {member} ({role}) on Mercury Mesh`
 - If the issue also had a `dept:{department}` label, mention the department in the PR context for reviewer clarity.
-- If this is a 🟡 needs-review task, add to the PR description: `⚠️ This task was flagged as "needs review" — please have a Mercury Mesh member review before merging.`
+- If this is a 🟡 needs-review task, add to the PR description: `⚠️ Review gate active. Route this through a Mercury Mesh reviewer before merge.`
 - Follow any project conventions in the Black Box: `.mesh/decisions.md` when present, otherwise `.mesh/decisions.md`
 
 ## Decisions
