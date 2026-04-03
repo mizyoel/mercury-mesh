@@ -2,9 +2,9 @@
 last_updated: {timestamp}
 ---
 
-# Team Wisdom
+# Mesh Wisdom
 
-Reusable patterns and heuristics learned through work. NOT transcripts — each entry is a distilled, actionable insight.
+Reusable patterns and heuristics learned through the burn. NOT transcripts — each entry is a distilled, actionable signal.
 
 ## Patterns
 

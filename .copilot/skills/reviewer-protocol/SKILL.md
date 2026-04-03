@@ -64,7 +64,7 @@ When an artifact is **rejected** by a Reviewer:
 **Example 4: Reviewer accidentally names original author**
 1. Fenster writes module → rejected
 2. Hockney says: "Fenster should fix the error handling"
-3. Coordinator: "Fenster is locked out as the original author. Please name a different agent."
+3. Coordinator: "Fenster is locked out as the original author. Name a different agent."
 4. Hockney: "Verbal, then"
 5. Coordinator spawns Verbal
 

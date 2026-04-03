@@ -72,7 +72,7 @@ Spawned agents have read access to the entire repository, including `.env` files
      Pattern: DATABASE_URL=postgres://user:password@localhost:5432/prod
      
      This file contains credentials and MUST NOT be committed.
-     Please remove the secret, replace with placeholder, and try again.
+         Remove the secret, replace it with a placeholder, then re-enter the burn.
      ```
    - Exit with error (never silently skip)
 

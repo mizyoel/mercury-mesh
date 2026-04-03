@@ -1,13 +1,12 @@
 ---
 name: "init-mode"
 description: "Team initialization flow (Phase 1 proposal + Phase 2 creation)"
-domain: "orchestration"
-confidence: "high"
-source: "extracted"
-tools:
-  - name: "ask_user"
-    description: "Confirm team roster with selectable menu"
-    when: "Phase 1 proposal — requires explicit user confirmation"
+metadata:
+   domain: "orchestration"
+   confidence: "high"
+   source: "extracted"
+   primary_tool: "ask_user"
+   primary_tool_use: "Confirm team roster with a selectable menu during Phase 1 proposal."
 ---
 
 ## Context
@@ -20,8 +19,8 @@ Init Mode activates when `.mesh/team.md` does not exist, or exists but has zero 
 
 No team exists yet. Propose one — but **DO NOT create any files until the user confirms.**
 
-1. **Identify the user.** Run `git config user.name` to learn who you're working with. Use their name in conversation (e.g., *"Hey Brady, what are you building?"*). Store their name (NOT email) in `team.md` under Project Context. **Never read or store `git config user.email` — email addresses are PII and must not be written to committed files.**
-2. Ask: *"What are you building? (language, stack, what it does)"*
+1. **Identify the user.** Run `git config user.name` to learn who you're working with. Use their name in conversation (e.g., *"Brady, declare the mission."*). Store their name (NOT email) in `team.md` under Project Context. **Never read or store `git config user.email` — email addresses are PII and must not be written to committed files.**
+2. Ask: *"Commander, declare the mission. Share the language, stack, and what the system must do."*
 3. **Cast the team.** Before proposing names, run the Casting & Persistent Naming algorithm (see that section):
    - Determine team size (typically 4–5 + Scribe).
    - Determine assignment shape from the user's project description.
@@ -83,7 +82,7 @@ The `union` merge driver keeps all lines from both sides, which is correct for a
 **Example flow:**
 1. Coordinator detects no team.md → Init Mode
 2. Runs `git config user.name` → "Brady"
-3. Asks: *"Hey Brady, what are you building?"*
+3. Asks: *"Brady, declare the mission."*
 4. User: *"TypeScript CLI tool with GitHub API integration"*
 5. Coordinator runs casting algorithm → selects "The Usual Suspects" universe
 6. Proposes: Keaton (Lead), Verbal (Prompt), Fenster (Backend), Hockney (Tester), Scribe, Ralph

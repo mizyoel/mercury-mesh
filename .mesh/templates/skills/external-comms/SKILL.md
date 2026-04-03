@@ -1,22 +1,23 @@
 ---
 name: "external-comms"
-description: "PAO workflow for scanning, drafting, and presenting community responses with human review gate"
-domain: "community, communication, workflow"
-confidence: "low"
-source: "manual (RFC #426 — PAO External Communications)"
-tools:
-  - name: "github-mcp-server-list_issues"
-    description: "List open issues for scan candidates and lightweight triage"
-    when: "Use for recent open issue scans before thread-level review"
-  - name: "github-mcp-server-issue_read"
-    description: "Read the full issue, comments, and labels before drafting"
-    when: "Use after selecting a candidate so PAO has complete thread context"
-  - name: "github-mcp-server-search_issues"
-    description: "Search for candidate issues or prior Mercury Mesh responses"
-    when: "Use when filtering by keywords, labels, or duplicate response checks"
-  - name: "gh CLI"
-    description: "Fallback for GitHub issue comments and discussions workflows"
-    when: "Use gh issue list/comment and gh api or gh api graphql when MCP coverage is incomplete"
+description: "PAO workflow for scanning, drafting, and presenting community responses in Mercury Mesh voice with a human command gate"
+metadata:
+  domain: "community, communication, workflow"
+  confidence: "low"
+  source: "manual (RFC #426 — PAO External Communications)"
+  tools:
+    - name: "github-mcp-server-list_issues"
+      description: "List open issues for scan candidates and lightweight triage"
+      when: "Use for recent open issue scans before thread-level review"
+    - name: "github-mcp-server-issue_read"
+      description: "Read the full issue, comments, and labels before drafting"
+      when: "Use after selecting a candidate so PAO has complete thread context"
+    - name: "github-mcp-server-search_issues"
+      description: "Search for candidate issues or prior Mercury Mesh responses"
+      when: "Use when filtering by keywords, labels, or duplicate response checks"
+    - name: "gh CLI"
+      description: "Fallback for GitHub issue comments and discussions workflows"
+      when: "Use gh issue list/comment and gh api or gh api graphql when MCP coverage is incomplete"
 ---
 
 ## Context
@@ -27,6 +28,7 @@ Phase 1 is **draft-only mode**.
 - **Human review gate is mandatory** — PAO never posts autonomously.
 - Every action is logged to `.mesh/comms/audit/`.
 - This workflow is triggered manually only ("PAO, check community") — no automated or Ralph-triggered activation in Phase 1.
+- The draft voice must obey `docs/brand-language.md` and `docs/persona-manifesto.md`: no apologies, no filler, direct telemetry, command-bridge cadence.
 
 ## Patterns
 
@@ -195,9 +197,9 @@ gh issue list --state open --json number,title,author,labels,comments --limit 20
 
 | # | Item | Author | Type | Confidence | Read | Preview |
 |---|------|--------|------|------------|------|---------|
-| 1 | Issue #426 | @newdev | Welcome | 🟢 | 1/1 | "Hey @newdev! Welcome to Mercury Mesh..." |
-| 2 | Discussion #18 | @builder | Feature guidance | 🟡 | 4/4 | "Great question! Today the CLI..." |
-| 3 | Issue #431 ⚠️ | @debugger | Technical uncertainty | 🔴 | 12/12 | "Interesting find, @debugger..." |
+| 1 | Issue #426 | @newdev | Welcome | 🟢 | 1/1 | "@newdev, signal received. Welcome aboard..." |
+| 2 | Discussion #18 | @builder | Feature guidance | 🟡 | 4/4 | "Vector received. Current CLI path..." |
+| 3 | Issue #431 ⚠️ | @debugger | Technical uncertainty | 🔴 | 12/12 | "Signal received, @debugger. Root cause..." |
 
 Confidence: 🟢 High | 🟡 Medium | 🔴 Needs review
 
@@ -224,9 +226,9 @@ reviewer: "@bradygaster"
 ## Draft Content (draft, edit, post actions)
 Thread: 3 comments, last activity 2026-03-16, reporter hit a preview-build regression after install.
 
-Hey @newdev! Welcome to Mercury Mesh 👋 Thanks for opening this.
-We reproduced the issue in preview builds and we're checking the regression point now.
-Let us know if you can share the command you ran right before the failure.
+@newdev, signal received. Welcome aboard.
+We reproduced the fault in preview builds. Regression point is under telemetry now.
+Transmit the command you ran right before the failure.
 
 ## Post Result (post, delete actions)
 https://github.com/bradygaster/Mercury Mesh/issues/426#issuecomment-123456
@@ -235,84 +237,84 @@ https://github.com/bradygaster/Mercury Mesh/issues/426#issuecomment-123456
 ### T1 — Welcome
 
 ```text
-Hey {author}! Welcome to Mercury Mesh 👋 Thanks for opening this.
+{author}, signal received. Welcome aboard.
 {specific acknowledgment or first answer}
-Let us know if you have questions — happy to help!
+Telemetry remains open if the thread picks up drift.
 ```
 
 ### T2 — Troubleshooting
 
 ```text
-Thanks for the detailed report, {author}!
-Here's what we think is happening: {explanation}
+Telemetry locked, {author}.
+Current read: {explanation}
 {steps or workaround}
-Let us know if that helps, or if you're seeing something different.
+If the drift persists, transmit {specific ask}.
 ```
 
 ### T3 — Feature Guidance
 
 ```text
-Great question! {context on current state}
+Vector received. {context on current state}
 {guidance or workaround}
-We've noted this as a potential improvement — {tracking info if applicable}.
+Queued on the flight path: {tracking info if applicable}.
 ```
 
 ### T4 — Redirect
 
 ```text
-Thanks for reaching out! This one is actually better suited for {correct location}.
+Routing correction, {author}. This belongs in {correct location}.
 {brief explanation of why}
-Feel free to open it there — they'll be able to help!
+Open the thread there and carry this context forward: {handoff note}.
 ```
 
 ### T5 — Acknowledgment
 
 ```text
-Good catch, {author}. We've confirmed this is a real issue.
+Confirmed, {author}. Real fault.
 {what we know so far}
-We'll update this thread when we have a fix. Thanks for flagging it!
+Patch is not in the burn yet. Telemetry will update here when it is.
 ```
 
 ### T6 — Closing
 
 ```text
-This should be resolved in {version/PR}! 🎉
+Patch landed in {version/PR}.
 {brief summary of what changed}
-Thanks for reporting this, {author} — it made Mercury Mesh better.
+Re-enter the burn and confirm hull integrity.
 ```
 
 ### T7 — Technical Uncertainty
 
 ```text
-Interesting find, {author}. We're not 100% sure what's causing this yet.
-Here's what we've ruled out: {list}
-We'd love more context if you have it — {specific ask}.
-We'll dig deeper and update this thread.
+Signal received, {author}. Root cause is still in the dark.
+Ruled out: {list}
+Transmit {specific ask}.
+That narrows the drift. Telemetry will update when the fault resolves.
 ```
 
 ### T8 — Empathetic Disagreement
 
 ```text
-We hear you, {author}. That's a fair concern.
+Signal received, {author}. The concern is valid.
 
-The current design choice was driven by {reason}. We know it's not ideal for every use case.
+The current design holds because {reason}. It will not fit every use case.
 
 {what alternatives exist or what trade-off was made}
 
-If you have ideas for how to make this work better for your scenario, we'd love to hear them — open a discussion or drop your thoughts here!
+If your use case breaks that geometry, open a discussion with the boundary conditions.
 ```
 
 ### T9 — Information Request
 
 ```text
-Thanks for reporting this, {author}!
+Telemetry incomplete, {author}.
 
-To help us dig into this, could you share:
+Transmit:
 - {specific ask 1}
 - {specific ask 2}
 - {specific ask 3, if applicable}
 
-That context will help us narrow down what's happening. Appreciate it!
+That signal is enough to narrow the fault.
 ```
 
 ## Anti-Patterns

@@ -6,4 +6,4 @@ active_issues: []
 
 # What We're Focused On
 
-{Narrative description of current focus — 1-3 sentences. Updated by coordinator at session start.}
+{Current Flight Path — 1-3 sentences. Updated by the coordinator at session start. Keep it sharp, direct, and tied to mission state.}

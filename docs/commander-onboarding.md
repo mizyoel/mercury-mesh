@@ -103,14 +103,14 @@ You are the final authority. The mesh extends your reach. It does not replace yo
 │                     (Node/Express, FastAPI, SvelteKit, bare metal...)      │
 │                                                                            │
 │    3. OBJECTIVE  :: What must this system accomplish?                       │
-│                     (API, CLI, platform, library, full-stack product...)   │
+│                     (API, CLI, bridge surface, library, full-stack system) │
 │                                                                            │
 │  State these clearly. The bridge will decompose the mission from here.     │
 │                                                                            │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-The Ship's Computer takes your declaration, analyzes the problem-space, and proposes a crew.
+The Ship's Computer takes your declaration, resolves the gravity well, and proposes a cast.
 
 ---
 
