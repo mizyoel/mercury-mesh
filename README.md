@@ -40,6 +40,78 @@
 
 ---
 
+## Experimental Status
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  CANDIDATE DISCLOSURE                                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  STATUS           :: EXPERIMENTAL ONLY                                     │
+│  CLEARANCE        :: NON-PRODUCTION                                        │
+│  LIVE-FIRE USE    :: DENIED                                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+Before you take the chair, the bridge issues one non-negotiable disclosure:
+
+Mercury Mesh is **experimental software operating outside a production-certified flight envelope**.
+
+This vessel is for proving grounds, not live-fire theaters. Do not hand Mercury Mesh authority over production deployments, destructive automation, regulated systems, or any mission path where one bad vector becomes a real operational, legal, or compliance event.
+
+Expect turbulence. Runtime structure, prompt geometry, workflow contracts, CLI behavior, and nervous-system subsystems may reform between releases without notice.
+
+Approved theaters for this phase:
+
+- R&D labs and internal proving grounds
+- sandbox repositories and prototype sorties
+- AI workflow experiments and Copilot operating-model design
+- reversible internal tooling where failure stays inside the hull
+
+## Commander Hiring Session
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  COMMANDER HIRING SESSION                                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  OPEN CHAIR       :: 01                                                    │
+│  ROLE             :: COMMANDER, MERCURY MESH                               │
+│  MISSION          :: DEFINE TRAJECTORY. GOVERN DRIFT. AUTHORIZE THRUST.    │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+The bridge is not hiring for prompt operators. It is hiring for Commanders.
+
+If you are looking to shape how AI-assisted engineering behaves inside a repository, proceed. If you only want code generation on demand, the chair will reject you.
+
+### Minimum Flight Qualifications
+
+You are a strong candidate if you can answer yes to most of the following:
+
+- You want to define Wing roles, routing rules, authority boundaries, and escalation gates.
+- You care about telemetry, memory, review rituals, and course correction, not just raw output.
+- You are running parallel workstreams where shared context and worktree isolation create leverage.
+- You are designing a reusable Copilot operating doctrine for yourself, your team, or a fleet of repos.
+- You want a bridge that governs how AI participates in triage, migration, review, and execution loops.
+
+### Immediate Disqualifiers
+
+You are not the right hire for this chair if your mission is any of the following:
+
+- Ship a small app fast with minimal setup and minimal ceremony.
+- Install a lightweight prompt pack without orchestration or authority controls.
+- Depend on strict backward compatibility and production-grade workflow guarantees today.
+- Hand automation a live production path where uptime, security, or compliance failures are unacceptable.
+
+### Interview Question
+
+Ask yourself one question before boarding:
+
+**Do I need a bridge, or do I only need a tool?**
+
+If you need a bridge, Mercury Mesh is worth the hiring cycle. If you only need a tool, do not put a Commander in the chair just to write a small app.
+
+---
+
 ## Installation
 
 ```text
