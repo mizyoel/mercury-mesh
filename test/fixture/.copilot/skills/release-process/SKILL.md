@@ -35,26 +35,23 @@ node -p "require('semver').valid('0.8.23-preview.1')"
 
 **If `semver.valid()` returns `null`:** STOP. Fix the version. Do NOT proceed.
 
-### 2. NPM_TOKEN Verification
+### 2. Publish Authentication Verification
 
-**Rule:** NPM_TOKEN must be an **Automation token** (no 2FA required). User tokens with 2FA will fail in CI with EOTP errors.
+**Rule:** Prefer **npm trusted publishing** from GitHub Actions via OIDC. Token-based publish is fallback only.
 
-```bash
-# Check token type (requires npm CLI authenticated)
-npm token list
-```
+**Preferred path: trusted publishing**
+1. Go to npmjs.com → Package Settings → Trusted publishing.
+2. Add GitHub Actions publisher: owner `mizyoel`, repo `mercury-mesh`, workflow `publish.yml`.
+3. Ensure `package.json` has `repository.url = https://github.com/mizyoel/mercury-mesh.git`.
+4. Keep GitHub Actions permission `id-token: write` enabled in `publish.yml`.
 
-Look for:
-- ✅ `read-write` tokens with NO 2FA requirement = Automation token (correct)
-- ❌ Tokens requiring OTP = User token (WRONG, will fail in CI)
+**Fallback path: granular token**
+- Use `NPM_TOKEN` only if trusted publishing is not configured yet.
+- `NPM_TOKEN` must be a **granular write token with bypass 2FA enabled**.
+- A normal user token with 2FA enforced will fail in CI with `EOTP`.
+- Legacy token guidance from older runbooks is obsolete; npm now recommends trusted publishing first.
 
-**How to create an Automation token:**
-1. Go to npmjs.com → Settings → Access Tokens
-2. Click "Generate New Token"
-3. Select **"Automation"** (NOT "Publish")
-4. Copy token and save as GitHub secret: `NPM_TOKEN`
-
-**If using a User token:** STOP. Create an Automation token first.
+**If using a token that still requires OTP:** STOP. Replace it or switch the package to trusted publishing before retrying release automation.
 
 ### 3. Branch and Tag State
 
@@ -182,7 +179,7 @@ gh run view --log
 4. Verify step runs with retry loop to confirm CLI on npm registry
 
 **If workflow fails:** Check the logs. Common issues:
-- EOTP error = wrong NPM_TOKEN type (use Automation token)
+- EOTP error = token requires OTP; use trusted publishing or a granular write token with bypass 2FA enabled
 - Verify step timeout = npm propagation delay (retry loop should handle this, but propagation can take up to 2 minutes in rare cases)
 - Version mismatch = package.json version doesn't match tag
 
@@ -357,7 +354,7 @@ git push origin main
 
 **Symptom:** Workflow fails with `EOTP` error.  
 **Root cause:** NPM_TOKEN is a User token with 2FA enabled. CI can't provide OTP.  
-**Fix:** Replace NPM_TOKEN with an Automation token (no 2FA). See "NPM_TOKEN Verification" above.
+**Fix:** Either configure npm trusted publishing for `publish.yml`, or replace `NPM_TOKEN` with a granular write token that has bypass 2FA enabled.
 
 ### Verify Step 404 (npm Propagation Delay)
 
@@ -390,7 +387,7 @@ git push origin main
 Before starting ANY release, confirm:
 
 - [ ] Version is valid semver: `node -p "require('semver').valid('VERSION')"` returns the version string (NOT null)
-- [ ] NPM_TOKEN is an Automation token (no 2FA): `npm token list` shows `read-write` without OTP requirement
+- [ ] Publish auth is ready: npm trusted publishing is configured for `publish.yml`, or `NPM_TOKEN` is a granular write token with bypass 2FA enabled
 - [ ] Branch is clean: `git status` shows "nothing to commit, working tree clean"
 - [ ] Tag doesn't exist: `git tag -l "vVERSION"` returns empty
 - [ ] `SKIP_BUILD_BUMP=1` is set: `echo $SKIP_BUILD_BUMP` returns `1`
@@ -428,7 +425,7 @@ This skill was created after the v0.8.22 release disaster. Full retrospective: `
 **Key learnings:**
 1. No release without a runbook = improvisation = disaster
 2. Semver validation is mandatory — 4-part versions break npm
-3. NPM_TOKEN type matters — User tokens with 2FA fail in CI
+3. Publish auth mode matters — trusted publishing is preferred, and token fallback must bypass 2FA
 4. Draft releases are a footgun — they don't trigger automation
 5. Retry logic is essential — npm propagation takes time
 

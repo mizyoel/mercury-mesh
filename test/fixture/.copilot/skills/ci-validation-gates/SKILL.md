@@ -28,11 +28,12 @@ Every publish workflow MUST validate version format before `npm publish`. 4-part
     echo "✅ Valid semver: $VERSION"
 ```
 
-### NPM Token Type Verification
-NPM_TOKEN MUST be an Automation token, not a User token with 2FA:
-- User tokens require OTP — CI can't provide it → EOTP error
-- Create Automation tokens at npmjs.com → Settings → Access Tokens → Automation
-- Verify before first publish in any workflow
+### Publish Authentication Verification
+Prefer npm trusted publishing via OIDC for GitHub Actions:
+- Trusted publishing removes long-lived write tokens from CI entirely
+- Configure npm package settings to trust GitHub repo `mizyoel/mercury-mesh` and workflow `publish.yml`
+- If token fallback is required, `NPM_TOKEN` must be a granular write token with bypass 2FA enabled
+- User tokens that still require OTP will fail in CI with `EOTP`
 
 ### Retry Logic for npm Registry Propagation
 npm registry uses eventual consistency. After `npm publish` succeeds, the package may not be immediately queryable.
@@ -71,7 +72,7 @@ Set `SKIP_BUILD_BUMP=1` (or `$env:SKIP_BUILD_BUMP = "1"` on Windows) before ANY 
 | # | What Happened | Root Cause | Prevention |
 |---|---------------|-----------|------------|
 | 1 | 4-part version published, npm mangled it | No semver validation gate | `npx semver` check before every publish |
-| 2 | CI failed 5+ times with EOTP | User token with 2FA | Automation token only |
+| 2 | CI failed 5+ times with EOTP | Token required OTP in CI | Trusted publishing or granular token with bypass 2FA |
 | 3 | Verify returned false 404 | No retry logic for propagation | 5 attempts, 15s intervals |
 | 4 | Workflow never triggered | Draft release doesn't emit event | Never create draft releases |
 | 5 | Version mutated during release | bump-build.mjs ran in release | SKIP_BUILD_BUMP=1 |
