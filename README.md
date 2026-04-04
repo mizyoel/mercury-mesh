@@ -97,9 +97,17 @@
 │  CLI REFERENCE                                                             │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                            │
-│  npx mercury-mesh init    [--force] [--target <path>]   scaffold project   │
-│  npx mercury-mesh update  [--target <path>]             upgrade agent      │
-│  npx mercury-mesh version                               print version      │
+│  npx mercury-mesh init          [--force] [--target <path>]  scaffold      │
+│  npx mercury-mesh update        [--target <path>]            upgrade agent │
+│  npx mercury-mesh doctor        [--target <path>]            27 checks     │
+│  npx mercury-mesh status        [--target <path>]            ASCII HUD     │
+│  npx mercury-mesh resume        [--session <id>] [--target]  session brief │
+│  npx mercury-mesh create-skill  <name> [--description] …     scaffold skill│
+│  npx mercury-mesh eject         [--target <path>]            remove .mesh/ │
+│  npx mercury-mesh worktree      list|status|prune            git worktrees │
+│  npx mercury-mesh coalescence   scan|apply                   ghost merging │
+│  npx mercury-mesh peers         list|register|sync|health|prune  mesh net  │
+│  npx mercury-mesh version                                    print version │
 │                                                                            │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -244,6 +252,10 @@ Missions act as gravity wells — pulling the right wings into orbit, holding th
 │      autonomic-core.js            :: persistent metabolism + drift patrol  │
 │      ghost-wing.js                :: emergent topology from the Void       │
 │      constellation-memory.js      :: spatial vector memory + RAG           │
+│      constellation-lancedb.js     :: LanceDB vector adapter (optional)    │
+│      worktree-manager.js          :: parallel Wing execution via worktrees│
+│      ghost-coalescence.js         :: Ghost Wing overlap detection + merge │
+│      mesh-peer.js                 :: distributed multi-machine mesh peers │
 │                                                                            │
 │  .copilot/                                                                 │
 │    mcp-config.json                :: MCP server configuration              │
@@ -417,7 +429,82 @@ When a new Sortie is declared, the Constellation is queried for **structural res
 │  Ingestion :: Black Box decisions, Ghost Wing outcomes, corrections         │
 │  Query     :: Cosine similarity → top-k → RAG context block               │
 │                                                                            │
-│  Upgrade path: LanceDB or Chroma for production-scale deployments.         │
+│  Backends:                                                                 │
+│    JSON    :: Zero-dependency default. Built-in vector store.              │
+│    LanceDB :: Optional. Install @lancedb/lancedb >=0.20.0.                │
+│               Set constellation.provider: "lancedb" in config.            │
+│               Dynamic ESM import — degrades gracefully if absent.          │
+│                                                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Ghost Wing Coalescence
+
+The death of duplicate work.
+
+When multiple Ghost Wings emerge from overlapping Void pockets, the mesh detects structural overlap and auto-coalesces them. Jaccard-based scoring evaluates domain keywords, file paths, backlog items, and attractor signals. High-overlap pairs merge automatically; borderline pairs are flagged for Commander review.
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  COALESCENCE ENGINE                                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  Signals     :: domain (0.4), keywords (0.2), files (0.3), attract (0.1)  │
+│  Auto-merge  :: overlap score ≥ 0.65 — coalesce into survivor Wing        │
+│  Flag        :: 0.35 ≤ score < 0.65 — Commander reviews before merge      │
+│  Ignore      :: score < 0.35 — Wings are sufficiently distinct            │
+│  Survivor    :: Wing with more successful tasks is preserved              │
+│                                                                            │
+│  CLI         :: npx mercury-mesh coalescence scan    (detect overlaps)     │
+│               :: npx mercury-mesh coalescence apply   (execute merges)     │
+│                                                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Worktree Parallelism
+
+The death of sequential execution.
+
+Wings that require isolated file system state execute in parallel via git worktrees. Each Wing gets its own checkout under a deterministic path. Branch naming follows `mesh/{issueNumber}-{slug}`. Orphaned worktrees are detected and pruned automatically.
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  WORKTREE ENGINE                                                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  Create      :: git worktree add mesh-{ghostId} -b mesh/{issue}-{slug}    │
+│  Cleanup     :: automatic prune of orphaned worktrees                      │
+│                                                                            │
+│  CLI         :: npx mercury-mesh worktree list    (show active worktrees)  │
+│               :: npx mercury-mesh worktree status  (health of each tree)   │
+│               :: npx mercury-mesh worktree prune   (remove orphans)        │
+│                                                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Distributed Mesh — Peer Coordination
+
+The death of single-machine isolation.
+
+Multiple Mercury Mesh instances across machines can register as peers in a shared registry. Each node has a deterministic identity derived from hostname and mesh directory. Peers exchange heartbeats, report fleet health, and synchronize Constellation Memory entries with content-hash deduplication.
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  PEER MESH                                                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  Identity    :: sha256(hostname:meshDir) → 12-char hex node ID            │
+│  Registry    :: .mesh/peers/{nodeId}.json                                  │
+│  Heartbeat   :: timestamp updated on each autonomic pulse (configurable)   │
+│  Classification :: healthy (within TTL) | stale (expired) | halted        │
+│  Sync        :: export/import constellation deltas with content-hash       │
+│                  deduplication — no duplicate entries across nodes          │
+│                                                                            │
+│  CLI         :: npx mercury-mesh peers list       (registry overview)      │
+│               :: npx mercury-mesh peers register   (add local node)        │
+│               :: npx mercury-mesh peers sync       (constellation sync)    │
+│               :: npx mercury-mesh peers health     (fleet health %)        │
+│               :: npx mercury-mesh peers prune      (remove stale peers)    │
 │                                                                            │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -511,6 +598,11 @@ SCHEMA :: v2
 | `nervousSystem.constellation.enabled` | `boolean` | `true` activates spatial vector memory and RAG context. |
 | `nervousSystem.constellation.ragMaxEntries` | `number` | Maximum Constellation entries returned per RAG query. Default: `5`. |
 | `nervousSystem.constellation.ragMinSimilarity` | `number` | Minimum similarity for a Constellation entry to appear in RAG. Default: `0.15`. |
+| `nervousSystem.constellation.provider` | `string` | `"json"` (default) or `"lancedb"`. LanceDB requires optional peer dep `@lancedb/lancedb`. |
+| `nervousSystem.peers.enabled` | `boolean` | `true` activates distributed mesh peer coordination. Default: `false`. |
+| `nervousSystem.peers.heartbeatOnPulse` | `boolean` | `true` sends peer heartbeat on each autonomic pulse. Default: `true`. |
+| `nervousSystem.peers.syncOnPulse` | `boolean` | `true` syncs constellation with peers on each pulse. Default: `false`. |
+| `nervousSystem.peers.heartbeatTTLMinutes` | `number` | Minutes before a peer is considered stale. Default: `30`. |
 
 Recommended for a commander who wants continuous status visibility:
 
@@ -610,6 +702,12 @@ Three voices operate on this bridge. Each has a purpose. Each has a frequency.
 │  SYNTHESIS           │  topology. Commander approval required.             │
 │  CONSTELLATION       │  ONLINE — spatial vector memory. RAG context        │
 │  MEMORY              │  pre-loaded into Wing context windows.              │
+│  GHOST WING          │  ONLINE — Jaccard overlap scoring, auto-merge       │
+│  COALESCENCE         │  above 0.65, flag-for-review above 0.35.           │
+│  WORKTREE            │  ONLINE — parallel Wing execution via git           │
+│  PARALLELISM         │  worktrees. Branch: mesh/{issue}-{slug}.           │
+│  DISTRIBUTED         │  ARMED — multi-machine peer registry, heartbeat,   │
+│  MESH PEERS          │  fleet health, constellation sync.                  │
 ├──────────────────────┴──────────────────────────────────────────────────────┤
 │  All protocols nominal. Nervous system online. Bridge is live.             │
 └─────────────────────────────────────────────────────────────────────────────┘
