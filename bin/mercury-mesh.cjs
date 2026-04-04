@@ -8,6 +8,68 @@ const { execFileSync, spawn } = require("node:child_process");
 const PACKAGE_ROOT = path.resolve(__dirname, "..");
 const VERSION = require(path.join(PACKAGE_ROOT, "package.json")).version;
 
+// ─── Terminal styling ──────────────────────────────────────────────────
+// Zero-dependency ANSI color system. Degrades to plain text in pipes / NO_COLOR.
+
+const isTTY = process.stdout.isTTY && !process.env.NO_COLOR;
+const esc = (code, s) => isTTY ? `\x1b[${code}m${s}\x1b[0m` : s;
+
+const style = {
+  bold:    (s) => esc("1", s),
+  dim:     (s) => esc("2", s),
+  cyan:    (s) => esc("36", s),
+  green:   (s) => esc("32", s),
+  red:     (s) => esc("31", s),
+  yellow:  (s) => esc("33", s),
+  magenta: (s) => esc("35", s),
+
+  // composites
+  boldCyan:   (s) => esc("1;36", s),
+  boldGreen:  (s) => esc("1;32", s),
+  boldRed:    (s) => esc("1;31", s),
+  boldYellow: (s) => esc("1;33", s),
+  dimCyan:    (s) => esc("2;36", s),
+};
+
+// Gradient across a string using 256-color ANSI (blue→cyan: 33→51)
+function gradient(text, from = 33, to = 51) {
+  if (!isTTY) return text;
+  return [...text].map((ch, i) => {
+    if (ch === " ") return ch;
+    const code = Math.round(from + (to - from) * (i / Math.max(text.length - 1, 1)));
+    return `\x1b[38;5;${code}m${ch}`;
+  }).join("") + "\x1b[0m";
+}
+
+// Strip ANSI escape codes for width calculation
+function stripAnsi(s) {
+  return s.replace(/\x1b\[[0-9;]*m/g, "");
+}
+
+// Spinner for async-feeling operations (call stop() when done)
+function createSpinner(msg) {
+  if (!isTTY) {
+    // Pipe mode: just print the message, return a no-op stop
+    return {
+      stop(symbol, color) {
+        const prefix = symbol === "✓" ? "✓" : symbol === "✗" ? "✗" : symbol || "→";
+        console.log(`  ${prefix}  ${msg}`);
+      },
+    };
+  }
+  const frames = ["◜", "◠", "◝", "◞", "◡", "◟"];
+  let i = 0;
+  const id = setInterval(() => {
+    process.stdout.write(`\r  ${style.cyan(frames[i++ % frames.length])} ${msg}  `);
+  }, 80);
+  return {
+    stop(symbol = "✓", colorFn = style.green) {
+      clearInterval(id);
+      process.stdout.write(`\r  ${colorFn(symbol)} ${msg}  \n`);
+    },
+  };
+}
+
 // ─── Asset manifest ────────────────────────────────────────────────────
 // Each entry: { src (relative to package root), dest (relative to target project root), type }
 // type: "file" = single file, "dir" = recursive directory copy
@@ -87,9 +149,11 @@ function log(msg) {
 }
 
 function heading(msg) {
-  console.log(`\n${"─".repeat(60)}`);
-  console.log(`  ${msg}`);
-  console.log(`${"─".repeat(60)}`);
+  const cols = Math.min(process.stdout.columns || 60, 80);
+  const rule = style.dimCyan("─".repeat(cols));
+  console.log(`\n${rule}`);
+  console.log(`  ${gradient(msg)}`);
+  console.log(`${rule}`);
 }
 
 function ensureDir(dirPath) {
@@ -100,12 +164,12 @@ function ensureDir(dirPath) {
 
 function copyFileIfMissing(src, dest, { force = false } = {}) {
   if (fs.existsSync(dest) && !force) {
-    log(`skip  ${dest}  (already exists)`);
+    log(`${style.dim("skip")}  ${style.dim(dest)}  ${style.dim("(already exists)")}`);
     return false;
   }
   ensureDir(path.dirname(dest));
   fs.copyFileSync(src, dest);
-  log(`write ${dest}`);
+  log(`${style.green("write")} ${style.dim(dest)}`);
   return true;
 }
 
@@ -136,19 +200,19 @@ function patchGitignore(targetRoot) {
   );
 
   if (missing.length === 0) {
-    log("skip  .gitignore  (entries already present)");
+    log(`${style.dim("skip")}  ${style.dim(".gitignore")}  ${style.dim("(entries already present)")}`);
     return;
   }
 
   const block = "\n" + GITIGNORE_LINES.join("\n") + "\n";
   fs.writeFileSync(gitignorePath, content.trimEnd() + "\n" + block, "utf-8");
-  log("patch .gitignore  (added mesh runtime ignores)");
+  log(`${style.green("patch")} ${style.dim(".gitignore")}  ${style.dim("(added mesh runtime ignores)")}`);
 }
 
 function writeDefaultConfig(targetRoot) {
   const configPath = path.join(targetRoot, ".mesh", "config.json");
   if (fs.existsSync(configPath)) {
-    log("skip  .mesh/config.json  (already exists)");
+    log(`${style.dim("skip")}  ${style.dim(".mesh/config.json")}  ${style.dim("(already exists)")}`);
     return;
   }
   ensureDir(path.dirname(configPath));
@@ -173,7 +237,7 @@ function writeDefaultConfig(targetRoot) {
     },
   };
   fs.writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2) + "\n", "utf-8");
-  log("write .mesh/config.json  (default — nervous system off)");
+  log(`${style.green("write")} ${style.dim(".mesh/config.json")}  ${style.dim("(default — nervous system off)")}`);
 }
 
 function stampVersion(targetRoot) {
@@ -191,7 +255,7 @@ function stampVersion(targetRoot) {
   );
   if (stamped !== content) {
     fs.writeFileSync(agentFile, stamped, "utf-8");
-    log(`stamp .github/agents/mercury-mesh.agent.md → v${VERSION}`);
+    log(`${style.cyan("stamp")} ${style.dim(".github/agents/mercury-mesh.agent.md")} ${style.cyan("→")} ${style.bold(`v${VERSION}`)}`);
   }
 }
 
@@ -208,7 +272,7 @@ function runInit(targetRoot, flags) {
     const dest = path.join(targetRoot, entry.dest);
 
     if (!fs.existsSync(src)) {
-      log(`warn  ${entry.src}  (source missing in package — skipping)`);
+      log(`${style.yellow("warn")}  ${style.dim(entry.src)}  ${style.yellow("(source missing in package — skipping)")}`);
       continue;
     }
 
@@ -224,13 +288,13 @@ function runInit(targetRoot, flags) {
   stampVersion(targetRoot);
 
   heading("Init complete");
-  log(`${filesWritten} file(s) written.`);
-  log("Existing files were preserved (use --force to overwrite).\n");
-  log("Next steps:");
-  log("  1. Open VS Code in this project");
-  log("  2. Add your OpenRouter key to .mesh/local.json if you want semantic routing");
-  log('  3. Chat with @mercury-mesh — say "declare the mission"');
-  log("  4. The bridge will cast your crew and scaffold team.md\n");
+  log(`${style.boldGreen(String(filesWritten))} file(s) written.`);
+  log(`${style.dim("Existing files were preserved (use --force to overwrite).")}\n`);
+  log(style.bold("Next steps:"));
+  log(`  ${style.cyan("1.")} Open VS Code in this project`);
+  log(`  ${style.cyan("2.")} Add your OpenRouter key to .mesh/local.json if you want semantic routing`);
+  log(`  ${style.cyan("3.")} Chat with @mercury-mesh — say ${style.bold('"declare the mission"')}`);
+  log(`  ${style.cyan("4.")} The bridge will cast your crew and scaffold team.md\n`);
 }
 
 function runUpdate(targetRoot) {
@@ -257,7 +321,7 @@ function runUpdate(targetRoot) {
     } else {
       ensureDir(path.dirname(dest));
       fs.copyFileSync(src, dest);
-      log(`write ${dest}`);
+      log(`${style.green("write")} ${style.dim(dest)}`);
       filesWritten++;
     }
   }
@@ -265,7 +329,7 @@ function runUpdate(targetRoot) {
   stampVersion(targetRoot);
 
   heading("Update complete");
-  log(`${filesWritten} file(s) updated (agent prompt + skills + instructions).\n`);
+  log(`${style.boldGreen(String(filesWritten))} file(s) updated (agent prompt + skills + instructions).\n`);
 }
 
 function resolveGitHubCliToken() {
@@ -339,19 +403,19 @@ function runDoctor(targetRoot) {
 
   function pass(msg) {
     results.pass++;
-    log(`  ✓  ${msg}`);
+    log(`  ${style.green("✓")}  ${msg}`);
   }
   function warn(msg) {
     results.warn++;
-    log(`  ⚠  ${msg}`);
+    log(`  ${style.yellow("⚠")}  ${style.yellow(msg)}`);
   }
   function fail(msg) {
     results.fail++;
-    log(`  ✗  ${msg}`);
+    log(`  ${style.red("✗")}  ${style.red(msg)}`);
   }
 
   // ── 1. Structure ──────────────────────────────────────────────────
-  log("Structure\n");
+  log(style.bold("Structure") + "\n");
 
   for (const [rel, label, required] of DOCTOR_CHECKS.structure) {
     const full = path.join(targetRoot, rel);
@@ -365,7 +429,7 @@ function runDoctor(targetRoot) {
   }
 
   // ── 2. Config schema ──────────────────────────────────────────────
-  log("\nConfig\n");
+  log("\n" + style.bold("Config") + "\n");
 
   const configPath = path.join(targetRoot, ".mesh", "config.json");
   let config = null;
@@ -414,7 +478,7 @@ function runDoctor(targetRoot) {
   }
 
   // ── 3. Agent prompt version stamp ─────────────────────────────────
-  log("\nAgent Prompt\n");
+  log("\n" + style.bold("Agent Prompt") + "\n");
 
   const agentPath = path.join(
     targetRoot,
@@ -439,7 +503,7 @@ function runDoctor(targetRoot) {
   }
 
   // ── 4. Skills sync check ──────────────────────────────────────────
-  log("\nSkills\n");
+  log("\n" + style.bold("Skills") + "\n");
 
   const liveSkillsDir = path.join(targetRoot, ".copilot", "skills");
   const templateSkillsDir = path.join(PACKAGE_ROOT, ".mesh", "templates", "skills");
@@ -475,7 +539,7 @@ function runDoctor(targetRoot) {
   }
 
   // ── 5. Nervous system ─────────────────────────────────────────────
-  log("\nNervous System\n");
+  log("\n" + style.bold("Nervous System") + "\n");
 
   if (config && config.nervousSystem) {
     const ns = config.nervousSystem;
@@ -536,7 +600,7 @@ function runDoctor(targetRoot) {
   }
 
   // ── 6. Gitignore ──────────────────────────────────────────────────
-  log("\nGitignore\n");
+  log("\n" + style.bold("Gitignore") + "\n");
 
   const gitignorePath = path.join(targetRoot, ".gitignore");
   if (fs.existsSync(gitignorePath)) {
@@ -560,16 +624,16 @@ function runDoctor(targetRoot) {
   heading("Diagnosis");
 
   const total = results.pass + results.warn + results.fail;
-  log(`${results.pass}/${total} passed  ·  ${results.warn} warning(s)  ·  ${results.fail} failure(s)\n`);
+  log(`${style.green(String(results.pass))}/${total} passed  ·  ${style.yellow(String(results.warn))} warning(s)  ·  ${style.red(String(results.fail))} failure(s)\n`);
 
   if (results.fail > 0) {
-    log("HULL BREACH — resolve failures above before flight.\n");
+    log(style.boldRed("HULL BREACH — resolve failures above before flight.") + "\n");
     return 1;
   } else if (results.warn > 0) {
-    log("HULL INTACT — minor drift detected. Review warnings.\n");
+    log(style.boldYellow("HULL INTACT — minor drift detected. Review warnings.") + "\n");
     return 0;
   } else {
-    log("ALL SYSTEMS NOMINAL — ready for sortie.\n");
+    log(style.boldGreen("ALL SYSTEMS NOMINAL — ready for sortie.") + "\n");
     return 0;
   }
 }
@@ -741,74 +805,83 @@ function runStatus(targetRoot) {
   }
 
   // Render
+  const cols = Math.min(process.stdout.columns || 79, 79);
+  const bdr = (ch) => style.dimCyan(ch);
+  const lbl = (s) => style.bold(s);
+  const topBorder    = bdr("┌") + bdr("─".repeat(77)) + bdr("┐");
+  const midBorder    = bdr("├") + bdr("─".repeat(77)) + bdr("┤");
+  const bottomBorder = bdr("└") + bdr("─".repeat(77)) + bdr("┘");
+  const row = (content) => `${bdr("│")}  ${content}${" ".repeat(Math.max(0, 75 - stripAnsi(content).length))}${bdr("│")}`;
+  const blank = row("");
+
   console.log(`
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  MERCURY MESH v${VERSION}  —  BRIDGE TELEMETRY                ${" ".repeat(Math.max(0, 26 - VERSION.length))}│
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  SYSTEM STATE                                                               │`);
+${topBorder}`);
+  console.log(row(gradient(`MERCURY MESH v${VERSION}`) + "  —  " + style.bold("BRIDGE TELEMETRY")));
+  console.log(midBorder);
+  console.log(blank);
+  console.log(row(lbl("SYSTEM STATE")));;
 
-  const halted = config.halted ? "YES ■ ALL STOP" : "NO";
-  const orgMode = config.orgMode ? "ENABLED" : "DISABLED";
+  const halted = config.halted ? style.boldRed("YES ■ ALL STOP") : style.green("NO");
+  const orgMode = config.orgMode ? style.green("ENABLED") : style.dim("DISABLED");
   const haltBar = config.halted
-    ? "░░░░░░░░░░░░░░░░░░░░  HALTED"
-    : "████████████████████  ONLINE";
+    ? style.red("░".repeat(20)) + "  " + style.boldRed("HALTED")
+    : style.green("█".repeat(20)) + "  " + style.boldGreen("ONLINE");
 
-  console.log(`│    Halted          ${pad(halted, 52)}│`);
-  console.log(`│    Org Mode        ${pad(orgMode, 52)}│`);
-  console.log(`│    Bridge Status   ${pad(haltBar, 52)}│`);
-  console.log(`│    Agent Prompt    ${pad(agentVersion ? `v${agentVersion}${agentVersion !== VERSION ? ` (package: v${VERSION})` : ""}` : "not found", 52)}│`);
-  console.log(`│    Default Model   ${pad((config.modelRouting && config.modelRouting.default) || "—", 52)}│`);
+  console.log(row(`  ${style.dim("Halted")}          ${halted}`));
+  console.log(row(`  ${style.dim("Org Mode")}        ${orgMode}`));
+  console.log(row(`  ${style.dim("Bridge Status")}   ${haltBar}`));
+  console.log(row(`  ${style.dim("Agent Prompt")}    ${agentVersion ? `v${agentVersion}${agentVersion !== VERSION ? style.yellow(` (package: v${VERSION})`) : style.green(" ✓")}` : style.red("not found")}`));
+  console.log(row(`  ${style.dim("Default Model")}   ${(config.modelRouting && config.modelRouting.default) || "—"}`));
 
-  console.log(`│                                                                             │`);
-  console.log(`│  CREW                                                                       │`);
+  console.log(blank);
+  console.log(row(lbl("CREW")));
 
   if (members && members.length > 0) {
-    console.log(`│    Roster          ${pad(`${members.length} Wing(s)`, 52)}│`);
-    console.log(`│    Active          ${pad(String(statusCounts.active), 52)}│`);
-    console.log(`│    Probation       ${pad(String(statusCounts.probation), 52)}│`);
-    console.log(`│    Shadow          ${pad(String(statusCounts.shadow), 52)}│`);
+    console.log(row(`  ${style.dim("Roster")}          ${members.length} Wing(s)`));
+    console.log(row(`  ${style.dim("Active")}          ${style.green(String(statusCounts.active))}`));
+    console.log(row(`  ${style.dim("Probation")}       ${style.yellow(String(statusCounts.probation))}`));
+    console.log(row(`  ${style.dim("Shadow")}          ${style.dim(String(statusCounts.shadow))}`));
   } else {
-    console.log(`│    Roster          ${pad("EMPTY — bridge unclaimed", 52)}│`);
+    console.log(row(`  ${style.dim("Roster")}          ${style.yellow("EMPTY — bridge unclaimed")}`));
   }
 
-  console.log(`│                                                                             │`);
-  console.log(`│  ORGANIZATION                                                               │`);
-  console.log(`│    Departments     ${pad(String(activeDepts.length), 52)}│`);
-  console.log(`│    Ghost Wings     ${pad(String(ghostDepts.length) + (ns.ghostWings && ns.ghostWings.autoMaterialize ? " (auto-materialize)" : " (manual approval)"), 52)}│`);
-  console.log(`│    Decisions       ${pad(inboxCount > 0 ? `${inboxCount} pending in inbox` : "inbox clear", 52)}│`);
+  console.log(blank);
+  console.log(row(lbl("ORGANIZATION")));
+  console.log(row(`  ${style.dim("Departments")}     ${String(activeDepts.length)}`));
+  console.log(row(`  ${style.dim("Ghost Wings")}     ${String(ghostDepts.length)}${ns.ghostWings && ns.ghostWings.autoMaterialize ? style.green(" (auto-materialize)") : style.dim(" (manual approval)")}`));
+  console.log(row(`  ${style.dim("Decisions")}       ${inboxCount > 0 ? style.yellow(`${inboxCount} pending in inbox`) : style.dim("inbox clear")}`));
 
-  console.log(`│                                                                             │`);
-  console.log(`│  NERVOUS SYSTEM                                                             │`);
+  console.log(blank);
+  console.log(row(lbl("NERVOUS SYSTEM")));
 
   if (ns.enabled) {
     const provider = ns.embeddingProvider || "tfidf";
     const hasKey = !!(ns.embeddingApiKey || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY);
-    const keyStatus = provider === "tfidf" ? "—" : hasKey ? "configured" : "MISSING";
+    const keyStatus = provider === "tfidf" ? "—" : hasKey ? style.green("configured") : style.boldRed("MISSING");
 
-    console.log(`│    Status          ${pad("ONLINE", 52)}│`);
-    console.log(`│    Phase I         ${pad(`Gravimetry     :: ${provider}${provider !== "tfidf" ? ` (key: ${keyStatus})` : ""}`, 52)}│`);
-    console.log(`│    Phase II        ${pad(`Autonomic Core :: pulse ${(ns.autonomic && ns.autonomic.pulseMs) || 30000}ms`, 52)}│`);
-    console.log(`│    Phase III       ${pad(`Ghost Wings    :: ${ns.ghostWings && ns.ghostWings.enabled ? "armed" : "disabled"}`, 52)}│`);
+    console.log(row(`  ${style.dim("Status")}          ${style.boldGreen("ONLINE")}`));
+    console.log(row(`  ${style.dim("Phase I")}         ${style.cyan("Gravimetry")}     :: ${provider}${provider !== "tfidf" ? ` (key: ${keyStatus})` : ""}`));
+    console.log(row(`  ${style.dim("Phase II")}        ${style.cyan("Autonomic Core")} :: pulse ${(ns.autonomic && ns.autonomic.pulseMs) || 30000}ms`));
+    console.log(row(`  ${style.dim("Phase III")}       ${style.cyan("Ghost Wings")}    :: ${ns.ghostWings && ns.ghostWings.enabled ? style.green("armed") : style.dim("disabled")}`));
     const constellationLabel = entryCount === "lancedb"
-      ? `Constellation  :: lancedb (indexed)`
-      : `Constellation  :: ${entryCount} embedding(s)${manifest && manifest.dimensions ? ` (${manifest.dimensions}D)` : ""}${constellationProvider !== "json" ? ` [${constellationProvider}]` : ""}`;
-    console.log(`│    Phase IV        ${pad(constellationLabel, 52)}│`);
+      ? `${style.cyan("Constellation")}  :: lancedb (indexed)`
+      : `${style.cyan("Constellation")}  :: ${entryCount} embedding(s)${manifest && manifest.dimensions ? ` (${manifest.dimensions}D)` : ""}${constellationProvider !== "json" ? ` [${constellationProvider}]` : ""}`;
+    console.log(row(`  ${style.dim("Phase IV")}        ${constellationLabel}`));
   } else {
-    console.log(`│    Status          ${pad("OFFLINE", 52)}│`);
+    console.log(row(`  ${style.dim("Status")}          ${style.dim("OFFLINE")}`));
   }
 
-  console.log(`│                                                                             │`);
-  console.log(`│  SESSIONS                                                                   │`);
-  console.log(`│    Total           ${pad(String(sessionCount), 52)}│`);
+  console.log(blank);
+  console.log(row(lbl("SESSIONS")));
+  console.log(row(`  ${style.dim("Total")}           ${String(sessionCount)}`));
 
   if (lastSession) {
-    console.log(`│    Last Active     ${pad(lastSession.lastActiveAt || lastSession.createdAt || "—", 52)}│`);
-    console.log(`│    Messages        ${pad(String(lastSession.messageCount), 52)}│`);
+    console.log(row(`  ${style.dim("Last Active")}     ${lastSession.lastActiveAt || lastSession.createdAt || "—"}`));
+    console.log(row(`  ${style.dim("Messages")}        ${String(lastSession.messageCount)}`));
   }
 
-  console.log(`│                                                                             │`);
-  console.log(`└─────────────────────────────────────────────────────────────────────────────┘`);
+  console.log(blank);
+  console.log(bottomBorder);
   console.log();
 
   return 0;
@@ -951,7 +1024,7 @@ function runResume(targetRoot, args) {
   }
 
   // ── 3. Last conversation context ──────────────────────────────────
-  log("\nLAST ACTIVITY\n");
+  log("\n" + style.bold("LAST ACTIVITY") + "\n");
 
   const summary = summarizeMessages(session.messages, 4);
   if (summary.length > 0) {
@@ -963,7 +1036,7 @@ function runResume(targetRoot, args) {
   }
 
   // ── 4. Pending work ───────────────────────────────────────────────
-  log("\nPENDING WORK\n");
+  log("\n" + style.bold("PENDING WORK") + "\n");
 
   const inboxCount = countDirEntries(path.join(meshDir, "decisions", "inbox"));
   log(`  Decision inbox    ${inboxCount > 0 ? `${inboxCount} pending` : "clear"}`);
@@ -991,7 +1064,7 @@ function runResume(targetRoot, args) {
   }
 
   // ── 5. Git state ──────────────────────────────────────────────────
-  log("\nGIT STATE\n");
+  log("\n" + style.bold("GIT STATE") + "\n");
 
   const git = detectGitState(targetRoot);
   if (git) {
@@ -1010,7 +1083,7 @@ function runResume(targetRoot, args) {
   // ── 6. Recovery prompt ────────────────────────────────────────────
   const hasWork = inboxCount > 0 || activeClaims > 0 || (git && git.changedFiles > 0);
 
-  log("\nRECOVERY BRIEFING\n");
+  log("\n" + style.bold("RECOVERY BRIEFING") + "\n");
 
   if (hasWork) {
     log("  Unfinished work detected. Paste this into your next Copilot session:\n");
@@ -1097,12 +1170,12 @@ function runWorktree(targetRoot, wtArgs) {
     if (worktrees.length === 0) {
       log("  (no worktrees found)");
     } else {
-      log("  BRANCH                              PATH");
-      log("  " + "\u2500".repeat(70));
+      log(`  ${style.dim("BRANCH")}                              ${style.dim("PATH")}`);
+      log("  " + style.dimCyan("\u2500".repeat(70)));
       for (const wt of worktrees) {
         const branch = wt.branch || "(detached)";
-        const isMesh = branch.startsWith("mesh/") ? " [mesh]" : "";
-        log(`  ${pad(branch + isMesh, 38)}${wt.path}`);
+        const isMesh = branch.startsWith("mesh/") ? style.cyan(" [mesh]") : "";
+        log(`  ${pad(branch, 38)}${isMesh ? style.bold(branch) + isMesh : branch}  ${style.dim(wt.path)}`);
       }
     }
 
@@ -1118,7 +1191,7 @@ function runWorktree(targetRoot, wtArgs) {
 
     const { orphanedWorktrees, staleGhosts, healthy } = wm.reconcileWorktrees(repoRoot, meshDir);
 
-    log("WORKTREE HEALTH\n");
+    log(style.bold("WORKTREE HEALTH") + "\n");
     log(`  Healthy            ${healthy.length}`);
     log(`  Orphaned worktrees ${orphanedWorktrees.length}`);
     log(`  Stale ghosts       ${staleGhosts.length}`);
@@ -1215,7 +1288,7 @@ function runCoalescence(targetRoot, cArgs) {
   if (sub === "scan") {
     const report = gc.reconcile(meshDir, { apply: false });
 
-    log(`GHOST WING OVERLAP SCAN\n`);
+    log(style.bold(`GHOST WING OVERLAP SCAN`) + "\n");
     log(`  Active ghosts     ${report.ghostCount}`);
     log(`  Overlaps found    ${report.overlapCount}`);
     log(`  Auto-coalescible  ${report.autoCoalesce}`);
@@ -1225,9 +1298,9 @@ function runCoalescence(targetRoot, cArgs) {
       log("\n  OVERLAPPING PAIRS:");
       log("  " + "\u2500".repeat(70));
       for (const o of report.overlaps) {
-        const risk = o.score >= gc.COALESCENCE_AUTO_THRESHOLD ? "HIGH" : "MODERATE";
-        log(`  [${risk}] ${pad(o.wingAName || o.wingA, 20)} \u2194 ${pad(o.wingBName || o.wingB, 20)}  score: ${o.score}`);
-        log(`         domain: ${o.signals.domain}  keywords: ${o.signals.keywords}  files: ${o.signals.files}  attractors: ${o.signals.attractors}`);
+        const risk = o.score >= gc.COALESCENCE_AUTO_THRESHOLD ? style.boldRed("HIGH") : style.yellow("MODERATE");
+        log(`  [${risk}] ${pad(o.wingAName || o.wingA, 20)} \u2194 ${pad(o.wingBName || o.wingB, 20)}  score: ${style.bold(String(o.score))}`);
+        log(`         ${style.dim(`domain: ${o.signals.domain}  keywords: ${o.signals.keywords}  files: ${o.signals.files}  attractors: ${o.signals.attractors}`)}`);
       }
     }
 
@@ -1244,7 +1317,7 @@ function runCoalescence(targetRoot, cArgs) {
   if (sub === "apply") {
     const report = gc.reconcile(meshDir, { apply: true });
 
-    log(`COALESCENCE APPLIED\n`);
+    log(style.bold(`COALESCENCE APPLIED`) + "\n");
     log(`  Coalesced pairs   ${report.coalesced.length}`);
 
     if (report.coalesced.length > 0) {
@@ -1298,7 +1371,7 @@ function runPeers(targetRoot, pArgs) {
   if (sub === "list") {
     const { peers, healthy, stale, halted, localId } = mp.classifyPeers(meshDir);
 
-    log(`PEER REGISTRY\n`);
+    log(style.bold("PEER REGISTRY") + "\n");
     log(`  Total peers   ${peers.length}`);
     log(`  Healthy       ${healthy.length}`);
     log(`  Stale         ${stale.length}`);
@@ -1306,14 +1379,14 @@ function runPeers(targetRoot, pArgs) {
     log(`  Local node    ${localId}`);
 
     if (peers.length > 0) {
-      log("\n  NODE ID       ALIAS                STATUS     LAST HEARTBEAT");
-      log("  " + "\u2500".repeat(70));
+      log(`\n  ${style.dim("NODE ID")}       ${style.dim("ALIAS")}                ${style.dim("STATUS")}     ${style.dim("LAST HEARTBEAT")}`);
+      log("  " + style.dimCyan("\u2500".repeat(70)));
       for (const p of peers) {
         const status = p.halted
-          ? "HALTED"
+          ? style.red("HALTED")
           : p._staleMinutes
-            ? `STALE (${p._staleMinutes}m)`
-            : "HEALTHY";
+            ? style.yellow(`STALE (${p._staleMinutes}m)`)
+            : style.green("HEALTHY");
         const local = p._isLocal ? " (local)" : "";
         log(`  ${pad(p.nodeId, 14)}${pad(p.alias + local, 21)}${pad(status, 17)}${p.lastHeartbeat}`);
       }
@@ -1331,7 +1404,7 @@ function runPeers(targetRoot, pArgs) {
 
     const manifest = mp.registerSelf(meshDir, { alias });
 
-    log(`REGISTERED\n`);
+    log(style.bold("REGISTERED") + "\n");
     log(`  Node ID       ${manifest.nodeId}`);
     log(`  Alias         ${manifest.alias}`);
     log(`  Hostname      ${manifest.hostname}`);
@@ -1347,7 +1420,7 @@ function runPeers(targetRoot, pArgs) {
   if (sub === "sync") {
     const report = mp.syncWithPeers(meshDir);
 
-    log(`SYNC COMPLETE\n`);
+    log(style.bold("SYNC COMPLETE") + "\n");
     log(`  Local node          ${report.localNodeId}`);
     log(`  Peers scanned       ${report.peersScanned}`);
     log(`  Delta exported      ${report.localDeltaExported} entries`);
@@ -1368,7 +1441,7 @@ function runPeers(targetRoot, pArgs) {
   if (sub === "health") {
     const { peers, healthy, stale, halted, localId } = mp.classifyPeers(meshDir);
 
-    log(`FLEET HEALTH\n`);
+    log(style.bold("FLEET HEALTH") + "\n");
     log(`  Total nodes   ${peers.length}`);
     log(`  Healthy       ${healthy.length}`);
     log(`  Stale         ${stale.length}`);
@@ -1378,7 +1451,8 @@ function runPeers(targetRoot, pArgs) {
       ? Math.round((healthy.length / peers.length) * 100)
       : 100;
 
-    log(`\n  Fleet health  ${fleetHealth}%`);
+    const healthColor = fleetHealth >= 80 ? style.boldGreen : fleetHealth >= 50 ? style.boldYellow : style.boldRed;
+    log(`\n  ${style.dim("Fleet health")}  ${healthColor(fleetHealth + "%")}`);
 
     if (stale.length > 0) {
       log("\n  STALE NODES (no heartbeat within TTL):");
@@ -1405,7 +1479,7 @@ function runPeers(targetRoot, pArgs) {
   if (sub === "prune") {
     const { pruned, removed } = mp.pruneStalePeers(meshDir);
 
-    log(`PRUNE COMPLETE\n`);
+    log(style.bold("PRUNE COMPLETE") + "\n");
     log(`  Removed ${pruned} stale peer(s)`);
 
     if (removed.length > 0) {
@@ -1466,7 +1540,7 @@ function runEject(targetRoot) {
       } else {
         fs.unlinkSync(filePath);
       }
-      log(`remove  ${label}`);
+      log(`${style.red("remove")}  ${style.dim(label)}`);
       removedCount++;
     }
   }
@@ -1486,7 +1560,7 @@ function runEject(targetRoot) {
     const remaining = fs.readdirSync(agentsDir);
     if (remaining.length === 0) {
       fs.rmdirSync(agentsDir);
-      log("remove  .github/agents/  (empty)");
+      log(`${style.green("remove")}  ${style.dim(".github/agents/")}  ${style.dim("(empty)")}`);
     }
   }
 
@@ -1497,7 +1571,7 @@ function runEject(targetRoot) {
   // Keep .copilot/mcp-config.json if it exists (user may have customized)
   const mcpConfig = path.join(targetRoot, ".copilot", "mcp-config.json");
   if (fs.existsSync(mcpConfig)) {
-    log("keep    .copilot/mcp-config.json  (may contain user config)");
+    log(`${style.dim("keep")}    ${style.dim(".copilot/mcp-config.json")}  ${style.dim("(may contain user config)")}`);
     skippedCount++;
   }
 
@@ -1507,7 +1581,7 @@ function runEject(targetRoot) {
     const remaining = fs.readdirSync(copilotDir);
     if (remaining.length === 0) {
       fs.rmdirSync(copilotDir);
-      log("remove  .copilot/  (empty)");
+      log(`${style.green("remove")}  ${style.dim(".copilot/")}  ${style.dim("(empty)")}`);
     }
   }
 
@@ -1523,7 +1597,7 @@ function runEject(targetRoot) {
     const remaining = fs.readdirSync(workflowsDir);
     if (remaining.length === 0) {
       fs.rmdirSync(workflowsDir);
-      log("remove  .github/workflows/  (empty)");
+      log(`${style.green("remove")}  ${style.dim(".github/workflows/")}  ${style.dim("(empty)")}`);
     }
   } else {
     log("(no workflows directory)");
@@ -1545,9 +1619,9 @@ function runEject(targetRoot) {
 
     if (cleaned.length < lines.length) {
       fs.writeFileSync(gitignorePath, cleaned.join("\n"));
-      log(`patch   .gitignore  (removed ${lines.length - cleaned.length} mesh lines)`);
+      log(`${style.green("patch")}   ${style.dim(".gitignore")}  ${style.dim(`(removed ${lines.length - cleaned.length} mesh lines)`)}`);
     } else {
-      log("skip    .gitignore  (no mesh entries found)");
+      log(`${style.dim("skip")}    ${style.dim(".gitignore")}  ${style.dim("(no mesh entries found)")}`);
     }
   } else {
     log("(no .gitignore)");
@@ -1555,8 +1629,8 @@ function runEject(targetRoot) {
 
   // ── Summary ───────────────────────────────────────────────────────
   log("");
-  log(`Ejected. ${removedCount} item(s) removed, ${skippedCount} preserved.`);
-  log("Mercury Mesh has been cleanly removed from this project.\n");
+  log(`Ejected. ${style.boldGreen(String(removedCount))} item(s) removed, ${style.dim(String(skippedCount))} preserved.`);
+  log(`${style.dim("Mercury Mesh has been cleanly removed from this project.")}\n`);
 
   return 0;
 }
@@ -1638,70 +1712,70 @@ function runCreateSkill(targetRoot, args) {
   // Write to live skills
   ensureDir(liveDir);
   fs.writeFileSync(path.join(liveDir, "SKILL.md"), content, "utf-8");
-  log(`write .copilot/skills/${slug}/SKILL.md`);
+  log(`${style.green("write")} ${style.dim(`.copilot/skills/${slug}/SKILL.md`)}`);
 
   // Mirror to template seeds (keep in sync)
   if (fs.existsSync(path.join(targetRoot, ".mesh", "templates", "skills"))) {
     ensureDir(templateDir);
     fs.writeFileSync(path.join(templateDir, "SKILL.md"), content, "utf-8");
-    log(`write .mesh/templates/skills/${slug}/SKILL.md`);
-    log("Live and template skills are in sync.");
+    log(`${style.green("write")} ${style.dim(`.mesh/templates/skills/${slug}/SKILL.md`)}`);
+    log(style.dim("Live and template skills are in sync."));
   } else {
-    log("skip  .mesh/templates/skills/ (directory not found — template sync skipped)");
+    log(`${style.dim("skip")}  ${style.dim(".mesh/templates/skills/ (directory not found — template sync skipped)")}`);
   }
 
-  log(`\nSkill "${slug}" created. Edit .copilot/skills/${slug}/SKILL.md to fill in patterns.\n`);
+  log(`\nSkill ${style.bold(`"${slug}"`)} created. Edit ${style.cyan(`.copilot/skills/${slug}/SKILL.md`)} to fill in patterns.\n`);
   return 0;
 }
 
 function printUsage() {
   console.log(`
-Mercury Mesh v${VERSION} — CLI
+${gradient(`Mercury Mesh v${VERSION}`)} ${style.dim("— CLI")}
 
-Usage:
-  npx @mizyoel/mercury-mesh init    [--force] [--target <path>]
-  npx @mizyoel/mercury-mesh update  [--target <path>]
-  npx @mizyoel/mercury-mesh doctor  [--target <path>]
-  npx @mizyoel/mercury-mesh status  [--target <path>]
-  npx @mizyoel/mercury-mesh create-skill <name> [--description <desc>] [--domain <domain>]
-  npx @mizyoel/mercury-mesh resume  [--session <id>] [--target <path>]
-  npx @mizyoel/mercury-mesh eject   [--target <path>]
-  npx @mizyoel/mercury-mesh worktree [list|status|prune] [--target <path>]
-  npx @mizyoel/mercury-mesh coalescence [scan|apply] [--target <path>]
-  npx @mizyoel/mercury-mesh peers [list|register|sync|health|prune] [--target <path>]
-  npx @mizyoel/mercury-mesh github-mcp
-  npx @mizyoel/mercury-mesh version
+${style.bold("Usage:")}
+  ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("init")}    ${style.dim("[--force] [--target <path>]")}
+  ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("update")}  ${style.dim("[--target <path>]")}
+  ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("doctor")}  ${style.dim("[--target <path>]")}
+  ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("status")}  ${style.dim("[--target <path>]")}
+  ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("create-skill")} ${style.dim("<name> [--description <desc>] [--domain <domain>]")}
+  ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("resume")}  ${style.dim("[--session <id>] [--target <path>]")}
+  ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("eject")}   ${style.dim("[--target <path>]")}
+  ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("worktree")} ${style.dim("[list|status|prune] [--target <path>]")}
+  ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("coalescence")} ${style.dim("[scan|apply] [--target <path>]")}
+  ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("peers")} ${style.dim("[list|register|sync|health|prune] [--target <path>]")}
+  ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("github-mcp")}
+  ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("version")}
 
-Commands:
-  init     Scaffold Copilot agent, skills, workflows, and .mesh/ runtime
+${style.bold("Commands:")}
+  ${style.cyan("init")}     Scaffold Copilot agent, skills, workflows, and .mesh/ runtime
            into the target project. Existing files are preserved unless --force.
-  update   Overwrite agent prompt, skills, and copilot-instructions with the
+  ${style.cyan("update")}   Overwrite agent prompt, skills, and copilot-instructions with the
            latest from this package version. Config and team files are untouched.
-  doctor   Run hull diagnostics: validate config, structure, skills, nervous
+  ${style.cyan("doctor")}   Run hull diagnostics: validate config, structure, skills, nervous
            system, secrets, and version alignment. Paste output for bug reports.
-  status   Bridge telemetry: crew roster, org health, nervous system, sessions,
+  ${style.cyan("status")}   Bridge telemetry: crew roster, org health, nervous system, sessions,
            and pending decisions at a glance.
-  create-skill
+  ${style.cyan("create-skill")}
            Scaffold a new skill in .copilot/skills/ and .mesh/templates/skills/.
            Creates SKILL.md with frontmatter and section stubs.
-  resume   Recover from an interrupted sortie: show last session context,
+  ${style.cyan("resume")}   Recover from an interrupted sortie: show last session context,
            pending decisions, uncommitted work, and a recovery briefing.
-  eject    Remove Mercury Mesh from the project. Strips .mesh/, agent prompt,
+  ${style.cyan("eject")}    Remove Mercury Mesh from the project. Strips .mesh/, agent prompt,
            skills, workflows, and .gitignore entries. Keeps mcp-config.json.
-  worktree List, inspect, and prune git worktrees for parallel Wing execution.
+  ${style.cyan("worktree")} List, inspect, and prune git worktrees for parallel Wing execution.
            Subcommands: list (all worktrees), status (health), prune (cleanup).
-  coalescence
+  ${style.cyan("coalescence")}
            Detect overlapping Ghost Wings and auto-merge compatible pairs.
            Subcommands: scan (report only), apply (merge high-confidence overlaps).
-  peers    Multi-machine coordination: register nodes, sync constellation,
+  ${style.cyan("peers")}    Multi-machine coordination: register nodes, sync constellation,
            and monitor fleet health. Subcommands: list, register, sync, health, prune.
-  github-mcp  Start the GitHub MCP server using gh auth token for local auth.
-  version  Print package version.
+  ${style.cyan("github-mcp")}  Start the GitHub MCP server using gh auth token for local auth.
+  ${style.cyan("version")}  Print package version.
 
-Options:
-  --force            Overwrite existing files during init
-  --target <path>    Target project root (default: current working directory)
-  --session <id>     Target a specific session for resume (default: most recent)
+${style.bold("Options:")}
+  ${style.yellow("--force")}            Overwrite existing files during init
+  ${style.yellow("--target")} ${style.dim("<path>")}    Target project root (default: current working directory)
+  ${style.yellow("--session")} ${style.dim("<id>")}     Target a specific session for resume (default: most recent)
 `);
 }
 
