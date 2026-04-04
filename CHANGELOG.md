@@ -2,6 +2,10 @@
 
 All notable changes to this package will be documented in this file.
 
+## [1.1.0] - 2026-04-04
+
+- Add "GENESIS IN THE VOID" — cinematic origin narrative from the Mesh's perspective across Dimension Null.
+
 ## [1.0.0] - 2026-04-04
 
 - Merge the EVELUTION branch into `master` for the 1.0.0 release line.
