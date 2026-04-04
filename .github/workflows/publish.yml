@@ -2,9 +2,21 @@ name: Publish NPM Package
 
 on:
   workflow_dispatch:
+    inputs:
+      publish_auth_mode:
+        description: Publish auth mode to use for this run
+        required: false
+        default: oidc
+        type: choice
+        options:
+          - oidc
+          - token
   push:
     tags:
       - "v*"
+
+env:
+  PUBLISH_AUTH_MODE: ${{ github.event.inputs.publish_auth_mode || vars.NPM_PUBLISH_AUTH_MODE || 'oidc' }}
 
 permissions:
   contents: write
@@ -14,14 +26,19 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22.14.0
           registry-url: https://registry.npmjs.org
+
+      - name: Upgrade npm for trusted publishing
+        run: |
+          npm install --global npm@^11.5.1
+          npm --version
 
       - name: Run tests
         run: npm test
@@ -48,15 +65,26 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          if [ -n "$NPM_TOKEN" ]; then
-            echo "Publishing with NPM_TOKEN fallback."
-            echo "NPM_TOKEN must be a granular write token with bypass 2FA enabled."
-            NODE_AUTH_TOKEN="$NPM_TOKEN" npm publish --access public --provenance
-          else
-            echo "Publishing with npm trusted publishing via OIDC."
-            echo "Ensure npm package settings trust GitHub repo mizyoel/mercury-mesh and workflow publish.yml."
-            npm publish --access public
-          fi
+          case "$PUBLISH_AUTH_MODE" in
+            token)
+              if [ -z "$NPM_TOKEN" ]; then
+                echo "::error::PUBLISH_AUTH_MODE=token but NPM_TOKEN is not configured."
+                exit 1
+              fi
+              echo "Publishing with NPM_TOKEN fallback."
+              echo "NPM_TOKEN must be a granular write token with bypass 2FA enabled."
+              NODE_AUTH_TOKEN="$NPM_TOKEN" npm publish --access public --provenance
+              ;;
+            oidc)
+              echo "Publishing with npm trusted publishing via OIDC."
+              echo "Ensure npm package settings trust GitHub repo mizyoel/mercury-mesh and workflow publish.yml."
+              npm publish --access public
+              ;;
+            *)
+              echo "::error::Unsupported PUBLISH_AUTH_MODE: $PUBLISH_AUTH_MODE. Use oidc or token."
+              exit 1
+              ;;
+          esac
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
