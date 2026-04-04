@@ -1,6 +1,6 @@
 {
   "name": "@mizyoel/mercury-mesh",
-  "version": "0.9.5",
+  "version": "1.0.0",
   "description": "Mercury Mesh runtime templates, prompts, workflows, and skills for Fluid OS autonomous operations.",
   "type": "commonjs",
   "main": "index.cjs",

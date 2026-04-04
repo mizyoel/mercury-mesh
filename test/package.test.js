@@ -506,7 +506,7 @@ test("peers: buildNodeManifest returns complete manifest", () => {
   // Create minimal .mesh structure
   const meshDir = path.join(tmpDir, ".mesh");
   fs.mkdirSync(meshDir, { recursive: true });
-  fs.writeFileSync(path.join(meshDir, "config.json"), JSON.stringify({ version: "0.9.5", halted: false }));
+  fs.writeFileSync(path.join(meshDir, "config.json"), JSON.stringify({ version: "1.0.0", halted: false }));
 
   try {
     const manifest = buildNodeManifest(meshDir);
@@ -514,7 +514,7 @@ test("peers: buildNodeManifest returns complete manifest", () => {
     assert.ok(manifest.hostname, "should have hostname");
     assert.ok(manifest.platform, "should have platform");
     assert.ok(manifest.lastHeartbeat, "should have lastHeartbeat");
-    assert.equal(manifest.meshVersion, "0.9.5");
+    assert.equal(manifest.meshVersion, "1.0.0");
     assert.equal(manifest.halted, false);
     assert.ok(Array.isArray(manifest.capabilities));
   } finally {
@@ -527,7 +527,7 @@ test("peers: registerSelf and listPeers round-trip", () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "mesh-peer-"));
   const meshDir = path.join(tmpDir, ".mesh");
   fs.mkdirSync(meshDir, { recursive: true });
-  fs.writeFileSync(path.join(meshDir, "config.json"), JSON.stringify({ version: "0.9.5" }));
+  fs.writeFileSync(path.join(meshDir, "config.json"), JSON.stringify({ version: "1.0.0" }));
 
   try {
     const manifest = mp.registerSelf(meshDir, { alias: "test-node" });
@@ -547,7 +547,7 @@ test("peers: heartbeat updates lastHeartbeat timestamp", () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "mesh-peer-"));
   const meshDir = path.join(tmpDir, ".mesh");
   fs.mkdirSync(meshDir, { recursive: true });
-  fs.writeFileSync(path.join(meshDir, "config.json"), JSON.stringify({ version: "0.9.5" }));
+  fs.writeFileSync(path.join(meshDir, "config.json"), JSON.stringify({ version: "1.0.0" }));
 
   try {
     const m1 = mp.registerSelf(meshDir);
@@ -567,7 +567,7 @@ test("peers: classifyPeers identifies stale and healthy nodes", () => {
   const meshDir = path.join(tmpDir, ".mesh");
   const peersDir = path.join(meshDir, "peers");
   fs.mkdirSync(peersDir, { recursive: true });
-  fs.writeFileSync(path.join(meshDir, "config.json"), JSON.stringify({ version: "0.9.5" }));
+  fs.writeFileSync(path.join(meshDir, "config.json"), JSON.stringify({ version: "1.0.0" }));
 
   // Register local node (healthy)
   mp.registerSelf(meshDir);
@@ -609,7 +609,7 @@ test("peers: pruneStalePeers removes only stale nodes", () => {
   const meshDir = path.join(tmpDir, ".mesh");
   const peersDir = path.join(meshDir, "peers");
   fs.mkdirSync(peersDir, { recursive: true });
-  fs.writeFileSync(path.join(meshDir, "config.json"), JSON.stringify({ version: "0.9.5" }));
+  fs.writeFileSync(path.join(meshDir, "config.json"), JSON.stringify({ version: "1.0.0" }));
 
   // Register local (healthy)
   mp.registerSelf(meshDir);
