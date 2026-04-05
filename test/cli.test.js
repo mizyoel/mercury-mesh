@@ -411,6 +411,112 @@ test("cli: usage includes status command", () => {
   assert.ok(out.includes("Bridge telemetry"), "usage should describe status");
 });
 
+test("cli: vanguard outrider dismiss updates candidate state", () => {
+  cleanFixture();
+  fs.mkdirSync(FIXTURE_DIR, { recursive: true });
+
+  runCLI("init");
+
+  const mapPath = path.join(FIXTURE_DIR, ".mesh", "vanguard", "outrider", "adjacency-map.json");
+  fs.mkdirSync(path.dirname(mapPath), { recursive: true });
+  fs.writeFileSync(mapPath, JSON.stringify({
+    schemaVersion: 1,
+    lastScan: new Date().toISOString(),
+    candidates: [{ id: "adj-cli-1", domain: ["test"], score: 0.5, status: "discovered" }],
+  }, null, 2), "utf-8");
+
+  const out = runCLI("vanguard", "outrider", "dismiss", "adj-cli-1");
+  assert.ok(out.includes("DISMISSED"));
+
+  const updated = JSON.parse(fs.readFileSync(mapPath, "utf-8"));
+  assert.equal(updated.candidates[0].status, "dismissed");
+
+  cleanFixture();
+});
+
+test("cli: vanguard horizon authorize activates speculative sortie experiment", () => {
+  cleanFixture();
+  fs.mkdirSync(FIXTURE_DIR, { recursive: true });
+
+  runCLI("init");
+
+  const horizon = require("../.mesh/nervous-system/vanguard/horizon-deck.js");
+  const sortieMod = require("../.mesh/nervous-system/vanguard/speculative-sortie.js");
+  const outrider = require("../.mesh/nervous-system/vanguard/outrider.js");
+  const meshDir = path.join(FIXTURE_DIR, ".mesh");
+
+  outrider.saveAdjacencyMap(meshDir, {
+    schemaVersion: 1,
+    lastScan: new Date().toISOString(),
+    candidates: [{ id: "adj-cli-sortie", domain: ["graphql"], score: 0.72, status: "discovered", promotedToExperiment: null }],
+  });
+
+  const sortie = sortieMod.draftSortie({ id: "adj-cli-sortie", domain: ["graphql"], score: 0.72 });
+  const sortieDir = path.join(meshDir, "vanguard", "speculative-sorties");
+  fs.mkdirSync(sortieDir, { recursive: true });
+  fs.writeFileSync(path.join(sortieDir, `${sortie.id}.json`), JSON.stringify(sortie, null, 2) + "\n", "utf-8");
+
+  const staged = horizon.stageItem(meshDir, {
+    type: "speculative-sortie",
+    title: sortie.title,
+    proposalRef: sortie.id,
+    proposalData: sortie,
+  });
+
+  const out = runCLI("vanguard", "horizon", "authorize", staged.item.id, "--notes", "launch it");
+  assert.ok(out.includes("AUTHORIZED"));
+  assert.ok(out.includes("Experiment"));
+
+  const updatedSortie = JSON.parse(fs.readFileSync(path.join(sortieDir, `${sortie.id}.json`), "utf-8"));
+  assert.equal(updatedSortie.status, "active");
+  assert.ok(updatedSortie.experimentId);
+
+  cleanFixture();
+});
+
+test("cli: vanguard genesis integrate installs authorized proposal", () => {
+  cleanFixture();
+  fs.mkdirSync(FIXTURE_DIR, { recursive: true });
+
+  runCLI("init");
+
+  const skunkworks = require("../.mesh/nervous-system/vanguard/skunkworks.js");
+  const genesis = require("../.mesh/nervous-system/vanguard/genesis-protocols.js");
+  const skillSynth = require("../.mesh/nervous-system/vanguard/skill-synthesis.js");
+  const meshDir = path.join(FIXTURE_DIR, ".mesh");
+
+  const draft = skunkworks.draftExperiment(meshDir, {
+    title: "CLI Genesis",
+    hypothesis: "Integration works",
+    domain: ["graphql"],
+    successCriteria: ["Done"],
+  });
+  skunkworks.activateExperiment(meshDir, draft.experiment.id);
+  skunkworks.reviewExperiment(meshDir, draft.experiment.id, {
+    criteriaResults: [{ criterion: "Done", met: true, evidence: "ok" }],
+  });
+  skunkworks.promoteExperiment(meshDir, draft.experiment.id);
+
+  const skillDraft = skillSynth.synthesizeSkill({
+    name: "CLI Genesis Skill",
+    description: "test",
+    domain: "graphql",
+    experimentId: draft.experiment.id,
+  });
+  skillSynth.writeSkillDraft(meshDir, draft.experiment.id, skillDraft, true);
+
+  const staged = genesis.generateAndStageProposal(meshDir, draft.experiment.id);
+  genesis.authorizeProposal(meshDir, staged.proposal.id, "commander");
+
+  const out = runCLI("vanguard", "genesis", "integrate", staged.proposal.id);
+  assert.ok(out.includes("INTEGRATED"));
+
+  const structure = JSON.parse(fs.readFileSync(path.join(meshDir, "org", "structure.json"), "utf-8"));
+  assert.ok(structure.departments.some((dept) => dept.genesisOrigin === staged.proposal.id));
+
+  cleanFixture();
+});
+
 // ─── Create-skill tests ───────────────────────────────────────────────
 
 test("cli: create-skill scaffolds SKILL.md in both directories", () => {

@@ -29,6 +29,7 @@ const { synthesizeBlueprint, materialize, evaluateLifecycle, solidify, dissolve 
 const { reconcile: reconcileCoalescence } = require('./ghost-coalescence.js');
 const { registerSelf: registerPeer, heartbeat: peerHeartbeat, classifyPeers, syncWithPeers } = require('./mesh-peer.js');
 const { createConstellationStore, createConstellationStoreForProvider } = require('./constellation-memory.js');
+const vanguard = require('./vanguard/index.js');
 
 const RUNTIME_DIR_CANDIDATES = ['.mesh', '.mercury'];
 
@@ -124,6 +125,34 @@ const NERVOUS_SYSTEM_DEFAULTS = {
     syncOnPulse: false,               // Sync constellation on each pulse (expensive)
     heartbeatTTLMinutes: 30,
   },
+  vanguard: {
+    enabled: false,                   // Opt-in: autonomous innovation subsystem
+    outrider: {
+      scanIntervalHours: 24,
+      minimumAdjacencyScore: 0.40,
+      maxCandidates: 20,
+    },
+    skunkworks: {
+      maxConcurrentExperiments: 2,
+      tokenBudgetPerExperiment: 50000,
+      maxLifespanHours: 168,
+    },
+    horizonDeck: {
+      maxStagedItems: 10,
+      decayDays: 30,
+      decayWarningDays: 7,
+    },
+    speculativeSortie: {
+      minimumAdjacencyScore: 0.55,
+      idleThresholdMinutes: 120,
+      cadence: null,
+      autoApprove: false,
+      maxDraftsPerCycle: 2,
+    },
+    genesis: {
+      cooldownHours: 48,
+    },
+  },
 };
 
 function mergeDefaults(config) {
@@ -143,6 +172,30 @@ function mergeDefaults(config) {
     },
     constellation: { ...NERVOUS_SYSTEM_DEFAULTS.constellation, ...(ns.constellation || {}) },
     peers: { ...NERVOUS_SYSTEM_DEFAULTS.peers, ...(ns.peers || {}) },
+    vanguard: {
+      ...NERVOUS_SYSTEM_DEFAULTS.vanguard,
+      ...(ns.vanguard || {}),
+      outrider: {
+        ...NERVOUS_SYSTEM_DEFAULTS.vanguard.outrider,
+        ...((ns.vanguard || {}).outrider || {}),
+      },
+      skunkworks: {
+        ...NERVOUS_SYSTEM_DEFAULTS.vanguard.skunkworks,
+        ...((ns.vanguard || {}).skunkworks || {}),
+      },
+      horizonDeck: {
+        ...NERVOUS_SYSTEM_DEFAULTS.vanguard.horizonDeck,
+        ...((ns.vanguard || {}).horizonDeck || {}),
+      },
+      speculativeSortie: {
+        ...NERVOUS_SYSTEM_DEFAULTS.vanguard.speculativeSortie,
+        ...((ns.vanguard || {}).speculativeSortie || {}),
+      },
+      genesis: {
+        ...NERVOUS_SYSTEM_DEFAULTS.vanguard.genesis,
+        ...((ns.vanguard || {}).genesis || {}),
+      },
+    },
   };
 }
 
@@ -338,6 +391,17 @@ async function bootNervousSystem(options = {}) {
         emitter.emit('coalescence-review-needed', coalescenceReport.flagged);
       }
     }
+
+    // ── Phase V: Vanguard Tick ──────────────────────────────────────────
+    if (nsConfig.vanguard.enabled) {
+      vanguard.tick(meshDir, nsConfig.vanguard, constellation)
+        .then((vanguardReport) => {
+          emitter.emit('vanguard-tick', vanguardReport);
+        })
+        .catch((err) => {
+          emitter.emit('vanguard-error', { error: err.message });
+        });
+    }
   });
 
   // ── Unified Triage ────────────────────────────────────────────────────
@@ -451,6 +515,18 @@ async function bootNervousSystem(options = {}) {
       sync: (opts) => syncWithPeers(meshDir, opts),
     },
 
+    // Phase V: Vanguard
+    vanguard: nsConfig.vanguard.enabled ? {
+      tick: () => vanguard.tick(meshDir, nsConfig.vanguard, constellation),
+      diagnostics: () => vanguard.diagnostics(meshDir),
+      outrider: vanguard.outrider,
+      skunkworks: vanguard.skunkworks,
+      horizonDeck: vanguard.horizonDeck,
+      genesis: vanguard.genesis,
+      speculativeSortie: vanguard.speculativeSortie,
+      skillSynthesis: vanguard.skillSynthesis,
+    } : { enabled: false },
+
     // Events
     on: emitter.on.bind(emitter),
     off: emitter.off.bind(emitter),
@@ -482,6 +558,7 @@ async function bootNervousSystem(options = {}) {
         },
         constellation: constellation ? { ...constellation.stats(), provider: nsConfig.constellation.provider } : { enabled: false },
         peers: nsConfig.peers.enabled ? classifyPeers(meshDir) : { enabled: false },
+        vanguard: nsConfig.vanguard.enabled ? vanguard.diagnostics(meshDir) : { enabled: false },
       };
     },
   };

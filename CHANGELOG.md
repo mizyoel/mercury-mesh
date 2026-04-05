@@ -2,6 +2,11 @@
 
 All notable changes to this package will be documented in this file.
 
+## [1.2.0] - 2026-04-05
+
+- Promote the Mercury Mesh package version to 1.2.0.
+- Expand the Vanguard subsystem with actionable Horizon authorization, Genesis progression, and richer operational CLI flows.
+
 ## [1.1.0] - 2026-04-04
 
 - Add "GENESIS IN THE VOID" — cinematic origin narrative from the Mesh's perspective across Dimension Null.

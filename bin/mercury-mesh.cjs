@@ -1499,6 +1499,475 @@ function runPeers(targetRoot, pArgs) {
   return 1;
 }
 
+// ─── Vanguard ──────────────────────────────────────────────────────────
+
+function loadVanguardRuntimeConfig(meshDir) {
+  const configPath = path.join(meshDir, "config.json");
+  const localPath = path.join(meshDir, "local.json");
+  const baseNs = (readJsonSafe(configPath) || {}).nervousSystem || {};
+  const localNs = (readJsonSafe(localPath) || {}).nervousSystem || {};
+  const baseV = baseNs.vanguard || {};
+  const localV = localNs.vanguard || {};
+
+  return {
+    ...baseV,
+    ...localV,
+    outrider: {
+      ...(baseV.outrider || {}),
+      ...(localV.outrider || {}),
+    },
+    skunkworks: {
+      ...(baseV.skunkworks || {}),
+      ...(localV.skunkworks || {}),
+    },
+    horizonDeck: {
+      ...(baseV.horizonDeck || {}),
+      ...(localV.horizonDeck || {}),
+    },
+    speculativeSortie: {
+      ...(baseV.speculativeSortie || {}),
+      ...(localV.speculativeSortie || {}),
+    },
+    genesis: {
+      ...(baseV.genesis || {}),
+      ...(localV.genesis || {}),
+    },
+  };
+}
+
+function printVanguardCandidateList(map) {
+  log(style.bold("OUTRIDER — ADJACENCY MAP") + "\n");
+  log(`  Last scan      ${map.lastScan || "never"}`);
+  log(`  Candidates     ${map.candidates.length}\n`);
+
+  if (map.candidates.length > 0) {
+    log(`  ${style.dim("ID")}                  ${style.dim("SCORE")}  ${style.dim("STATUS")}       ${style.dim("DOMAIN")}`);
+    log("  " + style.dimCyan("\u2500".repeat(70)));
+
+    const sorted = [...map.candidates].sort((a, b) => b.score - a.score);
+    for (const c of sorted) {
+      const statusColor = c.status === "discovered" ? style.green
+        : c.status === "promoted" ? style.cyan
+        : style.dim;
+      log(`  ${pad(c.id, 20)}${pad(String(c.score), 7)}${pad(statusColor(c.status), 13)}${(c.domain || []).join(", ")}`);
+    }
+  } else {
+    log("  No adjacency candidates discovered yet.");
+  }
+
+  log("");
+}
+
+async function runVanguard(targetRoot, vArgs) {
+  const meshDir = path.join(targetRoot, ".mesh");
+  const sub = vArgs[0] || "status";
+  const vanguardConfig = loadVanguardRuntimeConfig(meshDir);
+
+  heading(`Mercury Mesh v${VERSION} — Vanguard`);
+  log(`target: ${targetRoot}\n`);
+
+  if (!fs.existsSync(meshDir)) {
+    log("No .mesh/ directory found. Run 'mercury-mesh init' first.\n");
+    return 1;
+  }
+
+  let vMod;
+  try {
+    vMod = require(path.join(
+      path.resolve(__dirname, ".."),
+      ".mesh",
+      "nervous-system",
+      "vanguard",
+      "index.js"
+    ));
+  } catch (err) {
+    log(`Vanguard module not available: ${err.message}\n`);
+    return 1;
+  }
+
+  if (sub === "status") {
+    const diag = vMod.diagnostics(meshDir);
+
+    log(style.bold("VANGUARD STATUS") + "\n");
+
+    log("  " + style.cyan("OUTRIDER"));
+    log(`    Last scan        ${diag.outrider.lastScan || "never"}`);
+    log(`    Candidates       ${diag.outrider.candidates}`);
+    if (diag.outrider.topCandidate) {
+      log(`    Top candidate    ${diag.outrider.topCandidate.id} (score: ${diag.outrider.topCandidate.score})`);
+    }
+
+    log("\n  " + style.cyan("SKUNKWORKS"));
+    log(`    Active           ${diag.skunkworks.active}`);
+    log(`    Completed        ${diag.skunkworks.completed}`);
+    log(`    Dissolved        ${diag.skunkworks.dissolved}`);
+    log(`    Tokens burned    ${diag.skunkworks.totalTokensBurned}`);
+
+    log("\n  " + style.cyan("HORIZON DECK"));
+    log(`    Pending          ${diag.horizonDeck.pending}`);
+    log(`    Authorized       ${diag.horizonDeck.authorized}`);
+    log(`    Capacity         ${diag.horizonDeck.available}/${diag.horizonDeck.capacity} available`);
+
+    log("\n  " + style.cyan("GENESIS"));
+    log(`    Integrated       ${diag.genesis.integrated}`);
+    log(`    Awaiting auth    ${diag.genesis.awaitingAuth}`);
+
+    log("\n  " + style.cyan("SORTIES"));
+    log(`    Total generated  ${diag.sorties.totalGenerated}`);
+    log(`    Last generated   ${diag.sorties.lastGenerated || "never"}`);
+
+    log("");
+    return 0;
+  }
+
+  if (sub === "horizon") {
+    const horizonSub = vArgs[1] || "list";
+
+    if (horizonSub === "list") {
+      const pending = vMod.horizonDeck.listPending(meshDir);
+      const deckStats = vMod.horizonDeck.stats(meshDir);
+
+      log(style.bold("HORIZON DECK") + "\n");
+
+      if (pending.length === 0) {
+        log("  No pending items on the Horizon Deck.\n");
+      } else {
+        log(`  ${style.dim("ID")}                  ${style.dim("TYPE")}              ${style.dim("AGE")}    ${style.dim("TITLE")}`);
+        log("  " + style.dimCyan("\u2500".repeat(70)));
+
+        for (const item of pending) {
+          const age = Math.round((Date.now() - new Date(item.stagedAt).getTime()) / (1000 * 60 * 60 * 24));
+          const typeTag = item.type === "genesis-proposal" ? "GENESIS"
+            : item.type === "speculative-sortie" ? "SORTIE"
+            : item.type === "skill-draft" ? "SKILL"
+            : item.type.toUpperCase();
+          log(`  ${pad(item.id, 20)}${pad(typeTag, 18)}${pad(age + "d", 7)}${item.title}`);
+        }
+      }
+
+      log(`\n  PENDING: ${deckStats.pending}   CAPACITY: ${deckStats.available}/${deckStats.capacity}`);
+      log("");
+      return 0;
+    }
+
+    if (horizonSub === "authorize") {
+      const itemId = vArgs[2];
+      if (!itemId) {
+        log("Usage: mercury-mesh vanguard horizon authorize <item-id> [--notes <notes>]\n");
+        return 1;
+      }
+      const notesIdx = vArgs.indexOf("--notes");
+      const notes = notesIdx !== -1 ? vArgs.slice(notesIdx + 1).join(" ") : undefined;
+      const inspection = vMod.horizonDeck.inspectItem(meshDir, itemId);
+      if (!inspection.item) {
+        log(style.boldRed("FAILED") + ` Item "${itemId}" not found\n`);
+        return 1;
+      }
+
+      if (inspection.item.type === "genesis-proposal" && inspection.item.proposalRef) {
+        const authResult = vMod.genesis.authorizeProposal(
+          meshDir,
+          inspection.item.proposalRef,
+          "commander",
+          notes,
+        );
+        if (!authResult.success) {
+          log(style.boldRed("FAILED") + ` ${authResult.reason}\n`);
+          return 1;
+        }
+      }
+
+      if (inspection.item.type === "speculative-sortie" && inspection.item.proposalRef) {
+        const approveResult = vMod.speculativeSortie.approveSortie(meshDir, inspection.item.proposalRef, {
+          config: {
+            ...vanguardConfig.speculativeSortie,
+            ...vanguardConfig.skunkworks,
+          },
+          authorizedBy: "commander",
+          notes,
+        });
+        if (!approveResult.success) {
+          log(style.boldRed("FAILED") + ` ${approveResult.reason}\n`);
+          return 1;
+        }
+      }
+
+      const result = vMod.horizonDeck.authorizeItem(meshDir, itemId, "commander", notes);
+      if (!result.success) {
+        log(style.boldRed("FAILED") + ` ${result.reason}\n`);
+        return 1;
+      }
+
+      log(style.boldGreen("AUTHORIZED") + ` ${itemId}`);
+      if (inspection.item.type === "genesis-proposal" && inspection.item.proposalRef) {
+        log(`  Genesis        ${inspection.item.proposalRef}`);
+      }
+      if (inspection.item.type === "speculative-sortie" && inspection.item.proposalRef) {
+        const sortie = vMod.speculativeSortie.loadSortie(meshDir, inspection.item.proposalRef);
+        if (sortie && sortie.experimentId) {
+          log(`  Experiment     ${sortie.experimentId}`);
+        }
+      }
+      log("");
+      return 0;
+    }
+
+    if (horizonSub === "reject") {
+      const itemId = vArgs[2];
+      if (!itemId) {
+        log("Usage: mercury-mesh vanguard horizon reject <item-id> [reason]\n");
+        return 1;
+      }
+      const reason = vArgs.slice(3).join(" ") || undefined;
+      const result = vMod.horizonDeck.rejectItem(meshDir, itemId, reason);
+      if (result.success) {
+        log(style.boldYellow("REJECTED") + ` ${itemId}\n`);
+      } else {
+        log(style.boldRed("FAILED") + ` ${result.reason}\n`);
+      }
+      return result.success ? 0 : 1;
+    }
+
+    if (horizonSub === "inspect") {
+      const itemId = vArgs[2];
+      if (!itemId) {
+        log("Usage: mercury-mesh vanguard horizon inspect <item-id>\n");
+        return 1;
+      }
+      const { item, proposalData } = vMod.horizonDeck.inspectItem(meshDir, itemId);
+      if (!item) {
+        log(`Item "${itemId}" not found.\n`);
+        return 1;
+      }
+      log(style.bold("HORIZON ITEM") + "\n");
+      log(`  ID            ${item.id}`);
+      log(`  Type          ${item.type}`);
+      log(`  Title         ${item.title}`);
+      log(`  Status        ${item.status}`);
+      log(`  Staged at     ${item.stagedAt}`);
+      log(`  Decays at     ${item.decaysAt}`);
+      log(`  Priority      ${item.priority}`);
+      if (item.summary) log(`  Summary       ${item.summary}`);
+      if (item.commanderNotes) log(`  Notes         ${item.commanderNotes}`);
+      if (proposalData) {
+        log("\n  " + style.dim("PROPOSAL DATA:"));
+        log("  " + JSON.stringify(proposalData, null, 2).split("\n").join("\n  "));
+      }
+      log("");
+      return 0;
+    }
+
+    log(`Unknown horizon subcommand: ${horizonSub}`);
+    log("Available: list, authorize, reject, inspect\n");
+    return 1;
+  }
+
+  if (sub === "skunkworks" || sub === "experiments") {
+    const skunkworksSub = sub === "experiments" ? (vArgs[1] || "list") : (vArgs[1] || "list");
+    const experiments = vMod.skunkworks.listExperiments(meshDir);
+
+    if (skunkworksSub === "inspect") {
+      const experimentId = vArgs[2];
+      if (!experimentId) {
+        log("Usage: mercury-mesh vanguard skunkworks inspect <experiment-id>\n");
+        return 1;
+      }
+      const experiment = vMod.skunkworks.loadExperiment(meshDir, experimentId);
+      if (!experiment) {
+        log(`Experiment "${experimentId}" not found.\n`);
+        return 1;
+      }
+      const rdWing = vMod.rdWing.loadRdWing(meshDir, experimentId);
+
+      log(style.bold("SKUNKWORKS EXPERIMENT") + "\n");
+      log(`  ID             ${experiment.id}`);
+      log(`  Title          ${experiment.title}`);
+      log(`  Status         ${experiment.status}`);
+      log(`  Origin         ${(experiment.origin && experiment.origin.type) || "unknown"}`);
+      log(`  Created        ${experiment.createdAt}`);
+      log(`  Hypothesis     ${experiment.hypothesis || "—"}`);
+      log(`  Domain         ${(experiment.domain || []).join(", ") || "—"}`);
+      if (rdWing) {
+        const ttl = vMod.rdWing.checkRdTTL(rdWing);
+        const budget = vMod.rdWing.checkRdBudget(rdWing);
+        log(`  R&D Wing       ${rdWing.id}`);
+        log(`  TTL            ${ttl.expired ? "expired" : `${ttl.hoursRemaining}h remaining`}`);
+        log(`  Budget         ${budget.used}/${budget.budget} (${budget.percentUsed}%)`);
+      }
+      if (experiment.results) {
+        log("\n  " + style.dim("RESULTS:"));
+        log("  " + JSON.stringify(experiment.results, null, 2).split("\n").join("\n  "));
+      }
+      log("");
+      return 0;
+    }
+
+    if (skunkworksSub === "dissolve") {
+      const experimentId = vArgs[2];
+      if (!experimentId) {
+        log("Usage: mercury-mesh vanguard skunkworks dissolve <experiment-id> [reason]\n");
+        return 1;
+      }
+      const reason = vArgs.slice(3).join(" ") || "Commander-requested dissolution";
+      const result = vMod.skunkworks.dissolveExperiment(meshDir, experimentId, "commander-stop", reason);
+      if (!result.success) {
+        log(style.boldRed("FAILED") + ` ${result.reason}\n`);
+        return 1;
+      }
+      log(style.boldYellow("DISSOLVED") + ` ${experimentId}`);
+      log(`  Tokens consumed ${result.tokensConsumed}`);
+      log("");
+      return 0;
+    }
+
+    log(style.bold("SKUNKWORKS EXPERIMENTS") + "\n");
+    log(`  Active         ${experiments.active.length}`);
+    log(`  Completed      ${experiments.completed.length}`);
+    log(`  Dissolved      ${experiments.dissolved.length}`);
+    log(`  Tokens burned  ${experiments.totalTokensBurned}`);
+
+    if (experiments.active.length > 0) {
+      log("\n  ACTIVE:");
+      for (const id of experiments.active) {
+        const exp = vMod.skunkworks.loadExperiment(meshDir, id);
+        if (exp) {
+          log(`    ${pad(id, 20)}${exp.title}`);
+        }
+      }
+    }
+
+    log("");
+    return 0;
+  }
+
+  if (sub === "outrider") {
+    const outriderSub = vArgs[1] || "list";
+
+    if (outriderSub === "scan") {
+      const result = await vMod.outrider.scan(meshDir, {
+        config: { outrider: vanguardConfig.outrider },
+      });
+      log(style.bold("OUTRIDER SCAN COMPLETE") + "\n");
+      log(`  New candidates  ${result.newCandidates.length}`);
+      log(`  Total candidates ${result.totalCandidates}`);
+      if (result.newCandidates.length > 0) {
+        log(`  Top new         ${result.newCandidates[0].id} (${result.newCandidates[0].score})`);
+      }
+      log("");
+      return 0;
+    }
+
+    if (outriderSub === "dismiss") {
+      const candidateId = vArgs[2];
+      if (!candidateId) {
+        log("Usage: mercury-mesh vanguard outrider dismiss <candidate-id>\n");
+        return 1;
+      }
+      const result = vMod.outrider.dismissCandidate(meshDir, candidateId);
+      if (!result.success) {
+        log(style.boldRed("FAILED") + ` ${result.reason}\n`);
+        return 1;
+      }
+      log(style.boldYellow("DISMISSED") + ` ${candidateId}\n`);
+      return 0;
+    }
+
+    printVanguardCandidateList(vMod.outrider.loadAdjacencyMap(meshDir));
+    return 0;
+  }
+
+  if (sub === "genesis") {
+    const genesisSub = vArgs[1] || "status";
+
+    if (genesisSub === "inspect") {
+      const proposalId = vArgs[2];
+      if (!proposalId) {
+        log("Usage: mercury-mesh vanguard genesis inspect <proposal-id>\n");
+        return 1;
+      }
+      const proposal = vMod.genesis.loadProposal(meshDir, proposalId);
+      if (!proposal) {
+        log(`Genesis proposal "${proposalId}" not found.\n`);
+        return 1;
+      }
+      log(style.bold("GENESIS PROPOSAL") + "\n");
+      log("  " + JSON.stringify(proposal, null, 2).split("\n").join("\n  "));
+      log("");
+      return 0;
+    }
+
+    if (genesisSub === "integrate") {
+      const proposalId = vArgs[2];
+      if (!proposalId) {
+        log("Usage: mercury-mesh vanguard genesis integrate <proposal-id>\n");
+        return 1;
+      }
+      const result = vMod.genesis.integrate(meshDir, proposalId, {
+        config: vanguardConfig.genesis,
+      });
+      if (!result.success) {
+        log(style.boldRed("FAILED") + ` ${result.reason}\n`);
+        return 1;
+      }
+      log(style.boldGreen("INTEGRATED") + ` ${proposalId}`);
+      log(`  Skills         ${result.integrated.skills.length}`);
+      log(`  Wings          ${result.integrated.wings.length}`);
+      if (result.integrated.errors.length > 0) {
+        log(`  Errors         ${result.integrated.errors.length}`);
+      }
+      log("");
+      return 0;
+    }
+
+    const proposals = vMod.genesis.listProposals(meshDir);
+    const cooldowns = vMod.genesis.checkCooldowns(meshDir);
+
+    log(style.bold("GENESIS PROTOCOLS") + "\n");
+    log(`  Active cooldowns ${cooldowns.active.length}`);
+    log(`  Completed       ${cooldowns.completed.length}`);
+    log(`  Anomalies       ${cooldowns.anomalies.length}\n`);
+
+    if (proposals.length === 0) {
+      log("  No Genesis proposals.\n");
+    } else {
+      for (const p of proposals) {
+        const statusColor = p.status === "complete" ? style.green
+          : p.status === "integrated" ? style.cyan
+          : p.status === "awaiting-authorization" ? style.yellow
+          : style.dim;
+        log(`  ${pad(p.id, 20)}${pad(statusColor(p.status), 26)}${p.title}`);
+      }
+    }
+
+    log("");
+    return 0;
+  }
+
+  if (sub === "sorties") {
+    const sorties = vMod.speculativeSortie.listSorties(meshDir);
+
+    log(style.bold("SPECULATIVE SORTIES") + "\n");
+
+    if (sorties.length === 0) {
+      log("  No speculative sorties generated yet.\n");
+    } else {
+      for (const s of sorties) {
+        const statusColor = s.status === "approved" ? style.green
+          : s.status === "drafted" ? style.yellow
+          : style.dim;
+        log(`  ${pad(s.id, 20)}${pad(statusColor(s.status), 16)}${pad(String(s.score || ""), 7)}${s.title}`);
+      }
+    }
+
+    log("");
+    return 0;
+  }
+
+  log(`Unknown subcommand: ${sub}`);
+  log("Available: status, horizon, skunkworks, experiments, outrider, genesis, sorties\n");
+  return 1;
+}
+
 // ─── Create Skill ──────────────────────────────────────────────────────
 
 // Workflow files scaffolded by init (used by eject to identify mesh workflows)
@@ -1743,6 +2212,7 @@ ${style.bold("Usage:")}
   ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("worktree")} ${style.dim("[list|status|prune] [--target <path>]")}
   ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("coalescence")} ${style.dim("[scan|apply] [--target <path>]")}
   ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("peers")} ${style.dim("[list|register|sync|health|prune] [--target <path>]")}
+  ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("vanguard")} ${style.dim("[status|horizon|skunkworks|outrider|genesis|sorties]")}
   ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("github-mcp")}
   ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("version")}
 
@@ -1769,6 +2239,9 @@ ${style.bold("Commands:")}
            Subcommands: scan (report only), apply (merge high-confidence overlaps).
   ${style.cyan("peers")}    Multi-machine coordination: register nodes, sync constellation,
            and monitor fleet health. Subcommands: list, register, sync, health, prune.
+  ${style.cyan("vanguard")} Autonomous innovation subsystem: scan adjacencies, manage experiments,
+           review proposals, and authorize Genesis integrations.
+           Subcommands: status, horizon, skunkworks (alias: experiments), outrider, genesis, sorties.
   ${style.cyan("github-mcp")}  Start the GitHub MCP server using gh auth token for local auth.
   ${style.cyan("version")}  Print package version.
 
@@ -1781,7 +2254,7 @@ ${style.bold("Options:")}
 
 // ─── Main ──────────────────────────────────────────────────────────────
 
-function main() {
+async function main() {
   const args = process.argv.slice(2);
   const command = args.find((a) => !a.startsWith("-"));
 
@@ -1866,6 +2339,16 @@ function main() {
       process.exit(runPeers(targetRoot, pArgs));
       break;
     }
+    case "vanguard": {
+      const vArgs = [];
+      for (let i = 0; i < args.length; i++) {
+        if (args[i] === "vanguard") continue;
+        if (args[i] === "--target") { i++; continue; }
+        vArgs.push(args[i]);
+      }
+      process.exit(await runVanguard(targetRoot, vArgs));
+      break;
+    }
     case "version":
       console.log(VERSION);
       break;
@@ -1875,4 +2358,7 @@ function main() {
   }
 }
 
-main();
+main().catch((err) => {
+  console.error(err && err.stack ? err.stack : String(err));
+  process.exit(1);
+});
