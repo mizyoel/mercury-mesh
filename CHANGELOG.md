@@ -2,6 +2,11 @@
 
 All notable changes to this package will be documented in this file.
 
+## [1.3.1] - 2026-04-06
+
+- Ship the CLI runtime support files under `lib/` so installed packages can execute `mercury-mesh update` without module resolution failures.
+- Add an npm pack regression test that asserts the published tarball contains the CLI entrypoint and its runtime dependencies.
+
 ## [1.3.0] - 2026-04-06
 
 - Promote the Mercury Mesh package version to 1.3.0.
