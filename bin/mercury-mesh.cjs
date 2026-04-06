@@ -2,11 +2,20 @@
 "use strict";
 
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 const { execFileSync, spawn } = require("node:child_process");
 
 const PACKAGE_ROOT = path.resolve(__dirname, "..");
-const VERSION = require(path.join(PACKAGE_ROOT, "package.json")).version;
+const PACKAGE_JSON = require(path.join(PACKAGE_ROOT, "package.json"));
+const PACKAGE_NAME = PACKAGE_JSON.name;
+const VERSION = PACKAGE_JSON.version;
+
+const { detectRepoComplexity } = require(path.join(PACKAGE_ROOT, "lib", "complexity-scanner.cjs"));
+const { resolveRecommendedProfile, buildConfig, formatRecommendationSummary } = require(path.join(PACKAGE_ROOT, "lib", "profile-resolver.cjs"));
+
+const UPDATE_CHECK_INTERVAL_MS = 12 * 60 * 60 * 1000;
+const UPDATE_CHECK_TIMEOUT_MS = 1200;
 
 // ─── Terminal styling ──────────────────────────────────────────────────
 // Zero-dependency ANSI color system. Degrades to plain text in pipes / NO_COLOR.
@@ -84,6 +93,25 @@ function confirm(question, defaultYes = false) {
       const a = answer.trim().toLowerCase();
       if (a === "") return resolve(defaultYes);
       resolve(a === "y" || a === "yes");
+    });
+  });
+}
+
+function choice(question, options) {
+  return new Promise((resolve) => {
+    if (!process.stdin.isTTY) return resolve(options[0].value);
+    console.log(`\n  ${style.cyan("?")} ${question}\n`);
+    for (let i = 0; i < options.length; i++) {
+      const marker = style.cyan(`[${i + 1}]`);
+      console.log(`    ${marker} ${options[i].label}`);
+    }
+    console.log("");
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    rl.question(`  ${style.dim("Choice:")} `, (answer) => {
+      rl.close();
+      const idx = parseInt(answer.trim(), 10) - 1;
+      if (idx >= 0 && idx < options.length) return resolve(options[idx].value);
+      resolve(options[0].value);
     });
   });
 }
@@ -177,6 +205,113 @@ function heading(msg) {
 function ensureDir(dirPath) {
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
+  }
+}
+
+function resolveUpdateCheckCachePath() {
+  if (process.env.MERCURY_MESH_UPDATE_CHECK_CACHE_PATH) {
+    return path.resolve(process.env.MERCURY_MESH_UPDATE_CHECK_CACHE_PATH);
+  }
+  return path.join(os.homedir(), ".mercury-mesh", "update-check.json");
+}
+
+function readUpdateCheckCache(cachePath) {
+  try {
+    return JSON.parse(fs.readFileSync(cachePath, "utf-8"));
+  } catch {
+    return null;
+  }
+}
+
+function writeUpdateCheckCache(cachePath, latestVersion) {
+  try {
+    ensureDir(path.dirname(cachePath));
+    fs.writeFileSync(cachePath, JSON.stringify({ checkedAt: Date.now(), latestVersion }) + "\n", "utf-8");
+  } catch {
+    // Cache writes should never affect CLI execution.
+  }
+}
+
+function normalizeVersion(version) {
+  const match = String(version || "").trim().match(/^v?(\d+)\.(\d+)\.(\d+)/);
+  if (!match) return null;
+  return match.slice(1).map((part) => Number.parseInt(part, 10));
+}
+
+function isVersionNewer(candidate, current) {
+  const next = normalizeVersion(candidate);
+  const existing = normalizeVersion(current);
+
+  if (!next || !existing) return false;
+
+  for (let i = 0; i < 3; i++) {
+    if (next[i] > existing[i]) return true;
+    if (next[i] < existing[i]) return false;
+  }
+
+  return false;
+}
+
+function fetchLatestPublishedVersion() {
+  if (process.env.MERCURY_MESH_UPDATE_CHECK_LATEST_VERSION) {
+    return process.env.MERCURY_MESH_UPDATE_CHECK_LATEST_VERSION;
+  }
+
+  const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+
+  try {
+    const stdout = execFileSync(
+      npmCommand,
+      ["view", PACKAGE_NAME, "version", "--json"],
+      {
+        encoding: "utf-8",
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: UPDATE_CHECK_TIMEOUT_MS,
+        windowsHide: true,
+      }
+    ).trim();
+
+    if (!stdout) return null;
+
+    const parsed = JSON.parse(stdout);
+    return Array.isArray(parsed) ? parsed[0] : parsed;
+  } catch {
+    return null;
+  }
+}
+
+function notifyIfUpdateAvailable(command) {
+  if (!command || command === "version" || command === "--help" || command === "help") {
+    return;
+  }
+
+  if (process.env.MERCURY_MESH_DISABLE_UPDATE_CHECK === "1") {
+    return;
+  }
+
+  const forceCheck = process.env.MERCURY_MESH_UPDATE_CHECK_FORCE === "1";
+  const cachePath = resolveUpdateCheckCachePath();
+
+  if (!forceCheck && !process.env.MERCURY_MESH_UPDATE_CHECK_LATEST_VERSION) {
+    const cached = readUpdateCheckCache(cachePath);
+    if (cached && typeof cached.checkedAt === "number") {
+      const freshEnough = (Date.now() - cached.checkedAt) < UPDATE_CHECK_INTERVAL_MS;
+      if (freshEnough) {
+        if (isVersionNewer(cached.latestVersion, VERSION)) {
+          log(`${style.boldYellow("update available")}  ${style.dim(`v${VERSION}`)} ${style.dim("→")} ${style.bold(`v${cached.latestVersion}`)}`);
+          log(`${style.dim("run")} ${style.cyan(`npm install -g ${PACKAGE_NAME}@latest`)} ${style.dim("or")} ${style.cyan(`npx ${PACKAGE_NAME}@latest <command>`)}\n`);
+        }
+        return;
+      }
+    }
+  }
+
+  const latestVersion = fetchLatestPublishedVersion();
+  writeUpdateCheckCache(cachePath, latestVersion);
+
+  if (isVersionNewer(latestVersion, VERSION)) {
+    log(`${style.boldYellow("update available")}  ${style.dim(`v${VERSION}`)} ${style.dim("→")} ${style.bold(`v${latestVersion}`)}`);
+    log(`${style.dim("run")} ${style.cyan(`npm install -g ${PACKAGE_NAME}@latest`)} ${style.dim("or")} ${style.cyan(`npx ${PACKAGE_NAME}@latest <command>`)}\n`);
   }
 }
 
@@ -304,20 +439,80 @@ async function runInit(targetRoot, flags) {
     }
   }
 
-  // ── Interactive config prompts ──────────────────────────────────────
+  // ── Adaptive config onboarding ──────────────────────────────────────
   const configPath = path.join(targetRoot, ".mesh", "config.json");
   const configExists = fs.existsSync(configPath);
-  let vanguardEnabled = false;
 
   if (!configExists) {
     log("");
-    vanguardEnabled = await confirm(
-      "Enable the Vanguard (autonomous innovation subsystem)?",
-      false
-    );
-  }
+    const spinner = createSpinner("Scanning hull profile");
+    const scanResult = detectRepoComplexity(targetRoot);
+    const resolved = resolveRecommendedProfile(scanResult);
+    spinner.stop("✓", style.green);
 
-  writeDefaultConfig(targetRoot, { vanguardEnabled });
+    // Display detected profile
+    log("");
+    log(`  ${style.boldCyan("HULL PROFILE DETECTED")} ${style.dim("::")} ${style.bold(resolved.label)}`);
+    log(`  ${style.dim("CONFIDENCE")}            ${style.dim("::")} ${scanResult.confidence.toUpperCase()}`);
+    log("");
+    log(`  ${style.bold("RECOMMENDED POSTURE")}`);
+    const cfg = resolved.config;
+    const on  = (v) => v ? style.green("ENABLE") : style.dim("KEEP OFF");
+    const man = (v) => v ? style.yellow("ENABLE") : style.dim("KEEP MANUAL");
+    log(`    orgMode               ${on(cfg.orgMode)}`);
+    log(`    nervousSystem         ${on(cfg.nervousSystem.enabled)}`);
+    log(`    ghostWings            ${on(cfg.ghostWings.enabled)}`);
+    log(`    autoMaterialize       ${man(cfg.ghostWings.autoMaterialize)}`);
+    log(`    vanguard              ${on(cfg.vanguard.enabled)}`);
+
+    if (scanResult.reasons.length > 0) {
+      log("");
+      log(`  ${style.dim("SIGNALS")}`);
+      for (const reason of scanResult.reasons) {
+        log(`    ${style.dim("—")} ${style.dim(reason)}`);
+      }
+    }
+
+    const initChoice = await choice("How would you like to proceed?", [
+      { label: "Accept recommended posture", value: "accept" },
+      { label: "Review each high-impact setting", value: "review" },
+      { label: "Start conservative (everything off)", value: "conservative" },
+    ]);
+
+    let overrides = {};
+
+    if (initChoice === "conservative") {
+      overrides = { orgMode: false, nervousSystem: false, vanguard: false, autoMaterialize: false };
+    } else if (initChoice === "review") {
+      // Walk through high-impact settings
+      overrides.orgMode = await confirm(
+        "Coordinate work as a structured multi-department formation?",
+        cfg.orgMode
+      );
+      overrides.nervousSystem = await confirm(
+        "Enable the Nervous System (semantic routing + adaptive mesh)?",
+        cfg.nervousSystem.enabled
+      );
+      overrides.vanguard = await confirm(
+        "Allow the Mesh to propose and stage autonomous innovation experiments?",
+        false
+      );
+      if (overrides.vanguard) {
+        overrides.autoMaterialize = await confirm(
+          "Auto-form Ghost Wings for unclaimed domains? (requires Commander trust)",
+          false
+        );
+      }
+    }
+    // "accept" → overrides stays empty, profile defaults apply
+
+    const finalConfig = buildConfig(resolved, overrides);
+    ensureDir(path.dirname(configPath));
+    fs.writeFileSync(configPath, JSON.stringify(finalConfig, null, 2) + "\n", "utf-8");
+    log(`\n  ${style.green("write")} ${style.dim(".mesh/config.json")}  ${style.dim(`(${resolved.profile} profile)`)}`);
+  } else {
+    log(`  ${style.dim("skip")}  ${style.dim(".mesh/config.json")}  ${style.dim("(already exists)")}`);
+  }
   patchGitignore(targetRoot);
   stampVersion(targetRoot);
 
@@ -652,7 +847,52 @@ function runDoctor(targetRoot) {
     warn("nervousSystem key missing from config.json");
   }
 
-  // ── 6. Gitignore ──────────────────────────────────────────────────
+  // ── 6. Posture Advisory ───────────────────────────────────────────
+  log("\n" + style.bold("Posture Advisory") + "\n");
+
+  if (config) {
+    try {
+      const scanResult = detectRepoComplexity(targetRoot);
+      const resolved = resolveRecommendedProfile(scanResult);
+      const rec = resolved.config;
+
+      // CFG-101: Repo complexity exceeds conservative bridge posture
+      if ((scanResult.profile === "heavy" || scanResult.profile === "medium") && config.orgMode === false) {
+        warn(`CFG-101  Repo complexity is ${scanResult.profile} but orgMode is OFF — consider enabling structured coordination`);
+      } else {
+        pass(`Org posture aligned with ${scanResult.profile} hull profile`);
+      }
+
+      // CFG-102: Ghost Wings likely beneficial based on signals
+      const nsConfig = config.nervousSystem || {};
+      const ghostEnabled = nsConfig.ghostWings ? nsConfig.ghostWings.enabled !== false : false;
+      if ((scanResult.profile === "medium" || scanResult.profile === "heavy") && !ghostEnabled && !nsConfig.enabled) {
+        warn("CFG-102  Nervous System + Ghost Wings likely beneficial for this hull size — run `mercury-mesh config tune`");
+      }
+
+      // CFG-103: Auto-materialization enabled without Tier-1 Commander
+      const autoMat = nsConfig.ghostWings && nsConfig.ghostWings.autoMaterialize;
+      const hasTier1 = config.humanTiers && config.humanTiers.tier1 && config.humanTiers.tier1.length > 0;
+      if (autoMat && !hasTier1) {
+        warn("CFG-103  Auto-materialization enabled without a claimed Tier-1 Commander — topology may grow unsupervised");
+      }
+
+      // CFG-201: Experimental signals suggest Vanguard evaluation
+      if (scanResult.profile === "experimental" && (!config.vanguard || !config.vanguard.enabled)) {
+        warn("CFG-201  Experimental repo signals detected — consider evaluating Vanguard (`mercury-mesh vanguard status`)");
+      }
+
+      // CFG-301: High-autonomy settings without Tier-1 Commander
+      if (config.vanguard && config.vanguard.enabled && !hasTier1) {
+        warn("CFG-301  Vanguard enabled without a claimed Tier-1 Commander — autonomous innovation lacks oversight");
+      }
+    } catch {
+      // Scanner failure should not break doctor
+      log("    " + style.dim("Posture advisory skipped (scan error)"));
+    }
+  }
+
+  // ── 7. Gitignore ──────────────────────────────────────────────────
   log("\n" + style.bold("Gitignore") + "\n");
 
   const gitignorePath = path.join(targetRoot, ".gitignore");
@@ -2250,6 +2490,191 @@ function runCreateSkill(targetRoot, args) {
   return 0;
 }
 
+// ─── Config Recommend / Tune Commands ──────────────────────────────────
+
+function runConfigRecommend(targetRoot, flags) {
+  heading(`Mercury Mesh v${VERSION} — Config Recommend`);
+  log(`target: ${targetRoot}\n`);
+
+  const configPath = path.join(targetRoot, ".mesh", "config.json");
+  if (!fs.existsSync(configPath)) {
+    log(style.red("No .mesh/config.json found — run `mercury-mesh init` first.\n"));
+    return 1;
+  }
+
+  let config;
+  try {
+    config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+  } catch (e) {
+    log(style.red(`Failed to parse config.json: ${e.message}\n`));
+    return 1;
+  }
+
+  const spinner = createSpinner("Scanning hull profile");
+  const scanResult = detectRepoComplexity(targetRoot);
+  const resolved = resolveRecommendedProfile(scanResult);
+  spinner.stop("✓", style.green);
+
+  log("");
+  log(`  ${style.boldCyan("HULL PROFILE DETECTED")} ${style.dim("::")} ${style.bold(resolved.label)}`);
+  log(`  ${style.dim("CONFIDENCE")}            ${style.dim("::")} ${scanResult.confidence.toUpperCase()}`);
+
+  if (scanResult.reasons.length > 0) {
+    log("");
+    log(`  ${style.dim("SIGNALS")}`);
+    for (const reason of scanResult.reasons) {
+      log(`    ${style.dim("—")} ${style.dim(reason)}`);
+    }
+  }
+
+  // Compute diffs between current config and recommended
+  const rec = resolved.config;
+  const diffs = [];
+
+  if (config.orgMode !== rec.orgMode) {
+    diffs.push({ key: "orgMode", current: config.orgMode, recommended: rec.orgMode });
+  }
+  const nsEnabled = config.nervousSystem ? config.nervousSystem.enabled : false;
+  if (nsEnabled !== rec.nervousSystem.enabled) {
+    diffs.push({ key: "nervousSystem.enabled", current: nsEnabled, recommended: rec.nervousSystem.enabled });
+  }
+  // Ghost Wings are active when nervousSystem is on; autoMaterialize is the explicit toggle
+  const autoMat = config.nervousSystem && config.nervousSystem.ghostWings
+    ? !!config.nervousSystem.ghostWings.autoMaterialize : false;
+  if (autoMat !== rec.ghostWings.autoMaterialize) {
+    diffs.push({ key: "ghostWings.autoMaterialize", current: autoMat, recommended: rec.ghostWings.autoMaterialize });
+  }
+
+  log("");
+  if (diffs.length === 0) {
+    log(`  ${style.boldGreen("POSTURE ALIGNED")} — current config matches recommended profile.\n`);
+  } else {
+    log(`  ${style.bold("RECOMMENDED CHANGES")}\n`);
+    for (const d of diffs) {
+      const cur = d.current ? style.green("ON") : style.dim("OFF");
+      const rec = d.recommended ? style.green("ON") : style.dim("OFF");
+      log(`    ${style.cyan(d.key.padEnd(28))} ${cur} ${style.dim("→")} ${rec}`);
+    }
+    log("");
+    log(`  ${style.dim("Run")} ${style.cyan("mercury-mesh config tune")} ${style.dim("to apply changes interactively.")}\n`);
+  }
+
+  if (flags.json) {
+    const output = {
+      profile: scanResult.profile,
+      confidence: scanResult.confidence,
+      signals: scanResult.signals,
+      reasons: scanResult.reasons,
+      diffs,
+    };
+    console.log(JSON.stringify(output, null, 2));
+  }
+
+  return 0;
+}
+
+async function runConfigTune(targetRoot, flags) {
+  heading(`Mercury Mesh v${VERSION} — Config Tune`);
+  log(`target: ${targetRoot}\n`);
+
+  const configPath = path.join(targetRoot, ".mesh", "config.json");
+  if (!fs.existsSync(configPath)) {
+    log(style.red("No .mesh/config.json found — run `mercury-mesh init` first.\n"));
+    return 1;
+  }
+
+  let config;
+  try {
+    config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+  } catch (e) {
+    log(style.red(`Failed to parse config.json: ${e.message}\n`));
+    return 1;
+  }
+
+  const spinner = createSpinner("Scanning hull profile");
+  const scanResult = detectRepoComplexity(targetRoot);
+  const resolved = resolveRecommendedProfile(scanResult);
+  spinner.stop("✓", style.green);
+
+  log("");
+  log(`  ${style.boldCyan("HULL PROFILE DETECTED")} ${style.dim("::")} ${style.bold(resolved.label)}`);
+  log(`  ${style.dim("CONFIDENCE")}            ${style.dim("::")} ${scanResult.confidence.toUpperCase()}`);
+  log("");
+
+  const rec = resolved.config;
+  let changed = false;
+
+  // Walk through each tunable setting
+  if (config.orgMode !== rec.orgMode) {
+    const cur = config.orgMode ? "ON" : "OFF";
+    const recLabel = rec.orgMode ? "ON" : "OFF";
+    log(`  ${style.dim("orgMode is")} ${cur}${style.dim(", recommended:")} ${recLabel}`);
+    const answer = await confirm(
+      "Coordinate work as a structured multi-department formation?",
+      rec.orgMode
+    );
+    if (answer !== config.orgMode) {
+      config.orgMode = answer;
+      changed = true;
+    }
+  }
+
+  const nsEnabled = config.nervousSystem ? config.nervousSystem.enabled : false;
+  if (nsEnabled !== rec.nervousSystem.enabled) {
+    const cur = nsEnabled ? "ON" : "OFF";
+    const recLabel = rec.nervousSystem.enabled ? "ON" : "OFF";
+    log(`  ${style.dim("nervousSystem is")} ${cur}${style.dim(", recommended:")} ${recLabel}`);
+    const answer = await confirm(
+      "Enable the Nervous System (semantic routing + adaptive mesh)?",
+      rec.nervousSystem.enabled
+    );
+    if (answer !== nsEnabled) {
+      if (!config.nervousSystem) config.nervousSystem = {};
+      config.nervousSystem.enabled = answer;
+      changed = true;
+    }
+  }
+
+  // Vanguard always requires explicit approval
+  if (!config.vanguard || !config.vanguard.enabled) {
+    const answer = await confirm(
+      "Allow the Mesh to propose and stage autonomous innovation experiments?",
+      false
+    );
+    if (answer) {
+      if (!config.vanguard) config.vanguard = {};
+      config.vanguard.enabled = true;
+      changed = true;
+    }
+  }
+
+  // autoMaterialize always requires explicit approval
+  const autoMat = config.nervousSystem && config.nervousSystem.ghostWings
+    && config.nervousSystem.ghostWings.autoMaterialize;
+  if (!autoMat) {
+    const answer = await confirm(
+      "Auto-form Ghost Wings for unclaimed domains? (requires Commander trust)",
+      false
+    );
+    if (answer) {
+      if (!config.nervousSystem) config.nervousSystem = {};
+      if (!config.nervousSystem.ghostWings) config.nervousSystem.ghostWings = {};
+      config.nervousSystem.ghostWings.autoMaterialize = true;
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n", "utf-8");
+    log(`\n  ${style.green("write")} ${style.dim(".mesh/config.json")}  ${style.dim("(tuned)")}`);
+    log(`  ${style.boldGreen("Configuration updated.")}\n`);
+  } else {
+    log(`\n  ${style.dim("No changes applied.")}\n`);
+  }
+
+  return 0;
+}
+
 function printUsage() {
   console.log(`
 ${gradient(`Mercury Mesh v${VERSION}`)} ${style.dim("— CLI")}
@@ -2259,6 +2684,7 @@ ${style.bold("Usage:")}
   ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("update")}  ${style.dim("[--target <path>]")}
   ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("doctor")}  ${style.dim("[--target <path>]")}
   ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("status")}  ${style.dim("[--target <path>]")}
+  ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("config")}  ${style.dim("[recommend|tune] [--json] [--target <path>]")}
   ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("create-skill")} ${style.dim("<name> [--description <desc>] [--domain <domain>]")}
   ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("resume")}  ${style.dim("[--session <id>] [--target <path>]")}
   ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("eject")}   ${style.dim("[--target <path>]")}
@@ -2295,6 +2721,8 @@ ${style.bold("Commands:")}
   ${style.cyan("vanguard")} Autonomous innovation subsystem: scan adjacencies, manage experiments,
            review proposals, and authorize Genesis integrations.
            Subcommands: status, horizon, skunkworks (alias: experiments), outrider, genesis, sorties.
+  ${style.cyan("config")}   Analyze hull profile and recommend posture changes, or re-tune
+           configuration interactively. Subcommands: recommend (read-only), tune (write).
   ${style.cyan("github-mcp")}  Start the GitHub MCP server using gh auth token for local auth.
   ${style.cyan("version")}  Print package version.
 
@@ -2302,6 +2730,7 @@ ${style.bold("Options:")}
   ${style.yellow("--force")}            Overwrite existing files during init
   ${style.yellow("--target")} ${style.dim("<path>")}    Target project root (default: current working directory)
   ${style.yellow("--session")} ${style.dim("<id>")}     Target a specific session for resume (default: most recent)
+  ${style.yellow("--json")}             Machine-readable output for config recommend
 `);
 }
 
@@ -2321,6 +2750,8 @@ async function main() {
   if (targetIdx !== -1 && args[targetIdx + 1]) {
     targetRoot = path.resolve(args[targetIdx + 1]);
   }
+
+  notifyIfUpdateAvailable(command);
 
   switch (command) {
     case "init":
@@ -2400,6 +2831,27 @@ async function main() {
         vArgs.push(args[i]);
       }
       process.exit(await runVanguard(targetRoot, vArgs));
+      break;
+    }
+    case "config": {
+      const cfgArgs = [];
+      for (let i = 0; i < args.length; i++) {
+        if (args[i] === "config") continue;
+        if (args[i] === "--target") { i++; continue; }
+        cfgArgs.push(args[i]);
+      }
+      const cfgSub = cfgArgs.find((a) => !a.startsWith("-"));
+      const cfgFlags = { json: cfgArgs.includes("--json") };
+      if (cfgSub === "recommend") {
+        process.exit(runConfigRecommend(targetRoot, cfgFlags));
+      } else if (cfgSub === "tune") {
+        process.exit(await runConfigTune(targetRoot, cfgFlags));
+      } else {
+        log(style.bold("\nUsage:"));
+        log(`  ${style.cyan("mercury-mesh config recommend")}  ${style.dim("Analyze hull and print recommended diffs")}`);
+        log(`  ${style.cyan("mercury-mesh config tune")}       ${style.dim("Re-run the configuration interview")}\n`);
+        process.exit(cfgSub ? 1 : 0);
+      }
       break;
     }
     case "version":

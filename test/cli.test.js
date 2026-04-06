@@ -17,7 +17,19 @@ function runCLI(...args) {
   return execFileSync(process.execPath, [CLI_PATH, ...args], {
     cwd: FIXTURE_DIR,
     encoding: "utf-8",
-    env: { ...process.env },
+    env: { ...process.env, MERCURY_MESH_DISABLE_UPDATE_CHECK: "1" },
+  });
+}
+
+function runCLIWithEnv(args, extraEnv) {
+  return execFileSync(process.execPath, [CLI_PATH, ...args], {
+    cwd: FIXTURE_DIR,
+    encoding: "utf-8",
+    env: {
+      ...process.env,
+      MERCURY_MESH_DISABLE_UPDATE_CHECK: "1",
+      ...extraEnv,
+    },
   });
 }
 
@@ -31,9 +43,41 @@ test("cli: version prints semver", () => {
 test("cli: no command prints usage", () => {
   const out = execFileSync(process.execPath, [CLI_PATH], {
     encoding: "utf-8",
+    env: { ...process.env, MERCURY_MESH_DISABLE_UPDATE_CHECK: "1" },
   });
   assert.ok(out.includes("Usage:"));
   assert.ok(out.includes("github-mcp"));
+});
+
+test("cli: update notification appears when a newer npm version exists", () => {
+  cleanFixture();
+  fs.mkdirSync(FIXTURE_DIR, { recursive: true });
+
+  const out = runCLIWithEnv(["init"], {
+    MERCURY_MESH_DISABLE_UPDATE_CHECK: "0",
+    MERCURY_MESH_UPDATE_CHECK_FORCE: "1",
+    MERCURY_MESH_UPDATE_CHECK_LATEST_VERSION: "9.9.9",
+  });
+
+  assert.ok(out.includes("update available"), "should notify about a newer package version");
+  assert.ok(out.includes("9.9.9"), "should include the latest published version");
+  assert.ok(out.includes("npm install -g @mizyoel/mercury-mesh@latest"), "should include upgrade guidance");
+
+  cleanFixture();
+});
+
+test("cli: version command stays clean when an update exists", () => {
+  const out = execFileSync(process.execPath, [CLI_PATH, "version"], {
+    encoding: "utf-8",
+    env: {
+      ...process.env,
+      MERCURY_MESH_DISABLE_UPDATE_CHECK: "0",
+      MERCURY_MESH_UPDATE_CHECK_FORCE: "1",
+      MERCURY_MESH_UPDATE_CHECK_LATEST_VERSION: "9.9.9",
+    },
+  });
+
+  assert.match(out.trim(), /^\d+\.\d+\.\d+$/);
 });
 
 test("cli: init scaffolds expected files", () => {
@@ -391,14 +435,14 @@ test("cli: status shows pending inbox decisions", () => {
   cleanFixture();
 });
 
-test("cli: status shows nervous system offline when disabled", () => {
+test("cli: status shows nervous system online in default light profile", () => {
   cleanFixture();
   fs.mkdirSync(FIXTURE_DIR, { recursive: true });
 
   runCLI("init");
-  // Default config has nervousSystem.enabled: false
+  // Adaptive config: light profile enables nervous system by default
   const out = runCLI("status");
-  assert.ok(out.includes("OFFLINE"), "should show nervous system offline");
+  assert.ok(out.includes("ONLINE"), "light profile should enable nervous system");
 
   cleanFixture();
 });
