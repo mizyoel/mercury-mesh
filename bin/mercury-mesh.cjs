@@ -70,6 +70,24 @@ function createSpinner(msg) {
   };
 }
 
+// ─── Interactive prompts ───────────────────────────────────────────────
+
+const readline = require("node:readline");
+
+function confirm(question, defaultYes = false) {
+  const hint = defaultYes ? "[Y/n]" : "[y/N]";
+  return new Promise((resolve) => {
+    if (!process.stdin.isTTY) return resolve(defaultYes);
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    rl.question(`  ${style.cyan("?")} ${question} ${style.dim(hint)} `, (answer) => {
+      rl.close();
+      const a = answer.trim().toLowerCase();
+      if (a === "") return resolve(defaultYes);
+      resolve(a === "y" || a === "yes");
+    });
+  });
+}
+
 // ─── Asset manifest ────────────────────────────────────────────────────
 // Each entry: { src (relative to package root), dest (relative to target project root), type }
 // type: "file" = single file, "dir" = recursive directory copy
@@ -209,7 +227,7 @@ function patchGitignore(targetRoot) {
   log(`${style.green("patch")} ${style.dim(".gitignore")}  ${style.dim("(added mesh runtime ignores)")}`);
 }
 
-function writeDefaultConfig(targetRoot) {
+function writeDefaultConfig(targetRoot, { vanguardEnabled = false } = {}) {
   const configPath = path.join(targetRoot, ".mesh", "config.json");
   if (fs.existsSync(configPath)) {
     log(`${style.dim("skip")}  ${style.dim(".mesh/config.json")}  ${style.dim("(already exists)")}`);
@@ -234,6 +252,9 @@ function writeDefaultConfig(targetRoot) {
     nervousSystem: {
       enabled: false,
       embeddingProvider: "tfidf",
+    },
+    vanguard: {
+      enabled: vanguardEnabled,
     },
   };
   fs.writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2) + "\n", "utf-8");
@@ -261,7 +282,7 @@ function stampVersion(targetRoot) {
 
 // ─── Commands ──────────────────────────────────────────────────────────
 
-function runInit(targetRoot, flags) {
+async function runInit(targetRoot, flags) {
   heading(`Mercury Mesh v${VERSION} — Init`);
   log(`target: ${targetRoot}\n`);
 
@@ -283,7 +304,20 @@ function runInit(targetRoot, flags) {
     }
   }
 
-  writeDefaultConfig(targetRoot);
+  // ── Interactive config prompts ──────────────────────────────────────
+  const configPath = path.join(targetRoot, ".mesh", "config.json");
+  const configExists = fs.existsSync(configPath);
+  let vanguardEnabled = false;
+
+  if (!configExists) {
+    log("");
+    vanguardEnabled = await confirm(
+      "Enable the Vanguard (autonomous innovation subsystem)?",
+      false
+    );
+  }
+
+  writeDefaultConfig(targetRoot, { vanguardEnabled });
   patchGitignore(targetRoot);
   stampVersion(targetRoot);
 
@@ -327,6 +361,24 @@ function runUpdate(targetRoot) {
   }
 
   stampVersion(targetRoot);
+
+  // ── Config migration: inject missing top-level keys ─────────────────
+  const updateConfigPath = path.join(targetRoot, ".mesh", "config.json");
+  if (fs.existsSync(updateConfigPath)) {
+    try {
+      const cfg = JSON.parse(fs.readFileSync(updateConfigPath, "utf-8"));
+      let migrated = false;
+      if (cfg.vanguard === undefined) {
+        cfg.vanguard = { enabled: false };
+        migrated = true;
+      }
+      if (migrated) {
+        fs.writeFileSync(updateConfigPath, JSON.stringify(cfg, null, 2) + "\n", "utf-8");
+        log(`${style.green("migrate")} ${style.dim(".mesh/config.json")}  ${style.dim("(added vanguard defaults)")}`);
+        filesWritten++;
+      }
+    } catch { /* config parse errors are caught by doctor */ }
+  }
 
   heading("Update complete");
   log(`${style.boldGreen(String(filesWritten))} file(s) updated (agent prompt + skills + instructions).\n`);
@@ -392,6 +444,7 @@ const DOCTOR_CHECKS = {
     "humanTiers",
     "modelRouting",
     "nervousSystem",
+    "vanguard",
   ],
 };
 
@@ -1504,10 +1557,10 @@ function runPeers(targetRoot, pArgs) {
 function loadVanguardRuntimeConfig(meshDir) {
   const configPath = path.join(meshDir, "config.json");
   const localPath = path.join(meshDir, "local.json");
-  const baseNs = (readJsonSafe(configPath) || {}).nervousSystem || {};
-  const localNs = (readJsonSafe(localPath) || {}).nervousSystem || {};
-  const baseV = baseNs.vanguard || {};
-  const localV = localNs.vanguard || {};
+  const baseConfig = readJsonSafe(configPath) || {};
+  const localConfig = readJsonSafe(localPath) || {};
+  const baseV = baseConfig.vanguard || {};
+  const localV = localConfig.vanguard || {};
 
   return {
     ...baseV,
@@ -2271,7 +2324,7 @@ async function main() {
 
   switch (command) {
     case "init":
-      runInit(targetRoot, flags);
+      await runInit(targetRoot, flags);
       break;
     case "github-mcp":
       runGitHubMcp();

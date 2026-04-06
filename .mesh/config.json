@@ -88,5 +88,8 @@
       "ragMaxEntries": 5,
       "ragMinSimilarity": 0.15
     }
+  },
+  "vanguard": {
+    "enabled": false
   }
 }
