@@ -24,6 +24,7 @@
     "docs/",
     "index.cjs",
     "bin/",
+    "lib/",
     ".copilot/",
     ".github/agents/",
     ".mesh/manifesto.md",

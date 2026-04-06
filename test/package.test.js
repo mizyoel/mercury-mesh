@@ -3,12 +3,33 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+const { execFileSync } = require("node:child_process");
 
 const mercuryMesh = require("../index.cjs");
 const { loadRuntimeConfig } = require("../.mesh/nervous-system/index.js");
 const {
   resolveEmbeddingProviderConfig,
 } = require("../.mesh/nervous-system/semantic-gravimetry.js");
+
+const PACKAGE_ROOT = path.resolve(__dirname, "..");
+
+function runNpm(args) {
+  if (process.platform === "win32") {
+    return execFileSync(
+      process.env.ComSpec || "cmd.exe",
+      ["/d", "/s", "/c", `npm ${args.join(" ")}`],
+      {
+        cwd: PACKAGE_ROOT,
+        encoding: "utf8",
+      }
+    );
+  }
+
+  return execFileSync("npm", args, {
+    cwd: PACKAGE_ROOT,
+    encoding: "utf8",
+  });
+}
 
 test("exports expected package roots", () => {
   assert.equal(mercuryMesh.packageRoot, path.resolve(__dirname, ".."));
@@ -42,6 +63,26 @@ test("resolves known docs", () => {
     mercuryMesh.existsAt(
       mercuryMesh.resolveDocPath("scenarios", "client-compatibility.md")
     )
+  );
+});
+
+test("npm pack includes CLI runtime dependencies", () => {
+  const packOutput = runNpm(["pack", "--json", "--dry-run"]);
+
+  const [{ files }] = JSON.parse(packOutput);
+  const packedPaths = new Set(files.map((entry) => entry.path));
+
+  assert.ok(
+    packedPaths.has("bin/mercury-mesh.cjs"),
+    "packed tarball should include the CLI entrypoint"
+  );
+  assert.ok(
+    packedPaths.has("lib/complexity-scanner.cjs"),
+    "packed tarball should include complexity-scanner.cjs"
+  );
+  assert.ok(
+    packedPaths.has("lib/profile-resolver.cjs"),
+    "packed tarball should include profile-resolver.cjs"
   );
 });
 
