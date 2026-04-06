@@ -2,6 +2,11 @@
 
 All notable changes to this package will be documented in this file.
 
+## [1.3.0] - 2026-04-06
+
+- Promote the Mercury Mesh package version to 1.3.0.
+- Align stamped agent templates, workflow release labels, and mirrored test fixtures with the 1.3.0 release line.
+
 ## [1.2.0] - 2026-04-05
 
 - Promote the Mercury Mesh package version to 1.2.0.
