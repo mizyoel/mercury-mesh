@@ -66,7 +66,7 @@ test("resolves known docs", () => {
   );
 });
 
-test("client compatibility docs describe VS Code named-agent limits", () => {
+test("client compatibility docs describe VS Code spawn adaptations", () => {
   const agentPrompt = fs.readFileSync(mercuryMesh.agentPromptPath, "utf8");
   const clientCompatibilityDoc = fs.readFileSync(
     mercuryMesh.resolveDocPath("scenarios", "client-compatibility.md"),
@@ -74,12 +74,12 @@ test("client compatibility docs describe VS Code named-agent limits", () => {
   );
 
   assert.ok(
-    agentPrompt.includes("If you omit `agentName`, VS Code reuses the current agent"),
-    "agent prompt should explain unnamed VS Code subagent recursion"
+    agentPrompt.includes("Use `runSubagent` instead of `task`"),
+    "agent prompt should explain VS Code spawning via runSubagent"
   );
   assert.ok(
-    clientCompatibilityDoc.includes('agentName: "Explore"'),
-    "client compatibility doc should document Explore as the named VS Code handoff"
+    clientCompatibilityDoc.includes("Multiple subagents in one turn run concurrently"),
+    "client compatibility doc should document VS Code parallel subagent spawning"
   );
 });
 

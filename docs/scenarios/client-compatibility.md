@@ -31,10 +31,10 @@ If both CLI and VS Code spawn tools appear to be available, prefer `task` becaus
 
 ### VS Code Mode
 
-- Use `runSubagent` or `agent` only when you can target a real named agent.
-- Use `agentName: "Explore"` ONLY for genuine read-only scouting (codebase questions, analysis, file discovery). Do NOT route implementation work through Explore.
-- If `agentName` is omitted, VS Code reuses the current agent instead of launching a distinct Wing.
-- For implementation, review, or logging work, execute inline: read the assigned agent's charter and history, adopt their role context, and do the task directly as the coordinator acting on behalf of that agent.
+- Use `runSubagent` or `agent` with the task prompt. Drop `agent_type`, `mode`, and `model` parameters.
+- Multiple subagents in one turn run concurrently (equivalent to background mode).
+- Accept the session model. Do not attempt per-spawn model selection or fallback chains.
+- Batch Scribe as the last subagent in any parallel group.
 - Do not pass CLI-only parameters such as `agent_type`, `mode`, or `model`.
 - Collect results from the returned subagent response rather than `read_agent`.
 
@@ -51,7 +51,7 @@ If both CLI and VS Code spawn tools appear to be available, prefer `task` becaus
 - Never rely on `sql` for workflows that must run in VS Code.
 - Never treat unnamed `runSubagent` calls as specialist launches.
 - Keep prompts surface-independent even when spawn parameters differ.
-- Treat Scribe behavior as surface-specific: background on CLI, inline on VS Code unless a real named Scribe exists, inline when no spawn tool exists.
+- Treat Scribe behavior as surface-specific: background on CLI, sync (batched last) on VS Code, inline when no spawn tool exists.
 
 ## Source of Truth
 

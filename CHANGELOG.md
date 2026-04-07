@@ -2,6 +2,10 @@
 
 All notable changes to this package will be documented in this file.
 
+## [1.3.4] - 2026-04-07
+
+- Revert VS Code delegation to full subagent spawning: `runSubagent` with complete agent prompts, parallel fan-out in a single turn, session model for all spawns. Removes Explore-only restriction and inline-work fallback introduced in 1.3.2–1.3.3.
+
 ## [1.3.3] - 2026-04-07
 
 - Fix VS Code delegation deadlock where the coordinator routed all work through `Explore` (read-only) instead of executing inline, because the refusal rule blocked inline domain work and no implementation subagent exists on VS Code.
