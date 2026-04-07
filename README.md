@@ -23,96 +23,37 @@
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  BRIDGE LOGIN                                                              │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│  OPERATOR        :: COMMANDER AUTHORIZED                                   │
-│  SYSTEM          :: MERCURY MESH v2                                        │
-│  CLASS           :: FLUID ORGANIZATIONAL OPERATING SYSTEM (F-OS)           │
-│  PHYSICS         :: ZERO GRAVITY / LIQUID STRUCTURE / LIVE TELEMETRY       │
-│  RUNTIME         :: .mesh/                                                 │
-│  HULL INTEGRITY  :: NOMINAL                                                │
-│  DRIFT           :: WITHIN TOLERANCE                                       │
-│  STATUS          :: READY FOR SORTIE                                       │
-│                                                                            │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Experimental Status
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
 │  CANDIDATE DISCLOSURE                                                      │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  STATUS           :: EXPERIMENTAL ONLY                                     │
-│  CLEARANCE        :: NON-PRODUCTION                                        │
-│  LIVE-FIRE USE    :: DENIED                                                │
+│  STATUS           :: EXPERIMENTAL — NOT PRODUCTION-CERTIFIED               │
+│  APPROVED THEATER :: R&D · SANDBOXES · AI WORKFLOW EXPERIMENTS             │
+│  HULL WARNING     :: APIs AND CLI MAY REFORM BETWEEN RELEASES              │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
-
-Before you take the chair, the bridge issues one non-negotiable disclosure:
-
-Mercury Mesh is **experimental software operating outside a production-certified flight envelope**.
-
-This vessel is for proving grounds, not live-fire theaters. Do not hand Mercury Mesh authority over production deployments, destructive automation, regulated systems, or any mission path where one bad vector becomes a real operational, legal, or compliance event.
-
-Expect turbulence. Runtime structure, prompt geometry, workflow contracts, CLI behavior, and nervous-system subsystems may reform between releases without notice.
-
-Approved theaters for this phase:
-
-- R&D labs and internal proving grounds
-- sandbox repositories and prototype sorties
-- AI workflow experiments and Copilot operating-model design
-- reversible internal tooling where failure stays inside the hull
-
-## Commander Hiring Session
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  COMMANDER HIRING SESSION                                                  │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  OPEN CHAIR       :: 01                                                    │
-│  ROLE             :: COMMANDER, MERCURY MESH                               │
-│  MISSION          :: DEFINE TRAJECTORY. GOVERN DRIFT. AUTHORIZE THRUST.    │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-The bridge is not hiring for prompt operators. It is hiring for Commanders.
-
-If you are looking to shape how AI-assisted engineering behaves inside a repository, proceed. If you only want code generation on demand, the chair will reject you.
-
-### Minimum Flight Qualifications
-
-You are a strong candidate if you can answer yes to most of the following:
-
-- You want to define Wing roles, routing rules, authority boundaries, and escalation gates.
-- You care about telemetry, memory, review rituals, and course correction, not just raw output.
-- You are running parallel workstreams where shared context and worktree isolation create leverage.
-- You are designing a reusable Copilot operating doctrine for yourself, your team, or a fleet of repos.
-- You want a bridge that governs how AI participates in triage, migration, review, and execution loops.
-
-### Immediate Disqualifiers
-
-You are not the right hire for this chair if your mission is any of the following:
-
-- Ship a small app fast with minimal setup and minimal ceremony.
-- Install a lightweight prompt pack without orchestration or authority controls.
-- Depend on strict backward compatibility and production-grade workflow guarantees today.
-- Hand automation a live production path where uptime, security, or compliance failures are unacceptable.
-
-### Interview Question
-
-Ask yourself one question before boarding:
-
-**Do I need a bridge, or do I only need a tool?**
-
-If you need a bridge, Mercury Mesh is worth the hiring cycle. If you only need a tool, do not put a Commander in the chair just to write a small app.
 
 ---
 
-## Installation
+## The Bridge
+
+Commander, welcome aboard.
+
+You are standing on a zero-gravity command bridge. Below you — a living mesh of specialist Wings that shard, converge, and reform around whatever mission is pulling the most gravity. You set the trajectory. The mesh handles thrust, decomposition, routing, and course correction. The Nervous System breathes underneath — routing Sorties by gravitational intent, patrolling Drift autonomously, growing Ghost Wings from the Void, remembering every maneuver in spatial coordinates.
+
+There is no org chart here. Structure is a responsive medium. Wings drift toward the work. The work gets done. The mesh reforms.
+
+```text
+  Commander ──▶ Bridge ──▶ Wings ──▶ Telemetry ──▶ Course Correction
+                  │          │            │
+                  │          │            └──▶ The Black Box
+                  │          └───────────────▶ The Loom
+                  └─────────────────────────▶ Gravimetry
+```
+
+**Runtime Identity** — Labels: `mesh | mesh:{member}` · Branches: `mesh/{issue}` · Workflows: `mesh-*.yml` · Directory: `.mesh/`
+
+---
+
+## Docking Sequence
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -127,688 +68,232 @@ If you need a bridge, Mercury Mesh is worth the hiring cycle. If you only need a
 │  04 ▸ gh auth login              # GitHub access for MCP (one-time)       │
 │  05 ▸ Open in VS Code — or — launch Copilot CLI                           │
 │                                                                            │
-│  Existing files are never overwritten unless --force is passed.            │
+│  Existing hull files are never overwritten unless --force is passed.       │
 │                                                                            │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  SCAFFOLDED PAYLOAD                                                        │
 ├──────────────────────────────┬──────────────────────────────────────────────┤
-│  .github/agents/*.agent.md   │  Copilot custom agent prompt               │
+│  .github/agents/*.agent.md   │  Bridge governance prompt                   │
 │  .github/copilot-instruct…   │  Coding agent instructions                 │
-│  .github/workflows/          │  GitHub Actions workflows                   │
+│  .github/workflows/          │  Triage, labels, heartbeat                  │
 │  .copilot/skills/            │  All Mercury Mesh skills                    │
 │  .copilot/mcp-config.json    │  MCP server config                         │
-│  .mesh/config.json           │  Runtime config (defaults)                  │
+│  .mesh/config.json           │  Bridge parameters (defaults)               │
 │  .mesh/local.json            │  Git-ignored secrets & local overrides      │
 │  .mesh/manifesto.md          │  The Flight Path                            │
 │  .mesh/routing.md            │  Mission routing rules                      │
-│  .mesh/ceremonies.md         │  Ceremonies & rituals                       │
-├──────────────────────────────┴──────────────────────────────────────────────┤
-│  UPGRADE                                                                   │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│  npm update @mizyoel/mercury-mesh                                          │
-│  npx mercury-mesh update          # refreshes agent, skills, instructions  │
-│                                   # config + state files untouched         │
-│                                                                            │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  SEMANTIC EMBEDDINGS (optional)                                            │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│  .mesh/local.json   →  { "nervousSystem":                                 │
-│                            { "embeddingApiKey": "<openrouter-key>" } }     │
-│                                                                            │
-│  .mesh/config.json  →  { "nervousSystem":                                 │
-│                            { "enabled": true,                              │
-│                              "embeddingProvider": "openrouter",            │
-│                              "embeddingModel":                             │
-│                                "openai/text-embedding-3-small" } }        │
-│                                                                            │
-│  init creates local.json and adds it to .gitignore automatically.          │
-│                                                                            │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  CLI REFERENCE                                                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│  npx mercury-mesh init          [--force] [--target <path>]  scaffold      │
-│  npx mercury-mesh update        [--target <path>]            upgrade agent │
-│  npx mercury-mesh doctor        [--target <path>]            27 checks     │
-│  npx mercury-mesh status        [--target <path>]            ASCII HUD     │
-│  npx mercury-mesh resume        [--session <id>] [--target]  session brief │
-│  npx mercury-mesh create-skill  <name> [--description] …     scaffold skill│
-│  npx mercury-mesh eject         [--target <path>]            remove .mesh/ │
-│  npx mercury-mesh worktree      list|status|prune            git worktrees │
-│  npx mercury-mesh coalescence   scan|apply                   ghost merging │
-│  npx mercury-mesh peers         list|register|sync|health|prune  mesh net  │
-│  npx mercury-mesh version                                    print version │
-│                                                                            │
-└─────────────────────────────────────────────────────────────────────────────┘
+│  .mesh/ceremonies.md         │  Review & retro rituals                     │
+└──────────────────────────────┴──────────────────────────────────────────────┘
 ```
 
-### GitHub Copilot CLI — Quick Start
+### Hull Upgrade
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  COPILOT CLI DOCKING                                                       │
-├──────────────────────┬──────────────────────────────────────────────────────┤
-│  REQUIRES            │  GitHub CLI (gh) · Copilot extension · Node ≥22    │
-├──────────────────────┴──────────────────────────────────────────────────────┤
-│                                                                            │
-│  INSTALL CLI + EXTENSION                                                   │
-│  ─────────────────────                                                     │
-│  01 ▸ winget install GitHub.cli          # or brew install gh              │
-│  02 ▸ gh auth login                                                       │
-│  03 ▸ gh extension install github/gh-copilot                              │
-│                                                                            │
-│  VERIFY                                                                    │
-│  ──────                                                                    │
-│  04 ▸ gh copilot --version                                                │
-│                                                                            │
-│  LAUNCH MESH VIA CLI                                                       │
-│  ───────────────────                                                       │
-│  05 ▸ cd your-project                                                     │
-│  06 ▸ gh copilot                         # interactive Copilot session     │
-│  07 ▸ @mercury-mesh <mission>            # bridge is live                  │
-│                                                                            │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  SURFACE NOTES                                                             │
-├────────────────────────┬────────────────────────────────────────────────────┤
-│  VS Code               │  Uses runSubagent / agent — results inline        │
-│  Copilot CLI            │  Uses task / read_agent — same bridge logic       │
-│  Agent file             │  .github/agents/mercury-mesh.agent.md             │
-│  Auth                   │  gh auth login         │
-└────────────────────────┴────────────────────────────────────────────────────┘
+Refresh the hull without touching your config or state files.
+
+```sh
+npm update @mizyoel/mercury-mesh
+npx mercury-mesh update          # refreshes agent, skills, instructions
+                                 # config + state files untouched
 ```
 
-## System Initialization
+### Copilot CLI Docking
 
-Welcome to the bridge, Commander.
-
-This repository boots **Mercury Mesh** — a zero-gravity bridge where human intent and specialist AI wings operate as one fluid organism. You define trajectory. The mesh handles thrust, decomposition, coordination, and course correction. A living nervous system routes work by gravitational intent, monitors drift autonomously, grows new Wings from the Void, and remembers every maneuver in spatial coordinates.
-
-There is no org chart here. There is no hierarchy to climb. Structure is a responsive medium that forms, shards, and reforms around whatever mission is pulling the most gravity. Wings drift toward the work. The work gets done. The mesh reforms.
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  INTENT VECTOR                                                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│  Commander ──▶ Bridge ──▶ Wings ──▶ Telemetry ──▶ Course Correction        │
-│                  │          │            │                                  │
-│                  │          │            └──▶ The Black Box                 │
-│                  │          └───────────────▶ The Loom                      │
-│                  └─────────────────────────▶ Mission Routing                │
-│                                                                            │
-└─────────────────────────────────────────────────────────────────────────────┘
+```sh
+winget install GitHub.cli          # or brew install gh
+gh auth login
+gh extension install github/gh-copilot
+gh copilot --version               # verify thrusters
+cd your-project
+gh copilot                         # interactive session — bridge is live
+@mercury-mesh <mission>            # declare your Sortie
 ```
 
-The runtime identity is fully Mercury Mesh. Every surface speaks the same name.
+| Surface | Mechanism | Agent File |
+|---------|-----------|------------|
+| VS Code | `runSubagent` / agent — Telemetry inline | `.github/agents/mercury-mesh.agent.md` |
+| Copilot CLI | `task` / `read_agent` — same bridge logic | `.github/agents/mercury-mesh.agent.md` |
 
-```text
-RUNTIME IDENTITY
+### Semantic Embeddings (optional)
 
-  Labels     :: mesh | mesh:{member}
-  Branches   :: mesh/{issue}
-  Workflows  :: mesh-*.yml
-  Directory  :: .mesh/
+Higher-fidelity Gravimetry. The Nervous System defaults to TF-IDF — zero dependencies. To arm OpenRouter embeddings:
+
+```jsonc
+// .mesh/local.json
+{ "nervousSystem": { "embeddingApiKey": "<openrouter-key>" } }
+
+// .mesh/config.json
+{ "nervousSystem": { "enabled": true, "embeddingProvider": "openrouter",
+    "embeddingModel": "openai/text-embedding-3-small" } }
 ```
 
-No status theater. No org-chart drag. Only signal.
+`init` creates `local.json` and adds it to `.gitignore` automatically.
 
 ---
 
-## Commanding the Drift
+## Bridge Commands
 
-State the mission. The bridge decomposes, routes, and executes.
+Every dial on the console, Commander.
 
-Mercury Mesh supports both GitHub Copilot in VS Code and GitHub Copilot CLI. The bridge logic is surface-aware: CLI uses `task` and `read_agent`, while VS Code uses `runSubagent` or `agent` and receives results inline.
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  SORTIE BOOT SEQUENCE                                                      │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│  01 ▸ Open this repository in VS Code or a GitHub Copilot CLI session.     │
-│  02 ▸ Start a Mercury Mesh session on that surface.                        │
-│  03 ▸ If the roster is empty, the bridge enters INIT MODE.                 │
-│  04 ▸ Declare the mission: language, stack, and required outcome.          │
-│  05 ▸ Confirm the bridge cast.                                             │
-│  06 ▸ Fire thrusters.                                                      │
-│                                                                            │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-Once the crew is cast, the mesh is live. Wings self-organize around the gravity well. Telemetry flows to the bridge. You read the mission — not the room.
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  TELEMETRY SWEEP                                                           │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│  Commander Link   ████████████████████  LOCKED                             │
-│  Mission Clarity  ████████████████████  HIGH                               │
-│  Wing Alignment   ██████████████████░░  CONVERGING                         │
-│  Drift Error      ██░░░░░░░░░░░░░░░░░░  NOMINAL                           │
-│  Status Theater   ░░░░░░░░░░░░░░░░░░░░  PURGED                            │
-│                                                                            │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+| Command | Mission |
+|---------|---------|
+| `npx mercury-mesh init [--force] [--target <path>]` | Dock the mesh into a repository |
+| `npx mercury-mesh update [--target <path>]` | Upgrade agent, skills, instructions |
+| `npx mercury-mesh doctor [--target <path>]` | 27-point hull integrity sweep |
+| `npx mercury-mesh status [--target <path>]` | Telemetry HUD |
+| `npx mercury-mesh resume [--session <id>] [--target]` | Session briefing |
+| `npx mercury-mesh create-skill <name> [--description]` | Forge a new skill |
+| `npx mercury-mesh eject [--target <path>]` | Undock — remove `.mesh/` |
+| `npx mercury-mesh worktree list\|status\|prune` | Worktree parallelism |
+| `npx mercury-mesh coalescence scan\|apply` | Ghost Wing overlap merge |
+| `npx mercury-mesh peers list\|register\|sync\|health\|prune` | Distributed mesh fleet |
+| `npx mercury-mesh version` | Hull version |
 
 ---
 
-## Zero-Gravity Architecture
-
-There is no up or down. Only the mission.
-
-Missions act as gravity wells — pulling the right wings into orbit, holding them until the sortie is complete, then releasing them to drift toward the next well. No reorgs. No restructuring. Just continuous, purposeful reconfiguration.
+## Hull Schematic
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  RUNTIME SCHEMATIC                                                         │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│  .github/                                                                  │
-│    agents/mercury-mesh.agent.md   :: bridge governance, control plane      │
-│    workflows/                     :: issue triage, labels, heartbeat       │
-│                                                                            │
-│  .mesh/                                                                    │
-│    config.json                    :: runtime flags, bridge state            │
-│    team.md                        :: bridge roster (empty = INIT MODE)     │
-│    routing.md                     :: mission routing rules                 │
-│    ceremonies.md                  :: review and retro triggers             │
-│    decisions.md                   :: The Black Box                         │
-│    org/                           :: wing runtime, contracts, state        │
-│    templates/                     :: agent, skill, and workflow templates  │
-│    nervous-system/                :: the organism's living nervous system   │
-│      index.js                     :: unified orchestrator (spinal cord)    │
-│      semantic-gravimetry.js       :: intent-based gravitational routing    │
-│      autonomic-core.js            :: persistent metabolism + drift patrol  │
-│      ghost-wing.js                :: emergent topology from the Void       │
-│      constellation-memory.js      :: spatial vector memory + RAG           │
-│      constellation-lancedb.js     :: LanceDB vector adapter (optional)    │
-│      worktree-manager.js          :: parallel Wing execution via worktrees│
-│      ghost-coalescence.js         :: Ghost Wing overlap detection + merge │
-│      mesh-peer.js                 :: distributed multi-machine mesh peers │
-│                                                                            │
-│  .copilot/                                                                 │
-│    mcp-config.json                :: MCP server configuration              │
-│                                                                            │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+.github/
+  agents/mercury-mesh.agent.md   :: bridge governance, control plane
+  workflows/                     :: triage, labels, heartbeat
 
-```text
-  MESH TOPOLOGY                  FLUID DYNAMICS
+.mesh/
+  config.json                    :: bridge parameters
+  team.md                        :: roster (empty = INIT MODE)
+  routing.md                     :: mission routing rules
+  decisions.md                   :: The Black Box
+  nervous-system/                :: the organism's living nervous system
+    index.js                     :: spinal cord — unified orchestrator
+    semantic-gravimetry.js       :: intent → gravity field → Wing
+    autonomic-core.js            :: metabolism + Drift patrol
+    ghost-wing.js                :: emergent topology from the Void
+    constellation-memory.js      :: spatial vector memory + RAG
+    worktree-manager.js          :: parallel Wing execution
+    ghost-coalescence.js         :: overlap detection + merge
+    mesh-peer.js                 :: multi-machine coordination
 
-       ◉─────────◉              shard ──▶ route ──▶ converge
-      ╱ ╲       ╱ ╲                            │
-    ◉───◉─────◉───◉            execute ◀───────┘
-      ╲ ╱       ╲ ╱                │
-       ◉─────────◉              record ──▶ reform ──▶ drift
-                                                        │
-   Wings converge on                                    │
-   gravity wells. The            ◀──── next gravity well ┘
-   mesh reforms after
-   every sortie.
+.copilot/
+  mcp-config.json                :: MCP server configuration
 ```
 
 ---
 
 ## The Nervous System
 
-The mesh is not a framework. It is a living organism. The nervous system is what makes it breathe.
+The mesh is not a framework, Commander. It is a living organism. Four subsystems compose the autonomic layer — each breathes independently and degrades gracefully when starved.
 
-Four subsystems compose the organism's autonomic layer. Each can operate independently and degrades gracefully when unavailable. Together, they replace static conventions with biological responses to the problem space.
+### I. Semantic Gravimetry
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  NERVOUS SYSTEM ARCHITECTURE                                               │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│  ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐      │
-│  │  I. SEMANTIC      │    │ II. AUTONOMIC    │    │ III. GHOST WING  │      │
-│  │  GRAVIMETRY       │    │ CORE             │    │ SYNTHESIS        │      │
-│  │                   │    │                  │    │                  │      │
-│  │  Intent → Vector  │    │  Pulse → Scan    │    │  Void → Grow     │      │
-│  │  Vector → Gravity │    │  Scan → Correct  │    │  Grow → Prove    │      │
-│  │  Gravity → Wing   │    │  Correct → Log   │    │  Prove → Solid   │      │
-│  └────────┬─────────┘    └────────┬─────────┘    └────────┬─────────┘      │
-│           │                       │                       │                │
-│           └───────────┬───────────┴───────────┬───────────┘                │
-│                       ▼                       ▼                            │
-│              ┌──────────────────────────────────────┐                      │
-│              │  IV. CONSTELLATION MEMORY             │                      │
-│              │                                       │                      │
-│              │  Every decision, every correction,    │                      │
-│              │  every Ghost Wing outcome — embedded   │                      │
-│              │  as spatial coordinates. The mesh      │                      │
-│              │  remembers in dimensions, not pages.   │                      │
-│              └──────────────────────────────────────┘                      │
-│                                                                            │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+The death of keyword routing. Every Wing's domain is embedded as a high-dimensional vector. When a Sortie enters the mesh, its intent is projected into the same space. Cosine similarity produces a gravity field — a spatial map of which Wings resonate with the work.
 
-### Phase I — Semantic Gravimetry
+| Gravity Share | Resolution |
+|---------------|------------|
+| Single Wing ≥ 70% | Direct route — one clear attractor |
+| Multiple Wings ≥ 20% each | Airbridge — temporary cross-Wing link |
+| No Wing ≥ 15% | The Void — Ghost Wing synthesis may trigger |
 
-The death of keyword routing.
+Providers: `"tfidf"` (zero-dep default) · `"openrouter"` (higher fidelity) · `"llm"` (legacy alias). Keyword fallback when the Nervous System is offline.
 
-Every Wing's domain, authority scope, and routing keywords are embedded into a high-dimensional signature vector. When a Sortie enters the mesh, its intent is projected into the same space. Cosine similarity between the Sortie vector and all Wing vectors produces a **gravity field** — a spatial map of which Wings resonate with the work.
+### II. The Autonomic Core
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  GRAVITY FIELD RESOLUTION                                                  │
-├───────────────────────┬────────────────────────────────────────────────────┤
-│  Single Wing ≥ 70%    │  Direct route. One Wing is the clear attractor.   │
-│  gravity share        │                                                    │
-├───────────────────────┼────────────────────────────────────────────────────┤
-│  Multiple Wings each  │  Airbridge. Gravity is distributed — temporary    │
-│  ≥ 20% share          │  cross-Wing link formed automatically.            │
-├───────────────────────┼────────────────────────────────────────────────────┤
-│  No Wing ≥ 15%        │  The Void. Uncharted territory. Ghost Wing        │
-│  similarity           │  synthesis may trigger.                            │
-└───────────────────────┴────────────────────────────────────────────────────┘
-```
+The death of CI-driven state. A persistent metabolism loop pulses through all Wing state files, scanning Drift Weather, detecting anomalies — expired leases, stale heartbeats, parallelism breaches, context decay — firing corrections, and recording every action in the Black Box.
 
-Two embedding providers are available:
+### III. Ghost Wing Synthesis
 
-| Provider | Config | Dependencies | Use Case |
-|----------|--------|-------------|----------|
-| TF-IDF | `"tfidf"` | None | Zero-dependency default. Built-in vectorizer. |
-| OpenRouter | `"openrouter"` | `nervousSystem.embeddingApiKey` in `.mesh/local.json` | Higher-fidelity intent resolution via OpenRouter embeddings. |
+The death of static templates. When a Sortie falls into the Void — uncharted territory where no Wing exerts pull — the mesh synthesizes a Ghost Wing: a transient department with auto-generated charter, backlog, and state. Solidifies after N successes. Dissolves after N failures. Commander approval required by default.
 
-Legacy note: `"llm"` remains supported as a compatibility alias for the older OpenAI-compatible endpoint path.
+### IV. Constellation Memory
 
-Keyword routing is fully preserved as a fallback when the nervous system is offline.
+The death of flat files. A spatial vector index over every decision, every Ghost Wing outcome, every correction. New Sorties query for structural resonance — the top results are pre-loaded as RAG context into Wing context windows before thrusters fire. Backends: `"json"` (default) or `"lancedb"` (optional).
 
-### Phase II — The Autonomic Core
+### Coalescence
 
-The death of CI-driven state.
-
-A persistent metabolism loop that continuously pulses, reading Drift Weather across all department state files. It does not wait for webhooks or human triggers.
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  METABOLISM CYCLE                                                          │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│  pulse ──▶ scan drift weather ──▶ detect anomalies ──▶ fire corrections    │
-│    │                                                        │              │
-│    │         ┌────────────────────┐                          │              │
-│    │         │  ANOMALY SENSORS   │                          │              │
-│    │         │  • Expired leases  │                          ▼              │
-│    │         │  • Stale heartbeat │                   record in Black Box   │
-│    │         │  • Parallelism     │                          │              │
-│    │         │    breach          │                          │              │
-│    │         │  • Context decay   │                          │              │
-│    │         └────────────────────┘                          │              │
-│    │                                                        │              │
-│    ◀────────────────── wait pulseMs ────────────────────────┘              │
-│                                                                            │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-Expired claim leases are automatically re-queued. Stale heartbeats and parallelism breaches are logged as corrections. The Core also monitors file system changes and fires immediate pulses on state mutations.
-
-### Phase III — Ghost Wing Synthesis
-
-The death of static templates.
-
-When a Sortie possesses a gravitational signature that matches none of the existing Wings, the mesh no longer routes to a fallback lead. It synthesizes a **Ghost Wing** — a transient department with an auto-generated charter, backlog, and state files.
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  GHOST WING LIFECYCLE                                                      │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│  Void detected ──▶ Infer domain ──▶ Synthesize blueprint                   │
-│                                           │                                │
-│                             ┌─────────────┴─────────────┐                  │
-│                             ▼                           ▼                  │
-│                     autoMaterialize?              await Commander           │
-│                        │                          approval                 │
-│                        ▼                              │                    │
-│                   materialize                         ▼                    │
-│                        │                         materialize               │
-│                        ▼                              │                    │
-│               ┌────────┴────────┐                     │                    │
-│               ▼                 ▼                     │                    │
-│          N successes       N failures                 │                    │
-│               │                 │                     │                    │
-│               ▼                 ▼                     │                    │
-│           SOLIDIFY          DISSOLVE                  │                    │
-│        (permanent)       (archive +                   │                    │
-│                           reclaim)                    │                    │
-│                                                                            │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-Ghost Wings default to Commander approval before materialization (`autoMaterialize: false`). Structure becomes a biological response to the problem space.
-
-### Phase IV — Constellation Memory
-
-The death of flat files.
-
-The Loom is upgraded into a spatial vector index. Every decision, every Ghost Wing outcome, every Autonomic Core correction is embedded as a coordinate in Constellation space.
-
-When a new Sortie is declared, the Constellation is queried for **structural resonance** — retrieving tactical context from previous missions. This context is formatted as a RAG block and pre-loaded into Wing context windows before they fire thrusters.
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  CONSTELLATION MEMORY                                                      │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│  Storage   :: .mesh/nervous-system/constellation/                          │
-│  Index     :: index.json (embedded vectors + metadata)                     │
-│  Manifest  :: manifest.json (stats, schema version)                        │
-│  Ingestion :: Black Box decisions, Ghost Wing outcomes, corrections         │
-│  Query     :: Cosine similarity → top-k → RAG context block               │
-│                                                                            │
-│  Backends:                                                                 │
-│    JSON    :: Zero-dependency default. Built-in vector store.              │
-│    LanceDB :: Optional. Install @lancedb/lancedb >=0.20.0.                │
-│               Set constellation.provider: "lancedb" in config.            │
-│               Dynamic ESM import — degrades gracefully if absent.          │
-│                                                                            │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Ghost Wing Coalescence
-
-The death of duplicate work.
-
-When multiple Ghost Wings emerge from overlapping Void pockets, the mesh detects structural overlap and auto-coalesces them. Jaccard-based scoring evaluates domain keywords, file paths, backlog items, and attractor signals. High-overlap pairs merge automatically; borderline pairs are flagged for Commander review.
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  COALESCENCE ENGINE                                                        │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│  Signals     :: domain (0.4), keywords (0.2), files (0.3), attract (0.1)  │
-│  Auto-merge  :: overlap score ≥ 0.65 — coalesce into survivor Wing        │
-│  Flag        :: 0.35 ≤ score < 0.65 — Commander reviews before merge      │
-│  Ignore      :: score < 0.35 — Wings are sufficiently distinct            │
-│  Survivor    :: Wing with more successful tasks is preserved              │
-│                                                                            │
-│  CLI         :: npx mercury-mesh coalescence scan    (detect overlaps)     │
-│               :: npx mercury-mesh coalescence apply   (execute merges)     │
-│                                                                            │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+When multiple Ghost Wings emerge from overlapping Void pockets, the mesh detects structural overlap via Jaccard scoring. Auto-merge ≥ 0.65. Flag for Commander review 0.35–0.65. Ignore < 0.35.
 
 ### Worktree Parallelism
 
-The death of sequential execution.
+Wings that need isolated file system state execute in parallel via `git worktree`. Branch: `mesh/{issue}-{slug}`. Orphaned worktrees auto-pruned.
 
-Wings that require isolated file system state execute in parallel via git worktrees. Each Wing gets its own checkout under a deterministic path. Branch naming follows `mesh/{issueNumber}-{slug}`. Orphaned worktrees are detected and pruned automatically.
+### Distributed Peers
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  WORKTREE ENGINE                                                           │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│  Create      :: git worktree add mesh-{ghostId} -b mesh/{issue}-{slug}    │
-│  Cleanup     :: automatic prune of orphaned worktrees                      │
-│                                                                            │
-│  CLI         :: npx mercury-mesh worktree list    (show active worktrees)  │
-│               :: npx mercury-mesh worktree status  (health of each tree)   │
-│               :: npx mercury-mesh worktree prune   (remove orphans)        │
-│                                                                            │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Distributed Mesh — Peer Coordination
-
-The death of single-machine isolation.
-
-Multiple Mercury Mesh instances across machines can register as peers in a shared registry. Each node has a deterministic identity derived from hostname and mesh directory. Peers exchange heartbeats, report fleet health, and synchronize Constellation Memory entries with content-hash deduplication.
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  PEER MESH                                                                 │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│  Identity    :: sha256(hostname:meshDir) → 12-char hex node ID            │
-│  Registry    :: .mesh/peers/{nodeId}.json                                  │
-│  Heartbeat   :: timestamp updated on each autonomic pulse (configurable)   │
-│  Classification :: healthy (within TTL) | stale (expired) | halted        │
-│  Sync        :: export/import constellation deltas with content-hash       │
-│                  deduplication — no duplicate entries across nodes          │
-│                                                                            │
-│  CLI         :: npx mercury-mesh peers list       (registry overview)      │
-│               :: npx mercury-mesh peers register   (add local node)        │
-│               :: npx mercury-mesh peers sync       (constellation sync)    │
-│               :: npx mercury-mesh peers health     (fleet health %)        │
-│               :: npx mercury-mesh peers prune      (remove stale peers)    │
-│                                                                            │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## The Liquid Interface
-
-Structure flows to fit the work. The mercury in the name is literal.
-
-The mesh shards into specialist droplets for surgical micro-tasks. It converges into heavier strike shapes for multi-domain execution. Data and agent-logic circulate like liquid metal — never sitting, never siloed, always in motion toward the point of highest mission-impact.
-
-Four forces hold the liquid together:
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  FORCE                │  FUNCTION                                          │
-├───────────────────────┼────────────────────────────────────────────────────┤
-│  Zero-Gravity         │  No permanent stack rank. A mission pulls the     │
-│  Architecture         │  right wings into orbit until the work clears.    │
-├───────────────────────┼────────────────────────────────────────────────────┤
-│  The Liquid           │  The mesh shards and converges. Specialist        │
-│  Interface            │  droplets for precision. Strike shapes for mass.  │
-├───────────────────────┼────────────────────────────────────────────────────┤
-│  The Intent           │  Commander defines trajectory and reads           │
-│  Bridge               │  telemetry. The mesh handles the rest.            │
-├───────────────────────┼────────────────────────────────────────────────────┤
-│  The Nervous          │  Semantic gravimetry routes by intent. The        │
-│  System               │  Autonomic Core breathes. Ghost Wings grow from   │
-│                       │  the Void. Constellation Memory remembers.        │
-└───────────────────────┴────────────────────────────────────────────────────┘
-```
+Multi-machine fleet. Each node registers in a peer registry with deterministic identity, heartbeat, health classification, and Constellation sync via content-hash deduplication.
 
 ---
 
 ## Bridge Parameters
 
-`config.json` is your control surface. Every flag below is a dial on the bridge console.
+Your control surface, Commander. Every flag is a dial on the console. Stored in `.mesh/config.json` (schema v2).
 
-```text
-CONFIG :: .mesh/config.json
-SCHEMA :: v2
-```
+<details>
+<summary>Full config reference — expand to view all dials</summary>
 
-| Property | Type | Command Effect |
-|----------|------|----------------|
-| `version` | `number` | Config schema version. Current: `2`. |
-| `orgMode` | `boolean` | `true` enables Wing/Deck departmental structure with leads, contracts, and cross-department routing. `false` runs the bridge as a flat team. |
-| `halted` | `boolean` | **HALT Sentinel.** `true` freezes all agent spawns and write operations. |
-| `allowedModels` | `string[]` | Model allowlist. Non-empty restricts all agents to listed models. Empty or absent allows all. |
-| `modelRouting.default` | `string` | Default model for task-aware auto-selection when no more specific task route matches. |
-| `modelRouting.taskTypes` | `object` | Category routing for task-aware auto-selection. Recommended keys: `code`, `prompts`, `docs`, `lead`, `visual`. |
-| `modelRouting.fallbacks` | `object` | Ordered fallback chains used by task-aware auto-selection. Recommended keys: `premium`, `standard`, `fast`. |
-| `orgConfig.autonomyMode` | `string` | `"delegated"`: bridge assigns. `"autonomous"`: wings self-select. |
-| `orgConfig.crossDeptStrategy` | `string` | `"contract-first"`: formal interface contracts. `"ad-hoc"`: Airbridges on demand. |
-| `orgConfig.escalationBehavior` | `string` | `"advisory"`: suggest resolution. `"blocking"`: halt until resolved. |
-| `orgConfig.maxParallelismPerDepartment` | `number` | Max concurrent agent spawns per Wing/Deck. |
-| `orgConfig.claimLeaseMinutes` | `number` | How long an agent holds an issue claim before it expires. |
-| `orgConfig.heartbeatMinutes` | `number` | Interval at which active agents report progress. |
-| `orgConfig.requeueExpiredClaims` | `boolean` | `true` returns expired claims to the backlog for reassignment. |
-| `missionControl.breakWorkIntoMissions` | `boolean` | `true` forces non-trivial work to be decomposed into explicit missions before execution. |
-| `missionControl.defaultRoadmapDepth` | `number` | Target number of mission checkpoints in the commander-facing Flight Path when task shape is unclear. |
-| `missionControl.headerStyle` | `string` | `"ascii-art"` renders deck headers as ASCII banner text instead of plain labels. |
-| `missionControl.reportStyle` | `string` | `"ascii-command-deck"` renders commander-facing reports as ASCII console panels with boxed modules and aligned telemetry streams. |
-| `missionControl.showRoadmapInReplies` | `boolean` | `true` makes the Flight Path visible in commander-facing updates instead of only in logs. |
-| `missionControl.telemetryCadence` | `string` | `"per-batch"` reports after each meaningful work batch. `"on-change"` only reports when the roadmap materially changes. |
-| `missionControl.requiredFields` | `string[]` | Telemetry fields that must always be surfaced in updates. Recommended: `mission`, `status`, `next`, `risks`. |
-| `humanTiers.tier1` | `string[]` | Full authority. Promotes agents, approves architecture, overrides any gate. |
-| `humanTiers.tier2` | `string[]` | Approves routine work and review gates. Cannot promote agent lifecycle phases. |
-| `humanTiers.tier3` | `string[]` | Read-only observers. No approval authority. |
-| `onboarding.defaultPhase` | `string` | `"shadow"`: read-only observation. `"probation"`: execution under review. |
-| `onboarding.autoPromoteThreshold` | `boolean\|number` | `false` requires Tier-1 approval. A number auto-promotes after that many successful tasks. |
-| `nervousSystem.enabled` | `boolean` | `true` activates the nervous system. All four phases boot on triage. |
-| `nervousSystem.embeddingProvider` | `string` | `"tfidf"`: built-in zero-dependency vectorizer. `"openrouter"`: OpenRouter embeddings API. `"llm"`: legacy OpenAI-compatible alias. |
-| `nervousSystem.embeddingApiKey` | `string\|null` | Preferred in `.mesh/local.json` for dependency installs. Used by `"openrouter"` and legacy `"llm"` providers. |
-| `nervousSystem.embeddingModel` | `string\|null` | Optional model override. Defaults by provider: OpenRouter uses `openai/text-embedding-3-small`; legacy `llm` uses `text-embedding-3-small`. |
-| `nervousSystem.embeddingEndpoint` | `string\|null` | Optional endpoint override. Defaults by provider. OpenRouter default: `https://openrouter.ai/api/v1/embeddings`. |
-| `nervousSystem.embeddingAppName` | `string\|null` | Optional OpenRouter attribution title. Sent as `X-OpenRouter-Title`. Default: `Mercury Mesh`. |
-| `nervousSystem.embeddingAppUrl` | `string\|null` | Optional OpenRouter attribution URL. Sent as `HTTP-Referer` when set. |
-| `nervousSystem.gravimetry.minimumGravity` | `number` | Minimum cosine similarity for a Wing to exert any pull. Default: `0.15`. |
-| `nervousSystem.gravimetry.airbridgeThreshold` | `number` | If top Wing gravity share ≥ this, route directly. Below triggers Airbridge. Default: `0.70`. |
-| `nervousSystem.gravimetry.airbridgeMinShare` | `number` | Minimum gravity share for a Wing to join an Airbridge. Default: `0.20`. |
-| `nervousSystem.autonomic.pulseMs` | `number` | Metabolism pulse interval in milliseconds. Default: `30000`. |
-| `nervousSystem.autonomic.contextDecayMinutes` | `number` | Minutes before untouched state files are flagged as decayed. Default: `60`. |
-| `nervousSystem.autonomic.applyCorrections` | `boolean` | `true` writes corrections (lease requeue, decisions). `false` is read-only. |
-| `nervousSystem.ghostWings.enabled` | `boolean` | `true` enables Ghost Wing synthesis when Sorties fall into the Void. |
-| `nervousSystem.ghostWings.autoMaterialize` | `boolean` | `true` materializes Ghost Wings without Commander approval. Default: `false`. |
-| `nervousSystem.ghostWings.solidificationThreshold` | `number` | Successful tasks before a Ghost Wing becomes permanent. Default: `3`. |
-| `nervousSystem.ghostWings.dissolutionThreshold` | `number` | Failed tasks before a Ghost Wing is dissolved. Default: `2`. |
-| `nervousSystem.ghostWings.maxLifespanHours` | `number` | Maximum hours a Ghost Wing can exist before forced dissolution. Default: `72`. |
-| `nervousSystem.constellation.enabled` | `boolean` | `true` activates spatial vector memory and RAG context. |
-| `nervousSystem.constellation.ragMaxEntries` | `number` | Maximum Constellation entries returned per RAG query. Default: `5`. |
-| `nervousSystem.constellation.ragMinSimilarity` | `number` | Minimum similarity for a Constellation entry to appear in RAG. Default: `0.15`. |
-| `nervousSystem.constellation.provider` | `string` | `"json"` (default) or `"lancedb"`. LanceDB requires optional peer dep `@lancedb/lancedb`. |
-| `nervousSystem.peers.enabled` | `boolean` | `true` activates distributed mesh peer coordination. Default: `false`. |
-| `nervousSystem.peers.heartbeatOnPulse` | `boolean` | `true` sends peer heartbeat on each autonomic pulse. Default: `true`. |
-| `nervousSystem.peers.syncOnPulse` | `boolean` | `true` syncs constellation with peers on each pulse. Default: `false`. |
-| `nervousSystem.peers.heartbeatTTLMinutes` | `number` | Minutes before a peer is considered stale. Default: `30`. |
+| Property | Type | Effect |
+|----------|------|--------|
+| `version` | `number` | Schema version. Current: `2`. |
+| `orgMode` | `boolean` | Wing/Deck departmental structure (`true`) or flat team (`false`). |
+| `halted` | `boolean` | **HALT Sentinel** — freezes all spawns and writes. |
+| `allowedModels` | `string[]` | Model allowlist. Empty = allow all. |
+| `modelRouting.default` | `string` | Default model for auto-selection. |
+| `modelRouting.taskTypes` | `object` | Per-category routing: `code`, `prompts`, `docs`, `lead`, `visual`. |
+| `modelRouting.fallbacks` | `object` | Fallback chains: `premium`, `standard`, `fast`. |
+| `orgConfig.autonomyMode` | `string` | `"delegated"` (bridge assigns) or `"autonomous"` (Wings self-select). |
+| `orgConfig.crossDeptStrategy` | `string` | `"contract-first"` or `"ad-hoc"` Airbridges. |
+| `orgConfig.escalationBehavior` | `string` | `"advisory"` or `"blocking"`. |
+| `orgConfig.maxParallelismPerDepartment` | `number` | Max concurrent spawns per Wing. |
+| `orgConfig.claimLeaseMinutes` | `number` | Claim expiry before requeue. |
+| `orgConfig.heartbeatMinutes` | `number` | Agent Telemetry interval. |
+| `orgConfig.requeueExpiredClaims` | `boolean` | Return expired claims to backlog. |
+| `missionControl.breakWorkIntoMissions` | `boolean` | Decompose work into Sorties. |
+| `missionControl.defaultRoadmapDepth` | `number` | Flight Path checkpoint count. |
+| `missionControl.headerStyle` | `string` | `"ascii-art"` for banner headers. |
+| `missionControl.reportStyle` | `string` | `"ascii-command-deck"` for console panels. |
+| `missionControl.showRoadmapInReplies` | `boolean` | Flight Path visible in replies. |
+| `missionControl.telemetryCadence` | `string` | `"per-batch"` or `"on-change"`. |
+| `missionControl.requiredFields` | `string[]` | e.g. `["mission","status","next","risks"]`. |
+| `humanTiers.tier1/2/3` | `string[]` | Authority tiers (full / approve / read-only). |
+| `onboarding.defaultPhase` | `string` | `"shadow"` (observe) or `"probation"` (execute under review). |
+| `onboarding.autoPromoteThreshold` | `boolean\|number` | Auto-promote after N tasks, or `false` for Tier-1 gate. |
+| `nervousSystem.enabled` | `boolean` | Activate the Nervous System. |
+| `nervousSystem.embeddingProvider` | `string` | `"tfidf"`, `"openrouter"`, or `"llm"` (legacy). |
+| `nervousSystem.embeddingApiKey` | `string\|null` | API key (prefer `.mesh/local.json`). |
+| `nervousSystem.embeddingModel` | `string\|null` | Model override. |
+| `nervousSystem.embeddingEndpoint` | `string\|null` | Endpoint override. |
+| `nervousSystem.gravimetry.*` | | `minimumGravity` (0.15), `airbridgeThreshold` (0.70), `airbridgeMinShare` (0.20). |
+| `nervousSystem.autonomic.*` | | `pulseMs` (30000), `contextDecayMinutes` (60), `applyCorrections` (true). |
+| `nervousSystem.ghostWings.*` | | `enabled`, `autoMaterialize` (false), `solidificationThreshold` (3), `dissolutionThreshold` (2), `maxLifespanHours` (72). |
+| `nervousSystem.constellation.*` | | `enabled`, `ragMaxEntries` (5), `ragMinSimilarity` (0.15), `provider` ("json"/"lancedb"). |
+| `nervousSystem.peers.*` | | `enabled` (false), `heartbeatOnPulse` (true), `syncOnPulse` (false), `heartbeatTTLMinutes` (30). |
 
-Recommended for a commander who wants continuous status visibility:
-
-```json
-"missionControl": {
-  "breakWorkIntoMissions": true,
-  "defaultRoadmapDepth": 4,
-  "headerStyle": "ascii-art",
-  "reportStyle": "ascii-command-deck",
-  "showRoadmapInReplies": true,
-  "telemetryCadence": "per-batch",
-  "requiredFields": ["mission", "status", "next", "risks"]
-}
-```
+</details>
 
 ---
 
-## Signal Translation
+## Signal Lexicon
 
-The mesh speaks its own physics. Every surface, every conversation, every commit message uses this lexicon. The bridge stays clearer when the whole organism shares one language.
+The mesh speaks its own physics, Commander. One language across every surface.
 
-```text
-┌─────────────────────┬────────────────────┬──────────────────────────────────┐
-│  STANDARD SIGNAL    │  MESH TERM         │  FUNCTION                        │
-├─────────────────────┼────────────────────┼──────────────────────────────────┤
-│  Department         │  Wing / Deck       │  Domain-scoped execution group   │
-│  Project            │  Mission / Sortie  │  Deployment into a problem space │
-│  Project Lead       │  Mission Prime     │  Local lead of a gravity well    │
-│  Documentation      │  The Black Box     │  Immutable decision ledger       │
-│  Roadmap            │  The Flight Path   │  Long-range strategic direction  │
-│  Task Status        │  Telemetry         │  Live HUD readout of progress    │
-│  Alignment State    │  The Drift         │  Deviation from mission vector   │
-│  Sprint             │  The Burn          │  High-intensity execution period │
-│  Project Health     │  Hull Integrity    │  Quality and structural health   │
-│  Unknown Territory  │  The Void          │  Uncharted problem-space ahead   │
-│  Cross-Team Sync    │  Airbridge         │  Temporary wing-to-wing link     │
-│  Knowledge Base     │  The Loom          │  Shared knowledge fabric         │
-│  Routing Engine     │  Gravimetry        │  Semantic intent-to-Wing mapping │
-│  Gravity Score      │  Gravity Field     │  Spatial pull of a Sortie on     │
-│                     │                    │  all Wings simultaneously        │
-│  Health Monitor     │  Autonomic Core    │  Persistent metabolism + drift   │
-│                     │                    │  correction loop                 │
-│  Temporary Team     │  Ghost Wing        │  Emergent department from the    │
-│                     │                    │  Void — solidifies or dissolves  │
-│  Memory Index       │  Constellation     │  Spatial vector memory of every  │
-│                     │  Memory            │  decision and outcome            │
-│  Context Injection  │  RAG Context       │  Pre-loaded historical resonance │
-│                     │                    │  from the Constellation          │
-│  Internal Clock     │  Pulse             │  One metabolism cycle of the     │
-│                     │                    │  Autonomic Core                  │
-│  State Check        │  Drift Weather     │  Full sensor sweep of all Wing   │
-│                     │                    │  state files in one pulse        │
-└─────────────────────┴────────────────────┴──────────────────────────────────┘
-```
+| Standard Signal | Mesh Term | Function |
+|-----------------|-----------|----------|
+| Department | Wing / Deck | Domain-scoped execution group |
+| Project | Mission / Sortie | Deployment into a problem space |
+| Documentation | The Black Box | Immutable decision ledger |
+| Roadmap | The Flight Path | Long-range strategic direction |
+| Task Status | Telemetry | Live HUD readout |
+| Alignment State | The Drift | Deviation from mission vector |
+| Unknown Territory | The Void | Uncharted problem-space |
+| Cross-Team Sync | Airbridge | Temporary wing-to-wing link |
+| Knowledge Base | The Loom | Shared knowledge fabric |
+| Routing Engine | Gravimetry | Semantic intent-to-Wing mapping |
+| Health Monitor | Autonomic Core | Metabolism + Drift correction |
+| Temporary Team | Ghost Wing | Emergent department — solidifies or dissolves |
+| Memory Index | Constellation Memory | Spatial vector memory |
 
 ---
 
-## Vocal Signatures
 
-Three voices operate on this bridge. Each has a purpose. Each has a frequency.
+## Credits
 
-```text
-┌─────────────────────┬──────────────────────────────────────────────────────┐
-│  VOICE              │  CHARACTER                                           │
-├─────────────────────┼──────────────────────────────────────────────────────┤
-│  Ship's Computer    │  Analytical. Objective. Slightly cold. The voice of │
-│                     │  coordination — measured, exact, austere.            │
-├─────────────────────┼──────────────────────────────────────────────────────┤
-│  Tactical Officer   │  Brief. Urgent. Mission-forward. The voice of       │
-│                     │  routing, triage, and escalation.                    │
-├─────────────────────┼──────────────────────────────────────────────────────┤
-│  Specialist         │  Focused. Adaptive. Immersed. The voice of          │
-│                     │  research, making, and iteration.                    │
-└─────────────────────┴──────────────────────────────────────────────────────┘
-```
-
----
-
-## Bridge Protocols
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  PROTOCOL STATUS                                                           │
-├──────────────────────┬──────────────────────────────────────────────────────┤
-│  HALT SENTINEL       │  ARMED — freezes all spawns and writes on trigger.  │
-│  SHADOWING PHASE     │  AVAILABLE — new agents observe before firing       │
-│                      │  thrusters.                                         │
-│  THE LOOM            │  ACTIVE — one wing learns, the whole mesh knows.    │
-│  AIRBRIDGE           │  READY — temporary link between autonomous wings.   │
-│  BLACK BOX           │  RECORDING — immutable. Every decision. Every       │
-│                      │  correction. Every lesson.                          │
-│  GRAVIMETRY          │  ONLINE — semantic routing replaces keyword         │
-│                      │  matching. TF-IDF or LLM embeddings.               │
-│  AUTONOMIC CORE      │  ONLINE — persistent metabolism. Drift weather      │
-│                      │  scanning, lease patrol, heartbeat monitoring.      │
-│  GHOST WING          │  ARMED — Void detection triggers emergent           │
-│  SYNTHESIS           │  topology. Commander approval required.             │
-│  CONSTELLATION       │  ONLINE — spatial vector memory. RAG context        │
-│  MEMORY              │  pre-loaded into Wing context windows.              │
-│  GHOST WING          │  ONLINE — Jaccard overlap scoring, auto-merge       │
-│  COALESCENCE         │  above 0.65, flag-for-review above 0.35.           │
-│  WORKTREE            │  ONLINE — parallel Wing execution via git           │
-│  PARALLELISM         │  worktrees. Branch: mesh/{issue}-{slug}.           │
-│  DISTRIBUTED         │  ARMED — multi-machine peer registry, heartbeat,   │
-│  MESH PEERS          │  fleet health, constellation sync.                  │
-├──────────────────────┴──────────────────────────────────────────────────────┤
-│  All protocols nominal. Nervous system online. Bridge is live.             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## The Black Box
-
-Everything the bridge learns is recorded here. Short. Sharp. Operational.
-
-- [docs/commander-onboarding.md](docs/commander-onboarding.md) — First Light. The full onboarding sequence from cold hull to live mission.
-- [docs/brand-language.md](docs/brand-language.md) — Voice, vocabulary, and messaging physics.
-- [docs/mercury-mesh-runtime-rename-impact.md](docs/mercury-mesh-runtime-rename-impact.md) — Runtime rename history and compatibility surface.
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  ARCHIVE CHANNELS                                                          │
-├──────────────────────┬──────────────────────────────────────────────────────┤
-│  PRIMARY RUNTIME     │  .mesh/                                             │
-│  ALT CHECK           │  .mercury/                                          │
-│  DECISION LEDGER     │  .mesh/decisions.md                                 │
-│  FLIGHT PATH         │  .mesh/manifesto.md                                 │
-│  NERVOUS SYSTEM      │  .mesh/nervous-system/                              │
-│  CONSTELLATION       │  .mesh/nervous-system/constellation/                │
-├──────────────────────┴──────────────────────────────────────────────────────┤
-│  Helpers resolve .mesh/ first. .mercury/ as fallback.                      │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+Mercury Mesh tips its hull to [Squad](https://github.com/bradygaster/squad) by Brady Gaster — the project that proved AI agent teams belong inside your repository, not outside it.
 
 ---
 
