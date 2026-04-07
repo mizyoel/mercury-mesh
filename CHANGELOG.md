@@ -2,6 +2,12 @@
 
 All notable changes to this package will be documented in this file.
 
+## [1.3.2] - 2026-04-07
+
+- Remove hardcoded model catalogs and example model IDs from Mercury Mesh prompts and skills so model selection is driven by `.mesh/config.json` or the active Copilot surface.
+- Fix VS Code subagent guidance so only real named agents are treated as launches, preventing recursive coordinator spawns and misleading model assumptions.
+- Stop scaffolding baked-in model defaults in generated configs; new runtimes now start with empty model routing fields until the Commander sets them explicitly.
+
 ## [1.3.1] - 2026-04-06
 
 - Ship the CLI runtime support files under `lib/` so installed packages can execute `mercury-mesh update` without module resolution failures.
