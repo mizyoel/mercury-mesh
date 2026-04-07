@@ -2,6 +2,10 @@
 
 All notable changes to this package will be documented in this file.
 
+## [1.3.3] - 2026-04-07
+
+- Fix VS Code delegation deadlock where the coordinator routed all work through `Explore` (read-only) instead of executing inline, because the refusal rule blocked inline domain work and no implementation subagent exists on VS Code.
+
 ## [1.3.2] - 2026-04-07
 
 - Remove hardcoded model catalogs and example model IDs from Mercury Mesh prompts and skills so model selection is driven by `.mesh/config.json` or the active Copilot surface.

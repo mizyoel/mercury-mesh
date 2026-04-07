@@ -32,9 +32,9 @@ If both CLI and VS Code spawn tools appear to be available, prefer `task` becaus
 ### VS Code Mode
 
 - Use `runSubagent` or `agent` only when you can target a real named agent.
-- Treat `agentName: "Explore"` as the only guaranteed Mercury Mesh handoff on VS Code, and only for read-only scouting.
+- Use `agentName: "Explore"` ONLY for genuine read-only scouting (codebase questions, analysis, file discovery). Do NOT route implementation work through Explore.
 - If `agentName` is omitted, VS Code reuses the current agent instead of launching a distinct Wing.
-- For implementation, review, or logging work without a real named agent, execute inline.
+- For implementation, review, or logging work, execute inline: read the assigned agent's charter and history, adopt their role context, and do the task directly as the coordinator acting on behalf of that agent.
 - Do not pass CLI-only parameters such as `agent_type`, `mode`, or `model`.
 - Collect results from the returned subagent response rather than `read_agent`.
 

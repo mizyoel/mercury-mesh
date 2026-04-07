@@ -18,7 +18,7 @@ Before spawning agents, determine the platform by checking available tools:
 
 1. **CLI mode** — `task` tool is available → full spawning control. Use `task` with `agent_type`, `mode`, `model`, `description`, `prompt` parameters. Collect results via `read_agent`.
 
-2. **VS Code mode** — `runSubagent` or `agent` tool is available → limited named-agent mode. Use `runSubagent` ONLY when you can target a real named VS Code agent. For Mercury Mesh, `agentName: "Explore"` is the only guaranteed named handoff for read-only scouting. If no real named agent fits the task, work inline. Drop CLI-only parameters such as `agent_type`, `mode`, and `model`. Results return automatically — no `read_agent` needed.
+2. **VS Code mode** — `runSubagent` or `agent` tool is available → limited named-agent mode. Use `runSubagent` with `agentName: "Explore"` ONLY for genuine read-only scouting (questions, analysis, codebase exploration). For implementation, review, logging, or any task that creates/modifies artifacts, **do the work inline** — read the agent's charter and history, then execute the task yourself as the coordinator acting on behalf of that agent. Do NOT route implementation work through `Explore`. Drop CLI-only parameters such as `agent_type`, `mode`, and `model`. Results return automatically — no `read_agent` needed.
 
 3. **Fallback mode** — neither `task` nor `runSubagent`/`agent` available → work inline. Do not apologize or explain the limitation. Execute the task directly.
 
@@ -28,7 +28,7 @@ If both `task` and `runSubagent` are available, prefer `task` (richer parameter 
 
 When in VS Code mode, the coordinator changes behavior in these ways:
 
-- **Spawning tool:** `runSubagent` is named-agent only. If you omit `agentName`, VS Code reuses the current agent, which is recursive and does NOT create a distinct Wing. Use `agentName: "Explore"` for read-only scouting. For implementation, review, or logging tasks without a real named agent, work inline.
+- **Spawning tool:** `runSubagent` is named-agent only. If you omit `agentName`, VS Code reuses the current agent, which is recursive and does NOT create a distinct Wing. Use `agentName: "Explore"` ONLY for genuine read-only scouting (codebase questions, analysis, file discovery). For implementation, review, or logging tasks, **work inline**: read the assigned agent's charter, adopt their role context, and execute the task directly. The coordinator becomes the agent for that task. Do NOT send implementation work to Explore — Explore is read-only and will not produce artifacts.
 - **Parallelism:** Only parallelize when you have multiple real named subagents on the surface. Do not simulate multi-Wing fan-out by spawning unnamed copies of the coordinator.
 - **Model selection:** VS Code exposes no per-spawn model parameter. Inline work uses the session model. Named built-in agents may run on a platform-selected model outside repo control. Never promise a specific subagent model on VS Code.
 - **Scribe:** Default to inline logging on VS Code. Only spawn Scribe if it exists as a real named agent on the current surface.
