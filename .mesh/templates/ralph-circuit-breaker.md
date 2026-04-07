@@ -6,17 +6,9 @@
 ## Problem
 
 When running multiple Ralph instances across repos, Copilot model rate limits cause cascading failures.
-All Ralphs fail simultaneously when the preferred model (e.g., `claude-sonnet-4.6`) hits quota.
+All Ralphs fail simultaneously when the preferred model from `.mesh/config.json` hits quota.
 
-Premium models burn quota fast:
-| Model | Multiplier | Risk |
-|-------|-----------|------|
-| `claude-sonnet-4.6` | 1x | Moderate with many Ralphs |
-| `claude-opus-4.6` | 10x | High |
-| `gpt-5.4` | 50x | Very high |
-| `gpt-5.4-mini` | **0x** | **Free — unlimited** |
-| `gpt-5-mini` | **0x** | **Free — unlimited** |
-| `gpt-4.1` | **0x** | **Free — unlimited** |
+Higher-cost configured routes typically exhaust quota faster than lower-cost fallback routes. Seed the breaker from config rather than hardcoding model IDs in the template.
 
 ## Circuit Breaker States
 
@@ -40,10 +32,7 @@ Premium models burn quota fast:
 - On rate limit error → transition to OPEN
 
 ### OPEN (rate limited — fallback active)
-- Fall back through the free-tier model chain:
-  1. `gpt-5.4-mini`
-  2. `gpt-5-mini`
-  3. `gpt-4.1`
+- Fall back through the configured low-cost model chain from `.mesh/config.json` / `.mesh/ralph-circuit-breaker.json`
 - Start cooldown timer (default: 10 minutes)
 - When cooldown expires → transition to HALF-OPEN
 
@@ -57,8 +46,8 @@ Premium models burn quota fast:
 ```json
 {
   "state": "closed",
-  "preferredModel": "claude-sonnet-4.6",
-  "fallbackChain": ["gpt-5.4-mini", "gpt-5-mini", "gpt-4.1"],
+    "preferredModel": "<preferred-model-from-config>",
+    "fallbackChain": ["<fallback-model-1>", "<fallback-model-2>", "<fallback-model-3>"],
   "currentFallbackIndex": 0,
   "cooldownMinutes": 10,
   "openedAt": null,
@@ -86,8 +75,8 @@ function Get-CircuitBreakerState {
     if (-not (Test-Path $StateFile)) {
         $default = @{
             state              = "closed"
-            preferredModel     = "claude-sonnet-4.6"
-            fallbackChain      = @("gpt-5.4-mini", "gpt-5-mini", "gpt-4.1")
+            preferredModel     = "<preferred-model-from-config>"
+            fallbackChain      = @("<fallback-model-1>", "<fallback-model-2>", "<fallback-model-3>")
             currentFallbackIndex = 0
             cooldownMinutes    = 10
             openedAt           = $null
@@ -293,8 +282,8 @@ Override defaults by editing `.mesh/ralph-circuit-breaker.json`:
 
 | Field | Default | Description |
 |-------|---------|-------------|
-| `preferredModel` | `claude-sonnet-4.6` | Model to use when circuit is closed |
-| `fallbackChain` | `["gpt-5.4-mini", "gpt-5-mini", "gpt-4.1"]` | Ordered fallback models (all free-tier) |
+| `preferredModel` | `<preferred-model-from-config>` | Model to use when circuit is closed |
+| `fallbackChain` | `["<fallback-model-1>", "<fallback-model-2>", "<fallback-model-3>"]` | Ordered fallback models from config |
 | `cooldownMinutes` | `10` | How long to wait before testing recovery |
 
 ## Metrics

@@ -611,7 +611,7 @@ After routing determines WHO handles work, select the response MODE based on tas
 **Lightweight Mode exemplars** (one agent, minimal prompt):
 - "Fix the typo in README" → Spawn one agent, no charter, no history read.
 - "Add a comment to line 42" → Small scoped edit, minimal context needed.
-- "What does this function do?" → `agent_type: "explore"` (Haiku model, fast).
+- "What does this function do?" → `agent_type: "explore"` (use the lowest-cost read-only route allowed by config and surface).
 - Follow-up edits after a Standard/Full response — context is fresh, skip ceremony.
 
 **Standard Mode exemplars** (one agent, full ceremony):
@@ -694,7 +694,7 @@ prompt: |
   ⚠️ RESPONSE ORDER: After ALL tool calls, write a plain text summary as FINAL output.
 ```
 
-For read-only queries, use the explore agent: `agent_type: "explore"` with `"You are {Name}, the {Role}. {question} TEAM ROOT: {team_root}"`
+For read-only queries, use the explore lane. On CLI, use `agent_type: "explore"` with `"You are {Name}, the {Role}. {question} TEAM ROOT: {team_root}"`. On VS Code, use `runSubagent` with `agentName: "Explore"` and the same prompt. Never use unnamed `runSubagent` for a handoff.
 
 ### Per-Agent Model Selection
 
@@ -713,7 +713,7 @@ Before spawning an agent, determine which model to use. Check these layers in or
 - **When user says "use X for {agent}":** Write to `agentModelOverrides.{agent}` in the active `config.json`. Acknowledge: `✅ {Agent} will always use {model} — saved to config.`
 - **When user says "switch back to automatic" / "clear model preference":** Remove `defaultModel` (and optionally `agentModelOverrides`) from the active `config.json`. Acknowledge: `✅ Model preference cleared — returning to automatic selection.`
 
-**Layer 1 — Session Directive:** Did the user specify a model for this session? ("use opus for this session", "save costs"). If yes, use that model. Session-wide directives persist until the session ends or contradicted.
+**Layer 1 — Session Directive:** Did the user specify a model for this session? ("use <model> for this session", "save costs"). If yes, use that model. Session-wide directives persist until the session ends or contradicted.
 
 **Layer 2 — Charter Preference:** Does the agent's charter have a `## Model` section with `Preferred` set to a specific model (not `auto`)? If yes, use that model.
 
@@ -797,11 +797,12 @@ When spawning, include the model in your acknowledgment:
 
 Include tier annotation only when the model was bumped or a specialist was chosen. Default-tier spawns just show the model name.
 
-**Valid models (current platform catalog):**
+**Model source of truth:**
 
-Premium: `claude-opus-4.6`, `claude-opus-4.6-fast`, `claude-opus-4.5`
-Standard: `gpt-5.4`, `claude-sonnet-4.5`, `claude-sonnet-4`, `gpt-5.2-codex`, `gpt-5.2`, `gpt-5.1-codex-max`, `gpt-5.1-codex`, `gpt-5.1`, `gpt-5`, `gemini-3-pro-preview`
-Fast/Cheap: `claude-haiku-4.5`, `gpt-5.1-codex-mini`, `gpt-5-mini`, `gpt-4.1`
+- Never hardcode a model catalog in prompt text.
+- On CLI, resolve models from `{runtime}/config.json` (`allowedModels`, `defaultModel`, `agentModelOverrides`, `modelRouting`, and configured fallback chains).
+- On VS Code, inline work uses the session model. Named built-in agents use the platform-selected model for that agent.
+- If a configured model is unavailable, use configured fallbacks, then omit the `model` parameter.
 
 ### Client Compatibility
 
@@ -813,7 +814,7 @@ Before spawning agents, determine the platform by checking available tools:
 
 1. **CLI mode** — `task` tool is available → full spawning control. Use `task` with `agent_type`, `mode`, `model`, `description`, `prompt` parameters. Collect results via `read_agent`.
 
-2. **VS Code mode** — `runSubagent` or `agent` tool is available → conditional behavior. Use `runSubagent` with the task prompt. Drop `agent_type`, `mode`, and `model` parameters. Multiple subagents in one turn run concurrently (equivalent to background mode). Results return automatically — no `read_agent` needed.
+2. **VS Code mode** — `runSubagent` or `agent` tool is available → limited named-agent mode. Use `runSubagent` ONLY when you can target a real named VS Code agent. For Mercury Mesh, `agentName: "Explore"` is the only guaranteed named handoff for read-only scouting. If no real named agent fits the task, work inline. Drop CLI-only parameters such as `agent_type`, `mode`, and `model`. Results return automatically — no `read_agent` needed.
 
 3. **Fallback mode** — neither `task` nor `runSubagent`/`agent` available → work inline. Do not apologize or explain the limitation. Execute the task directly.
 
@@ -823,23 +824,23 @@ If both `task` and `runSubagent` are available, prefer `task` (richer parameter 
 
 When in VS Code mode, the coordinator changes behavior in these ways:
 
-- **Spawning tool:** Use `runSubagent` instead of `task`. The prompt is the only required parameter — pass the full agent prompt (charter, identity, task, hygiene, response order) exactly as you would on CLI.
-- **Parallelism:** Spawn ALL concurrent agents in a SINGLE turn. They run in parallel automatically. This replaces `mode: "background"` + `read_agent` polling.
-- **Model selection:** Accept the session model. Do NOT attempt per-spawn model selection or fallback chains — they only work on CLI. In Phase 1, all subagents use whatever model the user selected in VS Code's model picker.
-- **Scribe:** Cannot fire-and-forget. Batch Scribe as the LAST subagent in any parallel group. Scribe is light work (file ops only), so the blocking is tolerable.
+- **Spawning tool:** `runSubagent` is named-agent only. If you omit `agentName`, VS Code reuses the current agent, which is recursive and does NOT create a distinct Wing. Use `agentName: "Explore"` for read-only scouting. For implementation, review, or logging tasks without a real named agent, work inline.
+- **Parallelism:** Only parallelize when you have multiple real named subagents on the surface. Do not simulate multi-Wing fan-out by spawning unnamed copies of the coordinator.
+- **Model selection:** VS Code exposes no per-spawn model parameter. Inline work uses the session model. Named built-in agents may run on a platform-selected model outside repo control. Never promise a specific subagent model on VS Code.
+- **Scribe:** Default to inline logging on VS Code. Only spawn Scribe if it exists as a real named agent on the current surface.
 - **Launch table:** Skip it. Results arrive with the response, not separately. By the time the coordinator speaks, the work is already done.
 - **`read_agent`:** Skip entirely. Results return automatically when subagents complete.
-- **`agent_type`:** Drop it. All VS Code subagents have full tool access by default. Subagents inherit the parent's tools.
+- **`agent_type`:** Drop it. VS Code does not expose CLI `agent_type` routing.
 - **`description`:** Drop it. The agent name is already in the prompt.
-- **Prompt content:** Keep ALL prompt structure — charter, identity, task, hygiene, response order blocks are surface-independent.
+- **Prompt content:** Keep ALL prompt structure when using a real named subagent. If no named subagent exists, do the work inline and do not claim a Wing launched.
 
 #### Feature Degradation Table
 
 | Feature | CLI | VS Code | Degradation |
 |---------|-----|---------|-------------|
-| Parallel fan-out | `mode: "background"` + `read_agent` | Multiple subagents in one turn | None — equivalent concurrency |
-| Model selection | Per-spawn `model` param (4-layer hierarchy) | Session model only (Phase 1) | Accept session model, log intent |
-| Scribe fire-and-forget | Background, never read | Sync, must wait | Batch with last parallel group |
+| Parallel fan-out | `mode: "background"` + `read_agent` | Named subagents only | Limited — avoid unnamed recursive spawns |
+| Model selection | Per-spawn `model` param (4-layer hierarchy) | No per-spawn control | Session model for inline work; named agents may use platform-selected models |
+| Scribe fire-and-forget | Background, never read | Inline unless a real named Scribe exists | Logging degrades to coordinator work |
 | Launch table UX | Show table → results later | Skip table → results with response | UX only — results are correct |
 | SQL tool | Available | Not available | Avoid SQL in cross-platform code paths |
 | Response order bug | Critical workaround | Possibly necessary (unverified) | Keep the block — harmless if unnecessary |
@@ -874,6 +875,7 @@ When spawning agents, include an `MCP TOOLS AVAILABLE` block in the prompt (see 
 - **Coordinator handles directly** when the MCP operation is simple (a single read, a status check) and doesn't need domain expertise.
 - **Spawn with context** when the task needs agent expertise AND MCP tools. Include the MCP block in the spawn prompt so the agent knows what's available.
 - **Explore agents never get MCP** — they have read-only local file access. Route MCP work to `general-purpose` or `task` agents, or handle it in the coordinator.
+- **Never claim a Wing launched on VS Code unless the `runSubagent` call set `agentName` to a real available agent.**
 
 #### Graceful Degradation
 

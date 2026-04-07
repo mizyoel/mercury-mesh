@@ -95,7 +95,7 @@ After updating economy mode state and including the `💰` indicator in spawn ac
 
 ## Anti-Patterns
 
-- **Don't override Layer 0 in economy mode.** If the user set `defaultModels: ["gpt-5.4", "claude-opus-4.6"]`, they want that chain honored. Economy mode only affects Layer 3 auto-selection.
+- **Don't override Layer 0 in economy mode.** If the user set Layer 0 model overrides in `config.json`, they want that chain honored. Economy mode only affects Layer 3 auto-selection.
 - **Don't silently apply economy mode.** Always acknowledge when activated or deactivated.
 - **Don't treat economy mode as permanent by default.** Session phrases activate session-only; only "always" or `config.json` persist it.
-- **Don't bump premium tasks down too far.** Architecture and security reviews shift from opus to sonnet in economy mode — they do NOT go to fast/cheap models.
+- **Don't invent downgrade targets.** Architecture and security reviews must follow the configured economy lead route in `config.json`; do NOT hardcode a premium-to-standard downgrade in the prompt.

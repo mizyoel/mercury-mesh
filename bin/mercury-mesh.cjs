@@ -373,13 +373,13 @@ function writeDefaultConfig(targetRoot, { vanguardEnabled = false } = {}) {
     version: 2,
     orgMode: false,
     halted: false,
-    allowedModels: ["gpt-5.4", "claude-opus-4.6"],
+    allowedModels: [],
     modelRouting: {
-      default: "gpt-5.4",
+      taskTypes: {},
       fallbacks: {
-        premium: ["claude-opus-4.6", "gpt-5.4"],
-        standard: ["gpt-5.4"],
-        fast: ["gpt-5.4"],
+        premium: [],
+        standard: [],
+        fast: [],
       },
     },
     humanTiers: { tier1: [], tier2: [], tier3: [] },

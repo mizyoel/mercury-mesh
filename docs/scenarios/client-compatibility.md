@@ -7,7 +7,7 @@ Mercury Mesh runs across multiple GitHub Copilot surfaces. The bridge must detec
 | Surface | Spawn Tool | Result Collection | Notes |
 |---------|------------|-------------------|-------|
 | GitHub Copilot CLI | `task` | `read_agent` | Full spawn controls, per-spawn model selection, and `sql` are available. |
-| GitHub Copilot in VS Code | `runSubagent` or `agent` | Inline subagent responses | No `read_agent`, no per-spawn model parameter, no `sql` tool. |
+| GitHub Copilot in VS Code | `runSubagent` or `agent` | Inline subagent responses | No `read_agent`, no per-spawn model parameter, no `sql` tool. Unnamed `runSubagent` reuses the current agent. |
 | Other / fallback surfaces | None | Inline work only | If no spawn tool exists, work inline and never claim a Wing launched when nothing launched. |
 
 ## Surface Detection
@@ -31,10 +31,12 @@ If both CLI and VS Code spawn tools appear to be available, prefer `task` becaus
 
 ### VS Code Mode
 
-- Use `runSubagent` or `agent` with the full prompt.
+- Use `runSubagent` or `agent` only when you can target a real named agent.
+- Treat `agentName: "Explore"` as the only guaranteed Mercury Mesh handoff on VS Code, and only for read-only scouting.
+- If `agentName` is omitted, VS Code reuses the current agent instead of launching a distinct Wing.
+- For implementation, review, or logging work without a real named agent, execute inline.
 - Do not pass CLI-only parameters such as `agent_type`, `mode`, or `model`.
 - Collect results from the returned subagent response rather than `read_agent`.
-- Batch Scribe as the last subagent in a parallel group so telemetry lands cleanly.
 
 ### Fallback Mode
 
@@ -47,8 +49,9 @@ If both CLI and VS Code spawn tools appear to be available, prefer `task` becaus
 - Never hard-require `task` in generic instructions.
 - Never call `read_agent` outside CLI mode.
 - Never rely on `sql` for workflows that must run in VS Code.
+- Never treat unnamed `runSubagent` calls as specialist launches.
 - Keep prompts surface-independent even when spawn parameters differ.
-- Treat Scribe behavior as surface-specific: background on CLI, final batched subagent on VS Code, inline when no spawn tool exists.
+- Treat Scribe behavior as surface-specific: background on CLI, inline on VS Code unless a real named Scribe exists, inline when no spawn tool exists.
 
 ## Source of Truth
 

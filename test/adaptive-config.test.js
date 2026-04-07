@@ -164,6 +164,9 @@ test("buildConfig: produces valid config from accepted profile", () => {
   assert.equal(config.vanguard.enabled, false);
   assert.ok(config.humanTiers);
   assert.ok(config.modelRouting);
+  assert.deepEqual(config.allowedModels, []);
+  assert.deepEqual(config.modelRouting.taskTypes, {});
+  assert.deepEqual(config.modelRouting.fallbacks, { premium: [], standard: [], fast: [] });
 });
 
 test("buildConfig: conservative overrides disable everything", () => {

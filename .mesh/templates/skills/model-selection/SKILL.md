@@ -1,6 +1,6 @@
 ---
 name: "model-selection"
-description: "Determines which LLM model to use for each agent spawn based on a 5-layer resolution hierarchy, including user preferences, session directives, charter specifications, task-aware defaults, and a hardcoded fallback."
+description: "Determines which LLM model to use for each agent spawn based on a 5-layer resolution hierarchy, including user preferences, session directives, charter specifications, task-aware defaults, and configured fallbacks."
 ---
 # Model Selection
 
@@ -20,7 +20,7 @@ description: "Determines which LLM model to use for each agent spawn based on a 
 
 ## Context
 
-Mercury Mesh supports 18+ models across three tiers (premium, standard, fast). The coordinator must select the right model for each agent spawn. Users can set persistent preferences that survive across sessions.
+Mercury Mesh resolves models from the active runtime config and the current client surface. The coordinator must select the right model for each agent spawn without embedding a hardcoded model catalog in the prompt. Users can set persistent preferences that survive across sessions.
 
 ## 5-Layer Model Resolution Hierarchy
 
@@ -35,7 +35,7 @@ Resolution is **first-match-wins** — the highest layer with a value wins.
 | **3** | Task-Aware Auto | `.mesh/config.json` → `modelRouting.taskTypes` | Computed per-spawn |
 | **4** | Default | `.mesh/config.json` → `modelRouting.default`, then `defaultModel`, then omit model param | Configured fallback |
 
-**Key principle:** Layer 0 (persistent config) beats everything. If the user said "always use opus" and it was saved to config.json, every agent gets opus regardless of role or task type. This is intentional — the user explicitly chose quality over cost.
+**Key principle:** Layer 0 (persistent config) beats everything. If the user said "always use <model>" and it was saved to config.json, every agent gets that configured model regardless of role or task type. This is intentional — the user explicitly chose that routing.
 
 ## AGENT WORKFLOW
 
@@ -65,19 +65,19 @@ Resolution is **first-match-wins** — the highest layer with a value wins.
 
 **Trigger phrases:** "always use X", "use X for everything", "switch to X", "default to X"
 
-1. VALIDATE the model ID against the catalog (18+ models)
+1. VALIDATE the model ID against `allowedModels` when present. If no allowlist exists, trust the user/config value and let the client surface enforce actual support.
 2. WRITE `defaultModel` to `.mesh/config.json` (merge, don't overwrite)
 3. ACKNOWLEDGE: `✅ Model preference saved: {model} — all future sessions will use this until changed.`
 
 **Per-agent trigger:** "use X for {agent}"
 
-1. VALIDATE model ID
+1. VALIDATE the model ID against `allowedModels` when present. If no allowlist exists, trust the user/config value and let the client surface enforce actual support.
 2. WRITE to `agentModelOverrides.{agent}` in `.mesh/config.json`
 3. ACKNOWLEDGE: `✅ {Agent} will always use {model} — saved to config.`
 
 **Per-category trigger:** "use X for code" / "use X for docs" / "use X for lead reviews"
 
-1. VALIDATE model ID
+1. VALIDATE the model ID against `allowedModels` when present. If no allowlist exists, trust the user/config value and let the client surface enforce actual support.
 2. WRITE to `.mesh/config.json` → `modelRouting.taskTypes.{category}`
 3. ACKNOWLEDGE: `✅ {category} tasks now route to {model}.`
 
@@ -95,6 +95,7 @@ After resolving the model and including it in the spawn template, this skill is 
 - Run benchmarks or speed tests
 - Create new config files (only modify existing `.mesh/config.json`)
 - Change the model after spawn (fallback chains handle runtime failures)
+- Invent a hardcoded model catalog in prompt text
 
 ## Config Schema
 
@@ -102,20 +103,21 @@ After resolving the model and including it in the spawn template, this skill is 
 
 ```json
 {
-  "version": 1,
+  "version": 2,
+  "allowedModels": ["<allowed-model-a>", "<allowed-model-b>"],
   "modelRouting": {
-    "default": "gpt-5.4",
+    "default": "<default-model>",
     "taskTypes": {
-      "code": "gpt-5.4",
-      "prompts": "gpt-5.4",
-      "docs": "gpt-5.4",
-      "lead": "claude-opus-4.6",
-      "visual": "claude-opus-4.6"
+      "code": "<code-model>",
+      "prompts": "<prompt-model>",
+      "docs": "<docs-model>",
+      "lead": "<lead-model>",
+      "visual": "<visual-model>"
     },
     "fallbacks": {
-      "premium": ["claude-opus-4.6", "gpt-5.4"],
-      "standard": ["gpt-5.4"],
-      "fast": ["gpt-5.4"]
+      "premium": ["<premium-fallback-1>", "<premium-fallback-2>"],
+      "standard": ["<standard-fallback-1>"],
+      "fast": ["<fast-fallback-1>"]
     }
   }
 }

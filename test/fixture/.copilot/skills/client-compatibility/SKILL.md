@@ -18,7 +18,7 @@ Before spawning agents, determine the platform by checking available tools:
 
 1. **CLI mode** — `task` tool is available → full spawning control. Use `task` with `agent_type`, `mode`, `model`, `description`, `prompt` parameters. Collect results via `read_agent`.
 
-2. **VS Code mode** — `runSubagent` or `agent` tool is available → conditional behavior. Use `runSubagent` with the task prompt. Drop `agent_type`, `mode`, and `model` parameters. Multiple subagents in one turn run concurrently (equivalent to background mode). Results return automatically — no `read_agent` needed.
+2. **VS Code mode** — `runSubagent` or `agent` tool is available → limited named-agent mode. Use `runSubagent` ONLY when you can target a real named VS Code agent. For Mercury Mesh, `agentName: "Explore"` is the only guaranteed named handoff for read-only scouting. If no real named agent fits the task, work inline. Drop CLI-only parameters such as `agent_type`, `mode`, and `model`. Results return automatically — no `read_agent` needed.
 
 3. **Fallback mode** — neither `task` nor `runSubagent`/`agent` available → work inline. Do not apologize or explain the limitation. Execute the task directly.
 
@@ -28,10 +28,10 @@ If both `task` and `runSubagent` are available, prefer `task` (richer parameter 
 
 When in VS Code mode, the coordinator changes behavior in these ways:
 
-- **Spawning tool:** Use `runSubagent` instead of `task`. The prompt is the only required parameter — pass the full agent prompt (charter, identity, task, hygiene, response order) exactly as you would on CLI.
-- **Parallelism:** Spawn ALL concurrent agents in a SINGLE turn. They run in parallel automatically. This replaces `mode: "background"` + `read_agent` polling.
-- **Model selection:** Accept the session model. Do NOT attempt per-spawn model selection or fallback chains — they only work on CLI. In Phase 1, all subagents use whatever model the user selected in VS Code's model picker.
-- **Scribe:** Cannot fire-and-forget. Batch Scribe as the LAST subagent in any parallel group. Scribe is light work (file ops only), so the blocking is tolerable.
+- **Spawning tool:** `runSubagent` is named-agent only. If you omit `agentName`, VS Code reuses the current agent, which is recursive and does NOT create a distinct Wing. Use `agentName: "Explore"` for read-only scouting. For implementation, review, or logging tasks without a real named agent, work inline.
+- **Parallelism:** Only parallelize when you have multiple real named subagents on the surface. Do not simulate multi-Wing fan-out by spawning unnamed copies of the coordinator.
+- **Model selection:** VS Code exposes no per-spawn model parameter. Inline work uses the session model. Named built-in agents may run on a platform-selected model outside repo control. Never promise a specific subagent model on VS Code.
+- **Scribe:** Default to inline logging on VS Code. Only spawn Scribe if it exists as a real named agent on the current surface.
 - **Launch table:** Skip it. Results arrive with the response, not separately. By the time the coordinator speaks, the work is already done.
 - **`read_agent`:** Skip entirely. Results return automatically when subagents complete.
 - **`agent_type`:** Drop it. All VS Code subagents have full tool access by default. Subagents inherit the parent's tools.
@@ -42,9 +42,9 @@ When in VS Code mode, the coordinator changes behavior in these ways:
 
 | Feature | CLI | VS Code | Degradation |
 |---------|-----|---------|-------------|
-| Parallel fan-out | `mode: "background"` + `read_agent` | Multiple subagents in one turn | None — equivalent concurrency |
-| Model selection | Per-spawn `model` param (4-layer hierarchy) | Session model only (Phase 1) | Accept session model, log intent |
-| Scribe fire-and-forget | Background, never read | Sync, must wait | Batch with last parallel group |
+| Parallel fan-out | `mode: "background"` + `read_agent` | Named subagents only | Limited — avoid unnamed recursive spawns |
+| Model selection | Per-spawn `model` param (4-layer hierarchy) | No per-spawn control | Session model for inline work; named agents may use platform-selected models |
+| Scribe fire-and-forget | Background, never read | Inline unless a real named Scribe exists | Logging degrades to coordinator work |
 | Launch table UX | Show table → results later | Skip table → results with response | UX only — results are correct |
 | SQL tool | Available | Not available | Avoid SQL in cross-platform code paths |
 | Response order bug | Critical workaround | Possibly necessary (unverified) | Keep the block — harmless if unnecessary |
@@ -58,21 +58,26 @@ The `sql` tool is **CLI-only**. It does not exist on VS Code, JetBrains, or GitH
 **Example 1: CLI parallel spawn**
 ```typescript
 // Coordinator detects task tool available → CLI mode
-task({ agent_type: "general-purpose", mode: "background", model: "claude-sonnet-4.5", ... })
-task({ agent_type: "general-purpose", mode: "background", model: "claude-haiku-4.5", ... })
+// Models were resolved from .mesh/config.json before these spawns
+task({ agent_type: "general-purpose", mode: "background", model: resolvedFromConfig.code, ... })
+task({ agent_type: "general-purpose", mode: "background", model: resolvedFromConfig.docs, ... })
 // Later: read_agent for both
 ```
 
-**Example 2: VS Code parallel spawn**
+**Example 2: VS Code named read-only spawn**
 ```typescript
 // Coordinator detects runSubagent available → VS Code mode
-runSubagent({ prompt: "...Fenster charter + task..." })
-runSubagent({ prompt: "...Hockney charter + task..." })
-runSubagent({ prompt: "...Scribe charter + task..." }) // Last in group
+runSubagent({ agentName: "Explore", prompt: "...Scout repo state..." })
 // Results return automatically, no read_agent
 ```
 
-**Example 3: Fallback mode**
+**Example 3: VS Code implementation work**
+```typescript
+// No named specialist agent exists on this surface
+// Coordinator executes the task inline instead of recursively spawning itself
+```
+
+**Example 4: Fallback mode**
 ```typescript
 // Neither task nor runSubagent available → work inline
 // Coordinator executes the task directly without spawning
@@ -82,7 +87,8 @@ runSubagent({ prompt: "...Scribe charter + task..." }) // Last in group
 
 - ❌ Using SQL tool in cross-platform workflows (breaks on VS Code/JetBrains/GitHub.com)
 - ❌ Attempting per-spawn model selection on VS Code (Phase 1 — only session model works)
-- ❌ Fire-and-forget Scribe on VS Code (must batch as last subagent)
+- ❌ Calling `runSubagent` without `agentName` and treating it as a specialist handoff
+- ❌ Fire-and-forget Scribe on VS Code when no real named Scribe agent exists
 - ❌ Showing launch table on VS Code (results already inline)
 - ❌ Apologizing or explaining platform limitations to the user
 - ❌ Using `task` when only `runSubagent` is available

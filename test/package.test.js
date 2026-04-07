@@ -66,6 +66,48 @@ test("resolves known docs", () => {
   );
 });
 
+test("client compatibility docs describe VS Code named-agent limits", () => {
+  const agentPrompt = fs.readFileSync(mercuryMesh.agentPromptPath, "utf8");
+  const clientCompatibilityDoc = fs.readFileSync(
+    mercuryMesh.resolveDocPath("scenarios", "client-compatibility.md"),
+    "utf8"
+  );
+
+  assert.ok(
+    agentPrompt.includes("If you omit `agentName`, VS Code reuses the current agent"),
+    "agent prompt should explain unnamed VS Code subagent recursion"
+  );
+  assert.ok(
+    clientCompatibilityDoc.includes('agentName: "Explore"'),
+    "client compatibility doc should document Explore as the named VS Code handoff"
+  );
+});
+
+test("model routing guidance stays config-driven", () => {
+  const agentPrompt = fs.readFileSync(mercuryMesh.agentPromptPath, "utf8");
+  const modelSelectionSkill = fs.readFileSync(
+    path.join(PACKAGE_ROOT, ".copilot", "skills", "model-selection", "SKILL.md"),
+    "utf8"
+  );
+  const clientCompatibilitySkill = fs.readFileSync(
+    path.join(PACKAGE_ROOT, ".copilot", "skills", "client-compatibility", "SKILL.md"),
+    "utf8"
+  );
+
+  assert.ok(
+    !agentPrompt.includes("**Valid models (current platform catalog):**"),
+    "agent prompt should not embed a hardcoded model catalog"
+  );
+  assert.ok(
+    !modelSelectionSkill.includes("hardcoded fallback"),
+    "model selection skill should not describe fallback routing as hardcoded"
+  );
+  assert.ok(
+    clientCompatibilitySkill.includes("model: resolvedFromConfig.code"),
+    "client compatibility examples should resolve models from config"
+  );
+});
+
 test("npm pack includes CLI runtime dependencies", () => {
   const packOutput = runNpm(["pack", "--json", "--dry-run"]);
 
