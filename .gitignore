@@ -17,3 +17,4 @@ test/.cli-test-target/
 .env.development
 .env.staging
 .env.test
+*.tgz

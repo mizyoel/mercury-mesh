@@ -33,7 +33,10 @@ If both CLI and VS Code spawn tools appear to be available, prefer `task` becaus
 
 - Use `runSubagent` or `agent` with the task prompt. Drop `agent_type`, `mode`, and `model` parameters.
 - Multiple subagents in one turn run concurrently (equivalent to background mode).
-- Accept the session model. Do not attempt per-spawn model selection or fallback chains.
+- Resolve `modelRouting` from `.mesh/config.json`, group pending subagent work by resolved model, and run one model batch at a time.
+- Before each batch whose resolved model differs from the current VS Code session model, prompt the user to switch the model picker and wait for confirmation.
+- Add a `## Model Routing` block to each subagent prompt so the batch can report the intended model and whether the active batch matched it.
+- If the current surface has no real named writable agent for a work item in that batch, execute it inline after the model-picker switch instead of routing it to Explore.
 - Batch Scribe as the last subagent in any parallel group.
 - Do not pass CLI-only parameters such as `agent_type`, `mode`, or `model`.
 - Collect results from the returned subagent response rather than `read_agent`.
@@ -50,6 +53,8 @@ If both CLI and VS Code spawn tools appear to be available, prefer `task` becaus
 - Never call `read_agent` outside CLI mode.
 - Never rely on `sql` for workflows that must run in VS Code.
 - Never treat unnamed `runSubagent` calls as specialist launches.
+- Never mix pending subagents that resolve to different models into the same VS Code batch.
+- Never send implementation work to `Explore` just to satisfy the spawn rule.
 - Keep prompts surface-independent even when spawn parameters differ.
 - Treat Scribe behavior as surface-specific: background on CLI, sync (batched last) on VS Code, inline when no spawn tool exists.
 

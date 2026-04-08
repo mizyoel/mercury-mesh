@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { execFileSync } = require("node:child_process");
 
+const PACKAGE_ROOT = path.resolve(__dirname, "..");
 const CLI_PATH = path.resolve(__dirname, "..", "bin", "mercury-mesh.cjs");
 const FIXTURE_DIR = path.join(__dirname, ".cli-test-target");
 
@@ -179,32 +180,84 @@ test("cli: init --force overwrites existing files", () => {
   cleanFixture();
 });
 
-test("cli: update only touches agent + skills + instructions", () => {
+test("cli: update refreshes managed scaffold assets and preserves user-owned files", () => {
   cleanFixture();
   fs.mkdirSync(FIXTURE_DIR, { recursive: true });
 
   // Init first
   runCLI("init");
 
-  // Modify config (should survive update)
+  // User-owned files should survive update.
   const configPath = path.join(FIXTURE_DIR, ".mesh", "config.json");
   const original = fs.readFileSync(configPath, "utf-8");
   fs.writeFileSync(configPath, original.replace('"version": 2', '"version": 888'));
 
+  const localPath = path.join(FIXTURE_DIR, ".mesh", "local.json");
+  fs.writeFileSync(localPath, '{"customLocal":true}\n');
+
+  const mcpPath = path.join(FIXTURE_DIR, ".copilot", "mcp-config.json");
+  fs.writeFileSync(mcpPath, '{"customMcp":true}\n');
+
+  // Managed scaffold assets should be refreshed from the package.
+  const manifestoPath = path.join(FIXTURE_DIR, ".mesh", "manifesto.md");
+  fs.writeFileSync(manifestoPath, "STALE MANIFESTO\n");
+
+  const routingPath = path.join(FIXTURE_DIR, ".mesh", "routing.md");
+  fs.writeFileSync(routingPath, "STALE ROUTING\n");
+
+  const ceremoniesPath = path.join(FIXTURE_DIR, ".mesh", "ceremonies.md");
+  fs.writeFileSync(ceremoniesPath, "STALE CEREMONIES\n");
+
+  const instructionsPath = path.join(FIXTURE_DIR, ".github", "copilot-instructions.md");
+  fs.writeFileSync(instructionsPath, "STALE INSTRUCTIONS\n");
+
+  const skillPath = path.join(FIXTURE_DIR, ".copilot", "skills", "client-compatibility", "SKILL.md");
+  fs.writeFileSync(skillPath, "STALE SKILL\n");
+
+  const workflowPath = path.join(FIXTURE_DIR, ".github", "workflows", "mesh-release.yml");
+  fs.writeFileSync(workflowPath, "stale: true\n");
+
   // Update
   const out = runCLI("update");
   assert.ok(out.includes("Update complete"));
+  assert.ok(out.includes("managed file(s) refreshed"));
 
-  // Config should NOT have been touched
+  // User-owned files should NOT have been overwritten.
   const after = fs.readFileSync(configPath, "utf-8");
   assert.ok(after.includes('"version": 888'), "config was overwritten by update");
+  assert.equal(fs.readFileSync(localPath, "utf-8"), '{"customLocal":true}\n');
+  assert.equal(fs.readFileSync(mcpPath, "utf-8"), '{"customMcp":true}\n');
 
-  // Agent prompt should have been refreshed
-  assert.ok(
-    fs.existsSync(
-      path.join(FIXTURE_DIR, ".github", "agents", "mercury-mesh.agent.md")
-    )
+  // Managed scaffold assets should have been refreshed from the package.
+  assert.equal(
+    fs.readFileSync(manifestoPath, "utf-8"),
+    fs.readFileSync(path.join(PACKAGE_ROOT, ".mesh", "manifesto.md"), "utf-8")
   );
+  assert.equal(
+    fs.readFileSync(routingPath, "utf-8"),
+    fs.readFileSync(path.join(PACKAGE_ROOT, ".mesh", "templates", "routing.md"), "utf-8")
+  );
+  assert.equal(
+    fs.readFileSync(ceremoniesPath, "utf-8"),
+    fs.readFileSync(path.join(PACKAGE_ROOT, ".mesh", "templates", "ceremonies.md"), "utf-8")
+  );
+  assert.equal(
+    fs.readFileSync(instructionsPath, "utf-8"),
+    fs.readFileSync(path.join(PACKAGE_ROOT, ".mesh", "templates", "copilot-instructions.md"), "utf-8")
+  );
+  assert.equal(
+    fs.readFileSync(skillPath, "utf-8"),
+    fs.readFileSync(path.join(PACKAGE_ROOT, ".copilot", "skills", "client-compatibility", "SKILL.md"), "utf-8")
+  );
+  assert.equal(
+    fs.readFileSync(workflowPath, "utf-8"),
+    fs.readFileSync(path.join(PACKAGE_ROOT, ".mesh", "templates", "workflows", "mesh-release.yml"), "utf-8")
+  );
+
+  // Update should still patch gitignore with any required runtime ignores.
+  const gitignorePath = path.join(FIXTURE_DIR, ".gitignore");
+  const gitignore = fs.readFileSync(gitignorePath, "utf-8");
+  assert.ok(gitignore.includes(".mesh/local.json"), ".gitignore should retain mesh local ignore entries");
 
   cleanFixture();
 });

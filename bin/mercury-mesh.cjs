@@ -117,7 +117,7 @@ function choice(question, options) {
 }
 
 // ─── Asset manifest ────────────────────────────────────────────────────
-// Each entry: { src (relative to package root), dest (relative to target project root), type }
+// Each entry: { src (relative to package root), dest (relative to target project root), type, preserveOnUpdate? }
 // type: "file" = single file, "dir" = recursive directory copy
 
 const SCAFFOLD_MANIFEST = [
@@ -144,6 +144,7 @@ const SCAFFOLD_MANIFEST = [
     src: ".copilot/mcp-config.json",
     dest: ".copilot/mcp-config.json",
     type: "file",
+    preserveOnUpdate: true,
   },
   // Mesh runtime manifesto
   {
@@ -168,6 +169,7 @@ const SCAFFOLD_MANIFEST = [
     src: ".mesh/templates/local.json",
     dest: ".mesh/local.json",
     type: "file",
+    preserveOnUpdate: true,
   },
   // GitHub workflows
   {
@@ -206,6 +208,67 @@ function ensureDir(dirPath) {
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
   }
+}
+
+function cloneJson(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function buildDefaultConfig({ vanguardEnabled = false } = {}) {
+  return {
+    version: 2,
+    orgMode: false,
+    halted: false,
+    allowedModels: [],
+    modelRouting: {
+      taskTypes: {},
+      fallbacks: {
+        premium: [],
+        standard: [],
+        fast: [],
+      },
+    },
+    humanTiers: { tier1: [], tier2: [], tier3: [] },
+    onboarding: { defaultPhase: "shadow", autoPromoteThreshold: false },
+    nervousSystem: {
+      enabled: false,
+      embeddingProvider: "tfidf",
+    },
+    vanguard: {
+      enabled: vanguardEnabled,
+    },
+  };
+}
+
+function mergeMissingDefaults(target, defaults) {
+  let changed = false;
+
+  if (!target || typeof target !== "object" || Array.isArray(target)) {
+    return { value: cloneJson(defaults), changed: true };
+  }
+
+  for (const [key, defaultValue] of Object.entries(defaults)) {
+    if (target[key] === undefined) {
+      target[key] = cloneJson(defaultValue);
+      changed = true;
+      continue;
+    }
+
+    if (
+      defaultValue &&
+      typeof defaultValue === "object" &&
+      !Array.isArray(defaultValue) &&
+      target[key] &&
+      typeof target[key] === "object" &&
+      !Array.isArray(target[key])
+    ) {
+      const nested = mergeMissingDefaults(target[key], defaultValue);
+      target[key] = nested.value;
+      changed = changed || nested.changed;
+    }
+  }
+
+  return { value: target, changed };
 }
 
 function resolveUpdateCheckCachePath() {
@@ -369,29 +432,7 @@ function writeDefaultConfig(targetRoot, { vanguardEnabled = false } = {}) {
     return;
   }
   ensureDir(path.dirname(configPath));
-  const defaultConfig = {
-    version: 2,
-    orgMode: false,
-    halted: false,
-    allowedModels: [],
-    modelRouting: {
-      taskTypes: {},
-      fallbacks: {
-        premium: [],
-        standard: [],
-        fast: [],
-      },
-    },
-    humanTiers: { tier1: [], tier2: [], tier3: [] },
-    onboarding: { defaultPhase: "shadow", autoPromoteThreshold: false },
-    nervousSystem: {
-      enabled: false,
-      embeddingProvider: "tfidf",
-    },
-    vanguard: {
-      enabled: vanguardEnabled,
-    },
-  };
+  const defaultConfig = buildDefaultConfig({ vanguardEnabled });
   fs.writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2) + "\n", "utf-8");
   log(`${style.green("write")} ${style.dim(".mesh/config.json")}  ${style.dim("(default — nervous system off)")}`);
 }
@@ -530,13 +571,8 @@ function runUpdate(targetRoot) {
   heading(`Mercury Mesh v${VERSION} — Update`);
   log(`target: ${targetRoot}\n`);
 
-  // Only update the agent prompt and skills (not config or team files)
-  const updateEntries = SCAFFOLD_MANIFEST.filter(
-    (e) =>
-      e.dest.startsWith(".github/agents/") ||
-      e.dest.startsWith(".copilot/skills/") ||
-      e.dest === ".github/copilot-instructions.md"
-  );
+  // Refresh all managed scaffold assets while preserving user-owned local overrides.
+  const updateEntries = SCAFFOLD_MANIFEST.filter((entry) => !entry.preserveOnUpdate);
 
   let filesWritten = 0;
   for (const entry of updateEntries) {
@@ -555,28 +591,26 @@ function runUpdate(targetRoot) {
     }
   }
 
+  patchGitignore(targetRoot);
   stampVersion(targetRoot);
 
-  // ── Config migration: inject missing top-level keys ─────────────────
+  // ── Config migration: inject missing default keys without overwriting user values ──
   const updateConfigPath = path.join(targetRoot, ".mesh", "config.json");
   if (fs.existsSync(updateConfigPath)) {
     try {
       const cfg = JSON.parse(fs.readFileSync(updateConfigPath, "utf-8"));
-      let migrated = false;
-      if (cfg.vanguard === undefined) {
-        cfg.vanguard = { enabled: false };
-        migrated = true;
-      }
-      if (migrated) {
-        fs.writeFileSync(updateConfigPath, JSON.stringify(cfg, null, 2) + "\n", "utf-8");
-        log(`${style.green("migrate")} ${style.dim(".mesh/config.json")}  ${style.dim("(added vanguard defaults)")}`);
+      const migration = mergeMissingDefaults(cfg, buildDefaultConfig());
+      if (migration.changed) {
+        fs.writeFileSync(updateConfigPath, JSON.stringify(migration.value, null, 2) + "\n", "utf-8");
+        log(`${style.green("migrate")} ${style.dim(".mesh/config.json")}  ${style.dim("(added missing defaults)")}`);
         filesWritten++;
       }
     } catch { /* config parse errors are caught by doctor */ }
   }
 
   heading("Update complete");
-  log(`${style.boldGreen(String(filesWritten))} file(s) updated (agent prompt + skills + instructions).\n`);
+  log(`${style.boldGreen(String(filesWritten))} managed file(s) refreshed.`);
+  log(`${style.dim("Preserved: .mesh/config.json values, .mesh/local.json, .copilot/mcp-config.json, and runtime state files.\n")}`);
 }
 
 function resolveGitHubCliToken() {
@@ -754,24 +788,24 @@ function runDoctor(targetRoot) {
   log("\n" + style.bold("Skills") + "\n");
 
   const liveSkillsDir = path.join(targetRoot, ".copilot", "skills");
-  const templateSkillsDir = path.join(PACKAGE_ROOT, ".mesh", "templates", "skills");
+  const packageSkillsDir = path.join(PACKAGE_ROOT, ".copilot", "skills");
 
-  if (fs.existsSync(liveSkillsDir) && fs.existsSync(templateSkillsDir)) {
+  if (fs.existsSync(liveSkillsDir) && fs.existsSync(packageSkillsDir)) {
     const liveSkills = fs
       .readdirSync(liveSkillsDir, { withFileTypes: true })
       .filter((d) => d.isDirectory())
       .map((d) => d.name)
       .sort();
-    const templateSkills = fs
-      .readdirSync(templateSkillsDir, { withFileTypes: true })
+    const packageSkills = fs
+      .readdirSync(packageSkillsDir, { withFileTypes: true })
       .filter((d) => d.isDirectory())
       .map((d) => d.name)
       .sort();
 
     pass(`${liveSkills.length} live skill(s) installed`);
 
-    const missing = templateSkills.filter((s) => !liveSkills.includes(s));
-    const extra = liveSkills.filter((s) => !templateSkills.includes(s));
+    const missing = packageSkills.filter((s) => !liveSkills.includes(s));
+    const extra = liveSkills.filter((s) => !packageSkills.includes(s));
 
     if (missing.length > 0) {
       warn(`Missing from live: ${missing.join(", ")}  (run \`npx mercury-mesh update\`)`);
@@ -780,7 +814,7 @@ function runDoctor(targetRoot) {
       pass(`${extra.length} custom skill(s): ${extra.join(", ")}`);
     }
     if (missing.length === 0 && extra.length === 0) {
-      pass("Live skills in sync with package templates");
+      pass("Live skills in sync with packaged skills");
     }
   } else if (!fs.existsSync(liveSkillsDir)) {
     fail("Skills directory missing — run `npx mercury-mesh init`");

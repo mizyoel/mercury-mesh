@@ -81,12 +81,28 @@ test("client compatibility docs describe VS Code spawn adaptations", () => {
     clientCompatibilityDoc.includes("Multiple subagents in one turn run concurrently"),
     "client compatibility doc should document VS Code parallel subagent spawning"
   );
+  assert.ok(
+    agentPrompt.includes("group pending subagents and inline fallback tasks by resolved model"),
+    "agent prompt should describe VS Code model batching by resolved route"
+  );
+  assert.ok(
+    clientCompatibilityDoc.includes("switch the model picker"),
+    "client compatibility doc should describe model-picker switches between VS Code batches"
+  );
 });
 
 test("model routing guidance stays config-driven", () => {
   const agentPrompt = fs.readFileSync(mercuryMesh.agentPromptPath, "utf8");
   const modelSelectionSkill = fs.readFileSync(
     path.join(PACKAGE_ROOT, ".copilot", "skills", "model-selection", "SKILL.md"),
+    "utf8"
+  );
+  const templateModelSelectionSkill = fs.readFileSync(
+    mercuryMesh.resolveTemplatePath("skills", "model-selection", "SKILL.md"),
+    "utf8"
+  );
+  const fixtureModelSelectionSkill = fs.readFileSync(
+    path.join(PACKAGE_ROOT, "test", "fixture", ".copilot", "skills", "model-selection", "SKILL.md"),
     "utf8"
   );
   const clientCompatibilitySkill = fs.readFileSync(
@@ -105,6 +121,26 @@ test("model routing guidance stays config-driven", () => {
   assert.ok(
     clientCompatibilitySkill.includes("model: resolvedFromConfig.code"),
     "client compatibility examples should resolve models from config"
+  );
+  assert.ok(
+    clientCompatibilitySkill.includes("inline fallback tasks by resolved model"),
+    "client compatibility skill should document VS Code batching by resolved model"
+  );
+  assert.ok(
+    agentPrompt.includes("## Model Routing"),
+    "agent prompt should include the VS Code Model Routing prompt block"
+  );
+  assert.ok(
+    modelSelectionSkill.includes("inline fallback batches"),
+    "live model selection skill should describe VS Code inline fallback batches"
+  );
+  assert.ok(
+    templateModelSelectionSkill.includes("inline fallback batches"),
+    "template model selection skill should mirror VS Code inline fallback guidance"
+  );
+  assert.ok(
+    fixtureModelSelectionSkill.includes("inline fallback batches"),
+    "fixture model selection skill should mirror VS Code inline fallback guidance"
   );
 });
 

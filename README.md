@@ -92,8 +92,9 @@ Refresh the hull without touching your config or state files.
 
 ```sh
 npm update @mizyoel/mercury-mesh
-npx mercury-mesh update          # refreshes agent, skills, instructions
-                                 # config + state files untouched
+npx mercury-mesh update          # refreshes managed scaffold assets
+                                 # agent, instructions, skills, runtime docs, workflows
+                                 # preserves config, local overrides, MCP config, and state files
 ```
 
 ### Copilot CLI Docking
@@ -137,7 +138,7 @@ Every dial on the console, Commander.
 | Command | Mission |
 |---------|---------|
 | `npx mercury-mesh init [--force] [--target <path>]` | Dock the mesh into a repository |
-| `npx mercury-mesh update [--target <path>]` | Upgrade agent, skills, instructions |
+| `npx mercury-mesh update [--target <path>]` | Refresh managed scaffold assets while preserving config and local overrides |
 | `npx mercury-mesh doctor [--target <path>]` | 27-point hull integrity sweep |
 | `npx mercury-mesh status [--target <path>]` | Telemetry HUD |
 | `npx mercury-mesh resume [--session <id>] [--target]` | Session briefing |
