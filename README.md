@@ -73,7 +73,7 @@ There is no org chart here. Structure is a responsive medium. Wings drift toward
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  SCAFFOLDED PAYLOAD                                                        │
 ├──────────────────────────────┬──────────────────────────────────────────────┤
-│  .github/agents/*.agent.md   │  Bridge governance prompt                   │
+│  .github/agents/mercury-…    │  Bridge coordinator prompt                  │
 │  .github/copilot-instruct…   │  Coding agent instructions                 │
 │  .github/workflows/          │  Triage, labels, heartbeat                  │
 │  .copilot/skills/            │  All Mercury Mesh skills                    │
@@ -111,8 +111,10 @@ gh copilot                         # interactive session — bridge is live
 
 | Surface | Mechanism | Agent File |
 |---------|-----------|------------|
-| VS Code | `runSubagent` / agent — Telemetry inline | `.github/agents/mercury-mesh.agent.md` |
-| Copilot CLI | `task` / `read_agent` — same bridge logic | `.github/agents/mercury-mesh.agent.md` |
+| VS Code | `runSubagent` / `agent` — results inline | `.github/agents/mercury-mesh.agent.md` |
+| Copilot CLI | `task` / `read_agent` — full agent spawning | `.github/agents/mercury-mesh.agent.md` |
+
+Mercury Mesh supports both GitHub Copilot in VS Code and GitHub Copilot CLI. The bridge logic is surface-aware: CLI uses `task` and `read_agent`, while VS Code uses `runSubagent` or `agent` and receives results inline.
 
 ### Semantic Embeddings (optional)
 
@@ -181,6 +183,8 @@ Every dial on the console, Commander.
 
 ## The Nervous System
 
+> **Runtime note:** The subsystems below describe Mercury Mesh routing, memory, and runtime state. On a default VS Code install they do **not** mean every Wing is a launchable VS Code subagent; the coordinator remains the only shipped prompt unless you add more named agent files.
+
 The mesh is not a framework, Commander. It is a living organism. Four subsystems compose the autonomic layer — each breathes independently and degrades gracefully when starved.
 
 ### I. Semantic Gravimetry
@@ -213,7 +217,7 @@ When multiple Ghost Wings emerge from overlapping Void pockets, the mesh detects
 
 ### Worktree Parallelism
 
-Wings that need isolated file system state execute in parallel via `git worktree`. Branch: `mesh/{issue}-{slug}`. Orphaned worktrees auto-pruned.
+Wings that need isolated file system state can execute in parallel via `git worktree` when the active surface exposes real writable agents. Branch: `mesh/{issue}-{slug}`. Orphaned worktrees auto-pruned.
 
 ### Distributed Peers
 
@@ -233,8 +237,8 @@ Your control surface, Commander. Every flag is a dial on the console. Stored in 
 | `version` | `number` | Schema version. Current: `2`. |
 | `orgMode` | `boolean` | Wing/Deck departmental structure (`true`) or flat team (`false`). |
 | `halted` | `boolean` | **HALT Sentinel** — freezes all spawns and writes. |
-| `allowedModels` | `string[]` | Model allowlist. Empty = allow all. |
-| `modelRouting.default` | `string` | Default model for auto-selection. |
+| `allowedModels` | `string[]` | Model allowlist. New installs seed `gpt-5.4` and `claude-opus-4.6`; expand or clear it to change routing policy. |
+| `modelRouting.default` | `string` | Default model for auto-selection. New installs seed this to `gpt-5.4`. |
 | `modelRouting.taskTypes` | `object` | Per-category routing: `code`, `prompts`, `docs`, `lead`, `visual`. |
 | `modelRouting.fallbacks` | `object` | Fallback chains: `premium`, `standard`, `fast`. |
 | `orgConfig.autonomyMode` | `string` | `"delegated"` (bridge assigns) or `"autonomous"` (Wings self-select). |

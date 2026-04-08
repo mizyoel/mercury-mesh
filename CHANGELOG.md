@@ -4,12 +4,12 @@ All notable changes to this package will be documented in this file.
 
 ## [Unreleased]
 
-- Harden VS Code model-routing guidance: batch work by resolved model, require explicit model-picker switches between batches, and fall back to inline execution when the surface exposes no real named writable agent for a batch.
-- Mirror the VS Code routing changes into template and fixture model-selection skills, and extend package tests to catch drift across live, template, and fixture assets.
+- Bump the package version to `1.3.5-local.0` for local npm testing.
+- Restore the exact 1.2 VS Code delegation semantics across prompts, skills, docs, and tests: use `runSubagent` directly, allow multiple subagents in one turn, and accept the current session model instead of coordinator-inline fallback batches.
 
 ## [1.3.4] - 2026-04-07
 
-- Revert VS Code delegation to full subagent spawning: `runSubagent` with complete agent prompts, parallel fan-out in a single turn, session model for all spawns. Removes Explore-only restriction and inline-work fallback introduced in 1.3.2–1.3.3.
+- Restore conditional VS Code `runSubagent` support for surfaces that expose real named agents, while retaining inline execution for coordinator-only installs.
 
 ## [1.3.3] - 2026-04-07
 

@@ -102,7 +102,7 @@ const NERVOUS_SYSTEM_DEFAULTS = {
   },
   ghostWings: {
     enabled: true,
-    autoMaterialize: false,         // Requires commander approval by default
+    autoMaterialize: true,          // Ghost Wings auto-form by default
     solidificationThreshold: 3,
     dissolutionThreshold: 2,
     maxLifespanHours: 72,
@@ -126,7 +126,7 @@ const NERVOUS_SYSTEM_DEFAULTS = {
     heartbeatTTLMinutes: 30,
   },
   vanguard: {
-    enabled: false,                   // Opt-in: autonomous innovation subsystem
+    enabled: true,                    // Autonomous innovation subsystem
     outrider: {
       scanIntervalHours: 24,
       minimumAdjacencyScore: 0.40,

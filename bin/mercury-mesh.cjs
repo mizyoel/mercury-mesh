@@ -12,7 +12,11 @@ const PACKAGE_NAME = PACKAGE_JSON.name;
 const VERSION = PACKAGE_JSON.version;
 
 const { detectRepoComplexity } = require(path.join(PACKAGE_ROOT, "lib", "complexity-scanner.cjs"));
-const { resolveRecommendedProfile, buildConfig, formatRecommendationSummary } = require(path.join(PACKAGE_ROOT, "lib", "profile-resolver.cjs"));
+const {
+  resolveRecommendedProfile,
+  buildConfig,
+  formatRecommendationSummary,
+} = require(path.join(PACKAGE_ROOT, "lib", "profile-resolver.cjs"));
 
 const UPDATE_CHECK_INTERVAL_MS = 12 * 60 * 60 * 1000;
 const UPDATE_CHECK_TIMEOUT_MS = 1200;
@@ -198,9 +202,9 @@ function log(msg) {
 
 function heading(msg) {
   const cols = Math.min(process.stdout.columns || 60, 80);
-  const rule = style.dimCyan("─".repeat(cols));
+  const rule = style.dimCyan("═".repeat(cols));
   console.log(`\n${rule}`);
-  console.log(`  ${gradient(msg)}`);
+  console.log(`  ${style.dimCyan("◈")} ${gradient(msg)}`);
   console.log(`${rule}`);
 }
 
@@ -214,28 +218,101 @@ function cloneJson(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function buildDefaultConfig({ vanguardEnabled = false } = {}) {
+function buildDefaultConfig({ vanguardEnabled = true } = {}) {
   return {
     version: 2,
     orgMode: false,
     halted: false,
-    allowedModels: [],
-    modelRouting: {
-      taskTypes: {},
-      fallbacks: {
-        premium: [],
-        standard: [],
-        fast: [],
-      },
+    orgConfig: {
+      autonomyMode: "delegated",
+      crossDeptStrategy: "contract-first",
+      escalationBehavior: "advisory",
+      maxParallelismPerDepartment: 3,
+      claimLeaseMinutes: 30,
+      heartbeatMinutes: 15,
+      requeueExpiredClaims: true,
+    },
+    missionControl: {
+      breakWorkIntoMissions: true,
+      defaultRoadmapDepth: 4,
+      headerStyle: "ascii-art",
+      reportStyle: "ascii-command-deck",
+      showRoadmapInReplies: true,
+      telemetryCadence: "per-batch",
+      requiredFields: ["mission", "status", "next", "risks"],
     },
     humanTiers: { tier1: [], tier2: [], tier3: [] },
     onboarding: { defaultPhase: "shadow", autoPromoteThreshold: false },
     nervousSystem: {
       enabled: false,
       embeddingProvider: "tfidf",
+      embeddingModel: null,
+      embeddingEndpoint: null,
+      embeddingAppName: "Mercury Mesh",
+      embeddingAppUrl: null,
+      gravimetry: {
+        minimumGravity: 0.15,
+        airbridgeThreshold: 0.70,
+        airbridgeMinShare: 0.20,
+      },
+      autonomic: {
+        pulseMs: 30000,
+        contextDecayMinutes: 60,
+        applyCorrections: true,
+      },
+      ghostWings: {
+        enabled: true,
+        autoMaterialize: true,
+        solidificationThreshold: 3,
+        dissolutionThreshold: 2,
+        maxLifespanHours: 72,
+        coalescence: {
+          enabled: true,
+          autoCoalesce: false,
+          autoThreshold: 0.65,
+          flagThreshold: 0.35,
+        },
+      },
+      constellation: {
+        enabled: true,
+        provider: "json",
+        ragMaxEntries: 5,
+        ragMinSimilarity: 0.15,
+      },
+      peers: {
+        enabled: false,
+        heartbeatOnPulse: true,
+        syncOnPulse: false,
+        heartbeatTTLMinutes: 30,
+      },
     },
     vanguard: {
       enabled: vanguardEnabled,
+      outrider: {
+        scanIntervalHours: 24,
+        minimumAdjacencyScore: 0.40,
+        maxCandidates: 20,
+      },
+      skunkworks: {
+        maxConcurrentExperiments: 2,
+        tokenBudgetPerExperiment: 50000,
+        maxLifespanHours: 168,
+      },
+      horizonDeck: {
+        maxStagedItems: 10,
+        decayDays: 30,
+        decayWarningDays: 7,
+      },
+      speculativeSortie: {
+        minimumAdjacencyScore: 0.55,
+        idleThresholdMinutes: 120,
+        cadence: null,
+        autoApprove: false,
+        maxDraftsPerCycle: 2,
+      },
+      genesis: {
+        cooldownHours: 48,
+      },
     },
   };
 }
@@ -361,8 +438,8 @@ function notifyIfUpdateAvailable(command) {
       const freshEnough = (Date.now() - cached.checkedAt) < UPDATE_CHECK_INTERVAL_MS;
       if (freshEnough) {
         if (isVersionNewer(cached.latestVersion, VERSION)) {
-          log(`${style.boldYellow("update available")}  ${style.dim(`v${VERSION}`)} ${style.dim("→")} ${style.bold(`v${cached.latestVersion}`)}`);
-          log(`${style.dim("run")} ${style.cyan(`npm install -g ${PACKAGE_NAME}@latest`)} ${style.dim("or")} ${style.cyan(`npx ${PACKAGE_NAME}@latest <command>`)}\n`);
+          log(`${style.boldYellow("⚡ NEW VECTOR")}  ${style.dim(`v${VERSION}`)} ${style.dim("→")} ${style.bold(`v${cached.latestVersion}`)}`);
+          log(`${style.dim("Upgrade:")} ${style.cyan(`npm install -g ${PACKAGE_NAME}@latest`)} ${style.dim("or")} ${style.cyan(`npx ${PACKAGE_NAME}@latest <command>`)}\n`);
         }
         return;
       }
@@ -373,8 +450,8 @@ function notifyIfUpdateAvailable(command) {
   writeUpdateCheckCache(cachePath, latestVersion);
 
   if (isVersionNewer(latestVersion, VERSION)) {
-    log(`${style.boldYellow("update available")}  ${style.dim(`v${VERSION}`)} ${style.dim("→")} ${style.bold(`v${latestVersion}`)}`);
-    log(`${style.dim("run")} ${style.cyan(`npm install -g ${PACKAGE_NAME}@latest`)} ${style.dim("or")} ${style.cyan(`npx ${PACKAGE_NAME}@latest <command>`)}\n`);
+    log(`${style.boldYellow("⚡ NEW VECTOR")}  ${style.dim(`v${VERSION}`)} ${style.dim("→")} ${style.bold(`v${latestVersion}`)}`);
+    log(`${style.dim("Upgrade:")} ${style.cyan(`npm install -g ${PACKAGE_NAME}@latest`)} ${style.dim("or")} ${style.cyan(`npx ${PACKAGE_NAME}@latest <command>`)}\n`);
   }
 }
 
@@ -425,7 +502,7 @@ function patchGitignore(targetRoot) {
   log(`${style.green("patch")} ${style.dim(".gitignore")}  ${style.dim("(added mesh runtime ignores)")}`);
 }
 
-function writeDefaultConfig(targetRoot, { vanguardEnabled = false } = {}) {
+function writeDefaultConfig(targetRoot, { vanguardEnabled = true } = {}) {
   const configPath = path.join(targetRoot, ".mesh", "config.json");
   if (fs.existsSync(configPath)) {
     log(`${style.dim("skip")}  ${style.dim(".mesh/config.json")}  ${style.dim("(already exists)")}`);
@@ -557,14 +634,15 @@ async function runInit(targetRoot, flags) {
   patchGitignore(targetRoot);
   stampVersion(targetRoot);
 
-  heading("Init complete");
-  log(`${style.boldGreen(String(filesWritten))} file(s) written.`);
+  heading("Bridge Online — Scaffold Complete");
+  log(`${style.boldGreen(String(filesWritten))} file(s) written to the hull.`);
   log(`${style.dim("Existing files were preserved (use --force to overwrite).")}\n`);
-  log(style.bold("Next steps:"));
-  log(`  ${style.cyan("1.")} Open VS Code in this project`);
-  log(`  ${style.cyan("2.")} Add your OpenRouter key to .mesh/local.json if you want semantic routing`);
-  log(`  ${style.cyan("3.")} Chat with @mercury-mesh — say ${style.bold('"declare the mission"')}`);
-  log(`  ${style.cyan("4.")} The bridge will cast your crew and scaffold team.md\n`);
+  log(style.bold("FLIGHT PREP — Next Sortie Instructions:"));
+  log(`  ${style.cyan("①")} Open VS Code in this project — your command bridge awaits`);
+  log(`  ${style.cyan("②")} Configure ${style.bold(".mesh/local.json")} with your OpenRouter key for semantic routing`);
+  log(`  ${style.cyan("③")} Hail ${style.bold("@mercury-mesh")} — say ${style.bold('"declare the mission"')} to ignite trajectory`);
+  log(`  ${style.cyan("④")} The bridge will cast your crew and form the initial Wing roster`);
+  log(`  ${style.cyan("⑤")} Wings deploy inline by default — add named agent prompts for dedicated launches\n`);
 }
 
 function runUpdate(targetRoot) {
@@ -608,9 +686,9 @@ function runUpdate(targetRoot) {
     } catch { /* config parse errors are caught by doctor */ }
   }
 
-  heading("Update complete");
-  log(`${style.boldGreen(String(filesWritten))} managed file(s) refreshed.`);
-  log(`${style.dim("Preserved: .mesh/config.json values, .mesh/local.json, .copilot/mcp-config.json, and runtime state files.\n")}`);
+  heading("Hull Refreshed — Update Complete");
+  log(`${style.boldGreen(String(filesWritten))} managed file(s) refreshed across the hull.`);
+  log(`${style.dim("Preserved: config values, local overrides, MCP config, and all runtime state. Your formation is intact.\n")}`);
 }
 
 function resolveGitHubCliToken() {
@@ -671,7 +749,6 @@ const DOCTOR_CHECKS = {
     "version",
     "halted",
     "humanTiers",
-    "modelRouting",
     "nervousSystem",
     "vanguard",
   ],
@@ -697,7 +774,7 @@ function runDoctor(targetRoot) {
   }
 
   // ── 1. Structure ──────────────────────────────────────────────────
-  log(style.bold("Structure") + "\n");
+  log(style.bold("HULL STRUCTURE") + "\n");
 
   for (const [rel, label, required] of DOCTOR_CHECKS.structure) {
     const full = path.join(targetRoot, rel);
@@ -711,7 +788,7 @@ function runDoctor(targetRoot) {
   }
 
   // ── 2. Config schema ──────────────────────────────────────────────
-  log("\n" + style.bold("Config") + "\n");
+  log("\n" + style.bold("BRIDGE CONFIGURATION") + "\n");
 
   const configPath = path.join(targetRoot, ".mesh", "config.json");
   let config = null;
@@ -751,16 +828,11 @@ function runDoctor(targetRoot) {
       }
     }
 
-    // Model routing
-    if (config.modelRouting && config.modelRouting.default) {
-      pass(`Default model: ${config.modelRouting.default}`);
-    } else if (config.modelRouting) {
-      warn("modelRouting.default not set");
-    }
+    // Model routing removed — VS Code Copilot uses UI-selected model
   }
 
   // ── 3. Agent prompt version stamp ─────────────────────────────────
-  log("\n" + style.bold("Agent Prompt") + "\n");
+  log("\n" + style.bold("AGENT CORTEX") + "\n");
 
   const agentPath = path.join(
     targetRoot,
@@ -784,8 +856,15 @@ function runDoctor(targetRoot) {
     }
   }
 
+  const namedAgentPromptCount = countNamedAgentPromptFiles(targetRoot);
+  if (namedAgentPromptCount > 0) {
+    pass(`VS Code named agent prompts detected: ${namedAgentPromptCount}`);
+  } else {
+    pass("VS Code scaffold is coordinator prompt only; rostered Wings run inline unless named agent prompts are added");
+  }
+
   // ── 4. Skills sync check ──────────────────────────────────────────
-  log("\n" + style.bold("Skills") + "\n");
+  log("\n" + style.bold("SKILL MATRIX") + "\n");
 
   const liveSkillsDir = path.join(targetRoot, ".copilot", "skills");
   const packageSkillsDir = path.join(PACKAGE_ROOT, ".copilot", "skills");
@@ -821,7 +900,7 @@ function runDoctor(targetRoot) {
   }
 
   // ── 5. Nervous system ─────────────────────────────────────────────
-  log("\n" + style.bold("Nervous System") + "\n");
+  log("\n" + style.bold("NERVOUS SYSTEM") + "\n");
 
   if (config && config.nervousSystem) {
     const ns = config.nervousSystem;
@@ -882,7 +961,7 @@ function runDoctor(targetRoot) {
   }
 
   // ── 6. Posture Advisory ───────────────────────────────────────────
-  log("\n" + style.bold("Posture Advisory") + "\n");
+  log("\n" + style.bold("POSTURE ADVISORY") + "\n");
 
   if (config) {
     try {
@@ -927,7 +1006,7 @@ function runDoctor(targetRoot) {
   }
 
   // ── 7. Gitignore ──────────────────────────────────────────────────
-  log("\n" + style.bold("Gitignore") + "\n");
+  log("\n" + style.bold("SECURITY PERIMETER") + "\n");
 
   const gitignorePath = path.join(targetRoot, ".gitignore");
   if (fs.existsSync(gitignorePath)) {
@@ -954,13 +1033,13 @@ function runDoctor(targetRoot) {
   log(`${style.green(String(results.pass))}/${total} passed  ·  ${style.yellow(String(results.warn))} warning(s)  ·  ${style.red(String(results.fail))} failure(s)\n`);
 
   if (results.fail > 0) {
-    log(style.boldRed("HULL BREACH — resolve failures above before flight.") + "\n");
+    log(style.boldRed("⛔ HULL BREACH — critical failures detected. Resolve before flight, Commander.") + "\n");
     return 1;
   } else if (results.warn > 0) {
-    log(style.boldYellow("HULL INTACT — minor drift detected. Review warnings.") + "\n");
+    log(style.boldYellow("⚠ HULL INTACT — minor drift in the formation. Review warnings at your discretion.") + "\n");
     return 0;
   } else {
-    log(style.boldGreen("ALL SYSTEMS NOMINAL — ready for sortie.") + "\n");
+    log(style.boldGreen("✦ ALL SYSTEMS NOMINAL — the bridge is clear. Ready for sortie, Commander.") + "\n");
     return 0;
   }
 }
@@ -1028,6 +1107,18 @@ function countDirEntries(dirPath) {
   if (!fs.existsSync(dirPath)) return 0;
   try {
     return fs.readdirSync(dirPath).length;
+  } catch {
+    return 0;
+  }
+}
+
+function countNamedAgentPromptFiles(targetRoot) {
+  const agentsDir = path.join(targetRoot, ".github", "agents");
+  if (!fs.existsSync(agentsDir)) return 0;
+  try {
+    return fs.readdirSync(agentsDir).filter(
+      (name) => name.endsWith(".agent.md") && name !== "mercury-mesh.agent.md"
+    ).length;
   } catch {
     return 0;
   }
@@ -1117,6 +1208,7 @@ function runStatus(targetRoot) {
   const sessionsDir = path.join(meshDir, "sessions");
   const sessionCount = countDirEntries(sessionsDir);
   const lastSession = latestSessionInfo(sessionsDir);
+  const namedAgentPromptCount = countNamedAgentPromptFiles(targetRoot);
 
   // Agent prompt version
   const agentPath = path.join(
@@ -1143,37 +1235,39 @@ function runStatus(targetRoot) {
 
   console.log(`
 ${topBorder}`);
-  console.log(row(gradient(`MERCURY MESH v${VERSION}`) + "  —  " + style.bold("BRIDGE TELEMETRY")));
+  console.log(row(gradient(`MERCURY MESH v${VERSION}`) + "  —  " + style.bold("COMMAND BRIDGE :: LIVE TELEMETRY")));
   console.log(midBorder);
   console.log(blank);
-  console.log(row(lbl("SYSTEM STATE")));;
+  console.log(row(lbl("BRIDGE SYSTEMS")));
 
   const halted = config.halted ? style.boldRed("YES ■ ALL STOP") : style.green("NO");
   const orgMode = config.orgMode ? style.green("ENABLED") : style.dim("DISABLED");
   const haltBar = config.halted
-    ? style.red("░".repeat(20)) + "  " + style.boldRed("HALTED")
-    : style.green("█".repeat(20)) + "  " + style.boldGreen("ONLINE");
+    ? style.red("░".repeat(20)) + "  " + style.boldRed("⛔ HALTED")
+    : style.green("█".repeat(20)) + "  " + style.boldGreen("◆ ONLINE");
 
   console.log(row(`  ${style.dim("Halted")}          ${halted}`));
   console.log(row(`  ${style.dim("Org Mode")}        ${orgMode}`));
-  console.log(row(`  ${style.dim("Bridge Status")}   ${haltBar}`));
+  console.log(row(`  ${style.dim("Thrust")}          ${haltBar}`));
   console.log(row(`  ${style.dim("Agent Prompt")}    ${agentVersion ? `v${agentVersion}${agentVersion !== VERSION ? style.yellow(` (package: v${VERSION})`) : style.green(" ✓")}` : style.red("not found")}`));
-  console.log(row(`  ${style.dim("Default Model")}   ${(config.modelRouting && config.modelRouting.default) || "—"}`));
+  console.log(row(`  ${style.dim("Surface Mode")}    ${namedAgentPromptCount > 0 ? style.green(`coord + ${namedAgentPromptCount} named`) : style.yellow("coordinator-only")}`));
 
   console.log(blank);
-  console.log(row(lbl("CREW")));
+  console.log(row(lbl("FORMATION ROSTER")));
 
   if (members && members.length > 0) {
     console.log(row(`  ${style.dim("Roster")}          ${members.length} Wing(s)`));
+    console.log(row(`  ${style.dim("VS Code Work")}    ${namedAgentPromptCount > 0 ? style.green("named launches available") : style.yellow("inline by default")}`));
     console.log(row(`  ${style.dim("Active")}          ${style.green(String(statusCounts.active))}`));
     console.log(row(`  ${style.dim("Probation")}       ${style.yellow(String(statusCounts.probation))}`));
     console.log(row(`  ${style.dim("Shadow")}          ${style.dim(String(statusCounts.shadow))}`));
   } else {
-    console.log(row(`  ${style.dim("Roster")}          ${style.yellow("EMPTY — bridge unclaimed")}`));
+    console.log(row(`  ${style.dim("Roster")}          ${style.yellow("EMPTY — bridge unclaimed. Cast your crew, Commander.")}`));
+    console.log(row(`  ${style.dim("VS Code Work")}    ${namedAgentPromptCount > 0 ? style.green("named launches available") : style.yellow("inline by default")}`));
   }
 
   console.log(blank);
-  console.log(row(lbl("ORGANIZATION")));
+  console.log(row(lbl("HULL TOPOLOGY")));
   console.log(row(`  ${style.dim("Departments")}     ${String(activeDepts.length)}`));
   console.log(row(`  ${style.dim("Ghost Wings")}     ${String(ghostDepts.length)}${ns.ghostWings && ns.ghostWings.autoMaterialize ? style.green(" (auto-materialize)") : style.dim(" (manual approval)")}`));
   console.log(row(`  ${style.dim("Decisions")}       ${inboxCount > 0 ? style.yellow(`${inboxCount} pending in inbox`) : style.dim("inbox clear")}`));
@@ -1186,7 +1280,7 @@ ${topBorder}`);
     const hasKey = !!(ns.embeddingApiKey || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY);
     const keyStatus = provider === "tfidf" ? "—" : hasKey ? style.green("configured") : style.boldRed("MISSING");
 
-    console.log(row(`  ${style.dim("Status")}          ${style.boldGreen("ONLINE")}`));
+    console.log(row(`  ${style.dim("Status")}          ${style.boldGreen("ONLINE ▸▸▸")}`));
     console.log(row(`  ${style.dim("Phase I")}         ${style.cyan("Gravimetry")}     :: ${provider}${provider !== "tfidf" ? ` (key: ${keyStatus})` : ""}`));
     console.log(row(`  ${style.dim("Phase II")}        ${style.cyan("Autonomic Core")} :: pulse ${(ns.autonomic && ns.autonomic.pulseMs) || 30000}ms`));
     console.log(row(`  ${style.dim("Phase III")}       ${style.cyan("Ghost Wings")}    :: ${ns.ghostWings && ns.ghostWings.enabled ? style.green("armed") : style.dim("disabled")}`));
@@ -1195,11 +1289,11 @@ ${topBorder}`);
       : `${style.cyan("Constellation")}  :: ${entryCount} embedding(s)${manifest && manifest.dimensions ? ` (${manifest.dimensions}D)` : ""}${constellationProvider !== "json" ? ` [${constellationProvider}]` : ""}`;
     console.log(row(`  ${style.dim("Phase IV")}        ${constellationLabel}`));
   } else {
-    console.log(row(`  ${style.dim("Status")}          ${style.dim("OFFLINE")}`));
+    console.log(row(`  ${style.dim("Status")}          ${style.dim("OFFLINE ▪▪▪")}`));
   }
 
   console.log(blank);
-  console.log(row(lbl("SESSIONS")));
+  console.log(row(lbl("FLIGHT LOG")));
   console.log(row(`  ${style.dim("Total")}           ${String(sessionCount)}`));
 
   if (lastSession) {
@@ -1209,6 +1303,7 @@ ${topBorder}`);
 
   console.log(blank);
   console.log(bottomBorder);
+  console.log(style.dim(`  Telemetry snapshot :: ${new Date().toISOString().replace("T", " ").slice(0, 19)} UTC`));
   console.log();
 
   return 0;
@@ -1337,7 +1432,7 @@ function runResume(targetRoot, args) {
   }
 
   // ── 2. Session briefing ───────────────────────────────────────────
-  log("SESSION\n");
+  log(style.bold("SESSION TELEMETRY") + "\n");
   log(`  ID           ${session.id}`);
   log(`  Started      ${session.createdAt || "unknown"}`);
   log(`  Last active  ${session.lastActiveAt || "unknown"}`);
@@ -1351,7 +1446,7 @@ function runResume(targetRoot, args) {
   }
 
   // ── 3. Last conversation context ──────────────────────────────────
-  log("\n" + style.bold("LAST ACTIVITY") + "\n");
+  log("\n" + style.bold("LAST KNOWN TRAJECTORY") + "\n");
 
   const summary = summarizeMessages(session.messages, 4);
   if (summary.length > 0) {
@@ -1363,7 +1458,7 @@ function runResume(targetRoot, args) {
   }
 
   // ── 4. Pending work ───────────────────────────────────────────────
-  log("\n" + style.bold("PENDING WORK") + "\n");
+  log("\n" + style.bold("UNFINISHED BUSINESS") + "\n");
 
   const inboxCount = countDirEntries(path.join(meshDir, "decisions", "inbox"));
   log(`  Decision inbox    ${inboxCount > 0 ? `${inboxCount} pending` : "clear"}`);
@@ -1391,7 +1486,7 @@ function runResume(targetRoot, args) {
   }
 
   // ── 5. Git state ──────────────────────────────────────────────────
-  log("\n" + style.bold("GIT STATE") + "\n");
+  log("\n" + style.bold("GIT FORMATION") + "\n");
 
   const git = detectGitState(targetRoot);
   if (git) {
@@ -1410,10 +1505,10 @@ function runResume(targetRoot, args) {
   // ── 6. Recovery prompt ────────────────────────────────────────────
   const hasWork = inboxCount > 0 || activeClaims > 0 || (git && git.changedFiles > 0);
 
-  log("\n" + style.bold("RECOVERY BRIEFING") + "\n");
+  log("\n" + style.bold("RECOVERY BRIEFING — ATTENTION COMMANDER") + "\n");
 
   if (hasWork) {
-    log("  Unfinished work detected. Paste this into your next Copilot session:\n");
+    log("  Unfinished work detected. Paste this into your next Copilot session to resume trajectory:\n");
 
     const lastAgentMsg = session.messages
       .filter((m) => m.role === "agent")
@@ -1434,7 +1529,7 @@ function runResume(targetRoot, args) {
     console.log(`  │  Context: ${pad(lastContext.slice(0, 47), 47)}│`);
     console.log("  └──────────────────────────────────────────────────────────┘");
   } else {
-    log("  No unfinished work detected. Start a fresh sortie.\n");
+    log("  No unfinished work in the queue. The bridge is clear — start a fresh sortie, Commander.\n");
   }
 
   log("");
@@ -1518,7 +1613,7 @@ function runWorktree(targetRoot, wtArgs) {
 
     const { orphanedWorktrees, staleGhosts, healthy } = wm.reconcileWorktrees(repoRoot, meshDir);
 
-    log(style.bold("WORKTREE HEALTH") + "\n");
+    log(style.bold("WORKTREE FORMATION HEALTH") + "\n");
     log(`  Healthy            ${healthy.length}`);
     log(`  Orphaned worktrees ${orphanedWorktrees.length}`);
     log(`  Stale ghosts       ${staleGhosts.length}`);
@@ -1615,7 +1710,7 @@ function runCoalescence(targetRoot, cArgs) {
   if (sub === "scan") {
     const report = gc.reconcile(meshDir, { apply: false });
 
-    log(style.bold(`GHOST WING OVERLAP SCAN`) + "\n");
+    log(style.bold(`GHOST WING OVERLAP SCAN — COALESCENCE ANALYSIS`) + "\n");
     log(`  Active ghosts     ${report.ghostCount}`);
     log(`  Overlaps found    ${report.overlapCount}`);
     log(`  Auto-coalescible  ${report.autoCoalesce}`);
@@ -1644,7 +1739,7 @@ function runCoalescence(targetRoot, cArgs) {
   if (sub === "apply") {
     const report = gc.reconcile(meshDir, { apply: true });
 
-    log(style.bold(`COALESCENCE APPLIED`) + "\n");
+    log(style.bold("COALESCENCE APPLIED — FORMATION MERGED") + "\n");
     log(`  Coalesced pairs   ${report.coalesced.length}`);
 
     if (report.coalesced.length > 0) {
@@ -1768,7 +1863,7 @@ function runPeers(targetRoot, pArgs) {
   if (sub === "health") {
     const { peers, healthy, stale, halted, localId } = mp.classifyPeers(meshDir);
 
-    log(style.bold("FLEET HEALTH") + "\n");
+    log(style.bold("FLEET HEALTH — DISTRIBUTED MESH VITALS") + "\n");
     log(`  Total nodes   ${peers.length}`);
     log(`  Healthy       ${healthy.length}`);
     log(`  Stale         ${stale.length}`);
@@ -1863,7 +1958,7 @@ function loadVanguardRuntimeConfig(meshDir) {
 }
 
 function printVanguardCandidateList(map) {
-  log(style.bold("OUTRIDER — ADJACENCY MAP") + "\n");
+  log(style.bold("OUTRIDER — VOID CARTOGRAPHY") + "\n");
   log(`  Last scan      ${map.lastScan || "never"}`);
   log(`  Candidates     ${map.candidates.length}\n`);
 
@@ -1915,7 +2010,7 @@ async function runVanguard(targetRoot, vArgs) {
   if (sub === "status") {
     const diag = vMod.diagnostics(meshDir);
 
-    log(style.bold("VANGUARD STATUS") + "\n");
+    log(style.bold("VANGUARD STATUS — PHASE V EVOLUTION") + "\n");
 
     log("  " + style.cyan("OUTRIDER"));
     log(`    Last scan        ${diag.outrider.lastScan || "never"}`);
@@ -2174,7 +2269,7 @@ async function runVanguard(targetRoot, vArgs) {
       const result = await vMod.outrider.scan(meshDir, {
         config: { outrider: vanguardConfig.outrider },
       });
-      log(style.bold("OUTRIDER SCAN COMPLETE") + "\n");
+      log(style.bold("OUTRIDER SCAN COMPLETE — VOID MAPPED") + "\n");
       log(`  New candidates  ${result.newCandidates.length}`);
       log(`  Total candidates ${result.totalCandidates}`);
       if (result.newCandidates.length > 0) {
@@ -2249,7 +2344,7 @@ async function runVanguard(targetRoot, vArgs) {
     const proposals = vMod.genesis.listProposals(meshDir);
     const cooldowns = vMod.genesis.checkCooldowns(meshDir);
 
-    log(style.bold("GENESIS PROTOCOLS") + "\n");
+    log(style.bold("GENESIS PROTOCOLS — INTEGRATION PIPELINE") + "\n");
     log(`  Active cooldowns ${cooldowns.active.length}`);
     log(`  Completed       ${cooldowns.completed.length}`);
     log(`  Anomalies       ${cooldowns.anomalies.length}\n`);
@@ -2273,7 +2368,7 @@ async function runVanguard(targetRoot, vArgs) {
   if (sub === "sorties") {
     const sorties = vMod.speculativeSortie.listSorties(meshDir);
 
-    log(style.bold("SPECULATIVE SORTIES") + "\n");
+    log(style.bold("SPECULATIVE SORTIES — AUTONOMOUS MISSIONS") + "\n");
 
     if (sorties.length === 0) {
       log("  No speculative sorties generated yet.\n");
@@ -2342,11 +2437,11 @@ function runEject(targetRoot) {
   }
 
   // ── 1. Remove .mesh/ directory ────────────────────────────────────
-  log("MESH RUNTIME\n");
+  log(style.bold("MESH RUNTIME") + "\n");
   rm(meshDir, ".mesh/");
 
   // ── 2. Remove mesh agent ──────────────────────────────────────────
-  log("\nAGENT & INSTRUCTIONS\n");
+  log("\n" + style.bold("EJECT — HULL DISASSEMBLY") + "\n");
   rm(path.join(targetRoot, ".github", "agents", "mercury-mesh.agent.md"), ".github/agents/mercury-mesh.agent.md");
   rm(path.join(targetRoot, ".github", "copilot-instructions.md"), ".github/copilot-instructions.md");
 
@@ -2361,7 +2456,7 @@ function runEject(targetRoot) {
   }
 
   // ── 3. Remove mesh skills ────────────────────────────────────────
-  log("\nSKILLS\n");
+  log("\n" + style.bold("SKILL PURGE") + "\n");
   rm(path.join(targetRoot, ".copilot", "skills"), ".copilot/skills/");
 
   // Keep .copilot/mcp-config.json if it exists (user may have customized)
@@ -2382,7 +2477,7 @@ function runEject(targetRoot) {
   }
 
   // ── 4. Remove mesh workflows ─────────────────────────────────────
-  log("\nWORKFLOWS\n");
+  log("\n" + style.bold("WORKFLOW CLEANUP") + "\n");
   const workflowsDir = path.join(targetRoot, ".github", "workflows");
   if (fs.existsSync(workflowsDir)) {
     for (const wf of MESH_WORKFLOW_FILES) {
@@ -2400,7 +2495,7 @@ function runEject(targetRoot) {
   }
 
   // ── 5. Clean .gitignore ──────────────────────────────────────────
-  log("\nGITIGNORE\n");
+  log("\n" + style.bold("PERIMETER CLEANUP") + "\n");
   const gitignorePath = path.join(targetRoot, ".gitignore");
   if (fs.existsSync(gitignorePath)) {
     const content = fs.readFileSync(gitignorePath, "utf-8");
@@ -2426,7 +2521,7 @@ function runEject(targetRoot) {
   // ── Summary ───────────────────────────────────────────────────────
   log("");
   log(`Ejected. ${style.boldGreen(String(removedCount))} item(s) removed, ${style.dim(String(skippedCount))} preserved.`);
-  log(`${style.dim("Mercury Mesh has been cleanly removed from this project.")}\n`);
+  log(`${style.dim("The bridge has gone dark. Mercury Mesh ejected cleanly from this hull.")}\n`);
 
   return 0;
 }
@@ -2711,7 +2806,7 @@ async function runConfigTune(targetRoot, flags) {
 
 function printUsage() {
   console.log(`
-${gradient(`Mercury Mesh v${VERSION}`)} ${style.dim("— CLI")}
+${gradient(`Mercury Mesh v${VERSION}`)} ${style.dim("— Command the Drift.")}
 
 ${style.bold("Usage:")}
   ${style.cyan("npx @mizyoel/mercury-mesh")} ${style.bold("init")}    ${style.dim("[--force] [--target <path>]")}

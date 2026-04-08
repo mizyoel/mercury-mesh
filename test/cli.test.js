@@ -60,7 +60,7 @@ test("cli: update notification appears when a newer npm version exists", () => {
     MERCURY_MESH_UPDATE_CHECK_LATEST_VERSION: "9.9.9",
   });
 
-  assert.ok(out.includes("update available"), "should notify about a newer package version");
+  assert.ok(out.includes("NEW VECTOR"), "should notify about a newer package version");
   assert.ok(out.includes("9.9.9"), "should include the latest published version");
   assert.ok(out.includes("npm install -g @mizyoel/mercury-mesh@latest"), "should include upgrade guidance");
 
@@ -86,7 +86,7 @@ test("cli: init scaffolds expected files", () => {
   fs.mkdirSync(FIXTURE_DIR, { recursive: true });
 
   const out = runCLI("init");
-  assert.ok(out.includes("Init complete"));
+  assert.ok(out.includes("Scaffold Complete"));
 
   // Agent prompt
   assert.ok(
@@ -120,6 +120,10 @@ test("cli: init scaffolds expected files", () => {
   assert.ok(
     fs.existsSync(path.join(FIXTURE_DIR, ".mesh", "config.json")),
     "config.json missing"
+  );
+
+  const config = JSON.parse(
+    fs.readFileSync(path.join(FIXTURE_DIR, ".mesh", "config.json"), "utf-8")
   );
 
   assert.ok(
@@ -175,7 +179,7 @@ test("cli: init --force overwrites existing files", () => {
 
   // Second init with --force
   const out = runCLI("init", "--force");
-  assert.ok(out.includes("Init complete"));
+  assert.ok(out.includes("Scaffold Complete"));
 
   cleanFixture();
 });
@@ -219,7 +223,7 @@ test("cli: update refreshes managed scaffold assets and preserves user-owned fil
 
   // Update
   const out = runCLI("update");
-  assert.ok(out.includes("Update complete"));
+  assert.ok(out.includes("Update Complete"));
   assert.ok(out.includes("managed file(s) refreshed"));
 
   // User-owned files should NOT have been overwritten.
@@ -388,11 +392,11 @@ test("cli: status renders HUD on scaffolded project", () => {
   runCLI("init");
   const out = runCLI("status");
 
-  assert.ok(out.includes("BRIDGE TELEMETRY"), "should show telemetry heading");
-  assert.ok(out.includes("SYSTEM STATE"), "should show system state section");
+  assert.ok(out.includes("COMMAND BRIDGE"), "should show telemetry heading");
+  assert.ok(out.includes("BRIDGE SYSTEMS"), "should show system state section");
   assert.ok(out.includes("NERVOUS SYSTEM"), "should show nervous system section");
-  assert.ok(out.includes("SESSIONS"), "should show sessions section");
-  assert.ok(out.includes("CREW"), "should show crew section");
+  assert.ok(out.includes("FLIGHT LOG"), "should show sessions section");
+  assert.ok(out.includes("FORMATION ROSTER"), "should show crew section");
 
   cleanFixture();
 });
@@ -505,7 +509,7 @@ test("cli: usage includes status command", () => {
     encoding: "utf-8",
   });
   assert.ok(out.includes("status"), "usage should mention status");
-  assert.ok(out.includes("Bridge telemetry"), "usage should describe status");
+  assert.ok(out.includes("Bridge telemetry") || out.includes("COMMAND BRIDGE"), "usage should describe status");
 });
 
 test("cli: vanguard outrider dismiss updates candidate state", () => {
@@ -749,8 +753,8 @@ test("cli: resume shows briefing with session data", () => {
   assert.ok(out.includes("Resume"), "should print resume heading");
   assert.ok(out.includes("test-session"), "should show session id");
   assert.ok(out.includes("SESSION"), "should have SESSION section");
-  assert.ok(out.includes("LAST ACTIVITY"), "should have LAST ACTIVITY section");
-  assert.ok(out.includes("PENDING WORK"), "should have PENDING WORK section");
+  assert.ok(out.includes("LAST KNOWN TRAJECTORY"), "should have LAST KNOWN TRAJECTORY section");
+  assert.ok(out.includes("UNFINISHED BUSINESS"), "should have UNFINISHED BUSINESS section");
 
   cleanFixture();
 });
@@ -1001,7 +1005,7 @@ test("cli: worktree status on initialized mesh project", () => {
   });
 
   const out = runCLI("worktree", "status", "--target", FIXTURE_DIR);
-  assert.ok(out.includes("WORKTREE HEALTH"), "should print health report");
+  assert.ok(out.includes("WORKTREE FORMATION HEALTH"), "should print health report");
   assert.ok(out.includes("Healthy"), "should show healthy count");
 
   cleanFixture();

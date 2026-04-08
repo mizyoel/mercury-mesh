@@ -74,20 +74,20 @@ test("client compatibility docs describe VS Code spawn adaptations", () => {
   );
 
   assert.ok(
-    agentPrompt.includes("Use `runSubagent` instead of `task`"),
-    "agent prompt should explain VS Code spawning via runSubagent"
+    agentPrompt.includes("Use `runSubagent` with the task prompt"),
+    "agent prompt should restore direct VS Code runSubagent guidance"
   );
   assert.ok(
     clientCompatibilityDoc.includes("Multiple subagents in one turn run concurrently"),
-    "client compatibility doc should document VS Code parallel subagent spawning"
+    "client compatibility doc should restore parallel VS Code subagent guidance"
   );
   assert.ok(
-    agentPrompt.includes("group pending subagents and inline fallback tasks by resolved model"),
-    "agent prompt should describe VS Code model batching by resolved route"
+    agentPrompt.includes("Accept the session model"),
+    "agent prompt should restore session-model-only VS Code guidance"
   );
   assert.ok(
-    clientCompatibilityDoc.includes("switch the model picker"),
-    "client compatibility doc should describe model-picker switches between VS Code batches"
+    clientCompatibilityDoc.includes("Do not attempt per-spawn model selection"),
+    "client compatibility doc should describe session-model-only VS Code behavior"
   );
 });
 
@@ -123,24 +123,28 @@ test("model routing guidance stays config-driven", () => {
     "client compatibility examples should resolve models from config"
   );
   assert.ok(
-    clientCompatibilitySkill.includes("inline fallback tasks by resolved model"),
-    "client compatibility skill should document VS Code batching by resolved model"
+    clientCompatibilitySkill.includes("Multiple subagents in one turn run concurrently"),
+    "client compatibility skill should restore full VS Code subagent concurrency guidance"
   );
   assert.ok(
-    agentPrompt.includes("## Model Routing"),
-    "agent prompt should include the VS Code Model Routing prompt block"
+    clientCompatibilitySkill.includes("Accept the session model"),
+    "client compatibility skill should document session-model-only VS Code behavior"
   );
   assert.ok(
-    modelSelectionSkill.includes("inline fallback batches"),
-    "live model selection skill should describe VS Code inline fallback batches"
+    !agentPrompt.includes("## Model Routing"),
+    "agent prompt should not include the VS Code Model Routing prompt block"
   );
   assert.ok(
-    templateModelSelectionSkill.includes("inline fallback batches"),
-    "template model selection skill should mirror VS Code inline fallback guidance"
+    modelSelectionSkill.includes("accepts the current session model"),
+    "live model selection skill should restore session-model-only VS Code guidance"
   );
   assert.ok(
-    fixtureModelSelectionSkill.includes("inline fallback batches"),
-    "fixture model selection skill should mirror VS Code inline fallback guidance"
+    templateModelSelectionSkill.includes("accepts the current session model"),
+    "template model selection skill should mirror session-model-only VS Code guidance"
+  );
+  assert.ok(
+    fixtureModelSelectionSkill.includes("accepts the current session model"),
+    "fixture model selection skill should mirror session-model-only VS Code guidance"
   );
 });
 

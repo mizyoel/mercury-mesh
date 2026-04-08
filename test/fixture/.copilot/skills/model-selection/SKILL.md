@@ -10,7 +10,7 @@ description: "Determines which LLM model to use for each agent spawn based on a 
 
 ✅ THIS SKILL PRODUCES:
 - A resolved `model` parameter for every CLI `task` tool call
-- A resolved model batch plan for VS Code `runSubagent` waves and inline fallback batches
+- Guidance that VS Code uses the current session model for `runSubagent` waves
 - Persistent model preferences in `.mesh/config.json`
 - Spawn acknowledgments that include the resolved model
 
@@ -23,7 +23,7 @@ description: "Determines which LLM model to use for each agent spawn based on a 
 
 Mercury Mesh resolves models from the active runtime config and the current client surface. The coordinator must select the right model for each agent spawn without embedding a hardcoded model catalog in the prompt. Users can set persistent preferences that survive across sessions.
 
-On VS Code, model selection is advisory because `runSubagent` exposes no per-spawn `model` parameter. The coordinator must still resolve the intended route from config, then enforce it operationally by batching subagents by model, asking the user to switch the VS Code model picker between batches, and falling back to inline execution when no real named writable agent exists for a batch.
+On VS Code, model selection is advisory because `runSubagent` exposes no per-spawn `model` parameter. The coordinator should still resolve the intended route from config for telemetry, but in Phase 1 it accepts the current session model instead of attempting per-spawn enforcement.
 
 ## 5-Layer Model Resolution Hierarchy
 
@@ -63,7 +63,7 @@ Resolution is **first-match-wins** — the highest layer with a value wins.
   - Non-code (docs, planning, triage, changelogs) → `taskTypes.docs`
 6. FALLBACK Layer 4: `modelRouting.default`, then `defaultModel`, then omit the model param
 7. IF on CLI, pass the resolved model as the `model` parameter.
-8. IF on VS Code, group pending subagents and inline fallback tasks with the same resolved model into the same batch, ask the user to switch the model picker before each new model batch, and include a `## Model Routing` block in every prompt or inline coordinator note.
+8. IF on VS Code, accept the current session model. Do NOT attempt per-spawn model selection or fallback chains there.
 9. INCLUDE model in spawn acknowledgment: `🔧 {Name} ({resolved_model}) — {task}`
 
 ### When User Sets a Preference
@@ -101,7 +101,7 @@ After resolving the model and including it in the spawn template, this skill is 
 - Create new config files (only modify existing `config.json` in the active runtime root)
 - Change the model after spawn (fallback chains handle runtime failures)
 - Invent a hardcoded model catalog in prompt text
-- Claim that VS Code enforced a route without batching work by resolved model and obtaining any required model-picker switch from the user
+- Claim that VS Code enforced per-spawn routing beyond the current session model
 
 ## Config Schema
 

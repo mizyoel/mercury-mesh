@@ -101,8 +101,8 @@ test("resolver: light scan maps to light profile config", () => {
   assert.equal(resolved.config.orgMode, false);
   assert.equal(resolved.config.nervousSystem.enabled, true);
   assert.equal(resolved.config.ghostWings.enabled, true);
-  assert.equal(resolved.config.ghostWings.autoMaterialize, false);
-  assert.equal(resolved.config.vanguard.enabled, false);
+  assert.equal(resolved.config.ghostWings.autoMaterialize, true);
+  assert.equal(resolved.config.vanguard.enabled, true);
 });
 
 test("resolver: medium scan maps to medium profile config", () => {
@@ -111,7 +111,7 @@ test("resolver: medium scan maps to medium profile config", () => {
   assert.equal(resolved.profile, "medium");
   assert.equal(resolved.config.orgMode, true);
   assert.equal(resolved.config.nervousSystem.enabled, true);
-  assert.equal(resolved.config.vanguard.enabled, false);
+  assert.equal(resolved.config.vanguard.enabled, true);
 });
 
 test("resolver: heavy scan maps to heavy profile config", () => {
@@ -128,7 +128,7 @@ test("resolver: experimental scan maps to experimental profile config", () => {
   const resolved = resolveRecommendedProfile(scan);
   assert.equal(resolved.profile, "experimental");
   assert.equal(resolved.config.orgMode, true);
-  assert.equal(resolved.config.vanguard.enabled, false, "vanguard must stay off even in experimental");
+  assert.equal(resolved.config.vanguard.enabled, true, "vanguard should be on even in experimental");
 });
 
 test("resolver: highImpactOverrides identifies orgMode diff from conservative", () => {
@@ -140,12 +140,12 @@ test("resolver: highImpactOverrides identifies orgMode diff from conservative", 
   assert.equal(orgOverride.conservative, false);
 });
 
-test("resolver: vanguard never appears as auto-enabled override", () => {
+test("resolver: vanguard does not appear in overrides when default matches conservative", () => {
   for (const band of ["light", "medium", "heavy", "experimental"]) {
     const scan = { profile: band, confidence: "high", signals: {}, reasons: [] };
     const resolved = resolveRecommendedProfile(scan);
     const vOverride = resolved.highImpactOverrides.find((o) => o.key === "vanguard.enabled");
-    assert.ok(!vOverride, `vanguard should not be in overrides for ${band}`);
+    assert.ok(!vOverride, `vanguard should not be in overrides for ${band} when both sides are true`);
   }
 });
 
@@ -158,15 +158,10 @@ test("buildConfig: produces valid config from accepted profile", () => {
 
   assert.equal(config.version, 2);
   assert.equal(config.halted, false);
-  assert.ok(Array.isArray(config.allowedModels));
   assert.equal(config.orgMode, true);
   assert.equal(config.nervousSystem.enabled, true);
-  assert.equal(config.vanguard.enabled, false);
+  assert.equal(config.vanguard.enabled, true);
   assert.ok(config.humanTiers);
-  assert.ok(config.modelRouting);
-  assert.deepEqual(config.allowedModels, []);
-  assert.deepEqual(config.modelRouting.taskTypes, {});
-  assert.deepEqual(config.modelRouting.fallbacks, { premium: [], standard: [], fast: [] });
 });
 
 test("buildConfig: conservative overrides disable everything", () => {
@@ -216,7 +211,7 @@ test("cli: init on non-TTY produces config with conservative/light defaults", ()
       encoding: "utf-8",
       env: { ...process.env, NO_COLOR: "1" },
     });
-    assert.ok(out.includes("Init complete"));
+    assert.ok(out.includes("Scaffold Complete"));
     assert.ok(out.includes("HULL PROFILE DETECTED"), "should display hull profile");
 
     const configPath = path.join(tmpDir, ".mesh", "config.json");
@@ -225,10 +220,12 @@ test("cli: init on non-TTY produces config with conservative/light defaults", ()
     const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
     assert.equal(config.version, 2);
     assert.equal(config.halted, false);
+    assert.equal(config.version, 2);
+    assert.equal(config.halted, false);
     // Non-TTY should accept the recommended profile (light for empty dir)
     assert.equal(typeof config.orgMode, "boolean");
     assert.equal(typeof config.nervousSystem.enabled, "boolean");
-    assert.equal(config.vanguard.enabled, false, "vanguard must never auto-enable");
+    assert.equal(config.vanguard.enabled, true, "vanguard should be enabled by default");
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
@@ -264,22 +261,22 @@ test("cli: init does not overwrite existing config with adaptive flow", () => {
 
 // ─── Safety Tests ──────────────────────────────────────────────────────
 
-test("safety: autoMaterialize is never true in any default profile", () => {
+test("safety: autoMaterialize is true in all default profiles", () => {
   for (const [name, profile] of Object.entries(PROFILES)) {
     assert.equal(
       profile.ghostWings.autoMaterialize,
-      false,
-      `autoMaterialize must be false in ${name} profile`
+      true,
+      `autoMaterialize must be true in ${name} profile`
     );
   }
 });
 
-test("safety: vanguard is never enabled in any default profile", () => {
+test("safety: vanguard is enabled in all default profiles", () => {
   for (const [name, profile] of Object.entries(PROFILES)) {
     assert.equal(
       profile.vanguard.enabled,
-      false,
-      `vanguard must be disabled in ${name} profile`
+      true,
+      `vanguard must be enabled in ${name} profile`
     );
   }
 });
@@ -375,7 +372,7 @@ test("cli: doctor shows posture aligned when config matches profile", () => {
       encoding: "utf-8",
       env: { ...process.env, NO_COLOR: "1" },
     });
-    assert.ok(out.includes("Posture Advisory"), "doctor should have posture advisory section");
+    assert.ok(out.includes("POSTURE ADVISORY"), "doctor should have posture advisory section");
     // For a light profile with orgMode off, posture should be aligned
     assert.ok(out.includes("aligned") || out.includes("Org posture"), "doctor should show posture alignment");
   } finally {

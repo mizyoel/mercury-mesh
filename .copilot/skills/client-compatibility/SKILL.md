@@ -28,25 +28,22 @@ If both `task` and `runSubagent` are available, prefer `task` (richer parameter 
 
 When in VS Code mode, the coordinator changes behavior in these ways:
 
-- **Spawning tool:** Use `runSubagent` instead of `task` only when the current surface exposes a real named agent for that batch. The prompt is the only required parameter — pass the full agent prompt (charter, identity, task, hygiene, response order) exactly as you would on CLI. Never send implementation work to `Explore`; it remains a read-only scout. If no real named writable agent exists for the batch, switch the model picker as needed and execute the batch inline instead.
+- **Spawning tool:** Use `runSubagent` instead of `task`. The prompt is the only required parameter — pass the full agent prompt (charter, identity, task, hygiene, response order) exactly as you would on CLI.
 - **Parallelism:** Spawn ALL concurrent agents in a SINGLE turn. They run in parallel automatically. This replaces `mode: "background"` + `read_agent` polling.
-- **Model selection workaround:** VS Code exposes no per-spawn `model` parameter. Resolve the desired model for each pending work item from `.mesh/config.json`, group pending subagents and inline fallback tasks by resolved model, and run one batch per model. Launch all real named agents that resolve to the same model in the same turn. Before moving to a batch with a different resolved model, prompt the user to switch the VS Code model picker to that model and wait for confirmation. Add a `## Model Routing` block to each prompt so the subagent can report whether the active batch matches the requested route. If no real named writable agent exists for a work item in that batch, execute it inline after the switch rather than routing it to Explore.
+- **Model selection:** Accept the session model. Do NOT attempt per-spawn model selection or fallback chains — they only work on CLI. In Phase 1, all subagents use whatever model the user selected in VS Code's model picker.
 - **Scribe:** Cannot fire-and-forget. Batch Scribe as the LAST subagent in any parallel group. Scribe is light work (file ops only), so the blocking is tolerable.
 - **Launch table:** Skip it. Results arrive with the response, not separately. By the time the coordinator speaks, the work is already done.
 - **`read_agent`:** Skip entirely. Results return automatically when subagents complete.
 - **`agent_type`:** Drop it. All VS Code subagents have full tool access by default. Subagents inherit the parent's tools.
 - **`description`:** Drop it. The agent name is already in the prompt.
 - **Prompt content:** Keep ALL prompt structure — charter, identity, task, hygiene, response order blocks are surface-independent.
-- **Parallelism:** Only parallelize inside the active model batch. Do not mix routes that resolve to different models in the same turn, and do not simulate multi-Wing fan-out by spawning unnamed copies of the coordinator.
-- **Model selection:** Never promise per-spawn enforcement on VS Code. Promise only that the coordinator will honor config by batching work per resolved model and asking the user to switch the model picker between batches when needed.
-- **Scribe:** Keep Scribe in the final batch for its resolved model. If Scribe routes to a different model than the implementation batch, prompt for the switch before spawning it.
 
 ### Feature Degradation Table
 
 | Feature | CLI | VS Code | Degradation |
 |---------|-----|---------|-------------|
 | Parallel fan-out | `mode: "background"` + `read_agent` | Multiple subagents in one turn | None — equivalent concurrency |
-| Model selection | Per-spawn `model` param (4-layer hierarchy) | Config-driven model batches with manual model-picker switches | Manual batch boundaries when routes diverge; some batches may fall back to inline execution |
+| Model selection | Per-spawn `model` param (4-layer hierarchy) | Session model only (Phase 1) | Accept session model, log intent |
 | Scribe fire-and-forget | Background, never read | Sync, must wait | Batch with last parallel group |
 | Launch table UX | Show table → results later | Skip table → results with response | UX only — results are correct |
 | SQL tool | Available | Not available | Avoid SQL in cross-platform code paths |
@@ -67,34 +64,26 @@ task({ agent_type: "general-purpose", mode: "background", model: resolvedFromCon
 // Later: read_agent for both
 ```
 
-**Example 2: VS Code named read-only spawn**
+**Example 2: VS Code parallel spawn**
 ```typescript
 // Coordinator detects runSubagent available → VS Code mode
-runSubagent({ agentName: "Explore", prompt: "...Scout repo state..." })
+runSubagent({ prompt: "...Fenster charter + task..." })
+runSubagent({ prompt: "...Hockney charter + task..." })
+runSubagent({ prompt: "...Scribe charter + task..." }) // Last in group
 // Results return automatically, no read_agent
 ```
 
-**Example 3: VS Code same-model batch**
+**Example 3: Fallback mode**
 ```typescript
-// Resolved routes for two real named writable agents both map to gpt-5.4
-runSubagent({ agentName: "<real-available-agent-a>", prompt: "...## Model Routing\nrequested_model: gpt-5.4\nroute_source: modelRouting.taskTypes.code\nbatch_model_match: true..." })
-runSubagent({ agentName: "<real-available-agent-b>", prompt: "...## Model Routing\nrequested_model: gpt-5.4\nroute_source: modelRouting.taskTypes.code\nbatch_model_match: true..." })
-```
-
-**Example 4: VS Code inline fallback batch**
-```typescript
-// No real named writable agent exists for the implementation batch on this surface
-// Coordinator asks user to switch the model picker, records the same Model Routing metadata, and executes the batch inline instead of sending it to Explore
+// Neither task nor runSubagent available → work inline
+// Coordinator executes the task directly without spawning
 ```
 
 ## Anti-Patterns
 
 - ❌ Using SQL tool in cross-platform workflows (breaks on VS Code/JetBrains/GitHub.com)
-- ❌ Mixing two resolved model routes into the same VS Code batch
-- ❌ Claiming a configured route was enforced on VS Code without asking for a model-picker switch when batches diverge
-- ❌ Sending implementation work to Explore merely to satisfy the spawn rule
-- ❌ Calling `runSubagent` without `agentName` and treating it as a specialist handoff
-- ❌ Fire-and-forget Scribe on VS Code when no real named Scribe agent exists
+- ❌ Attempting per-spawn model selection on VS Code (Phase 1 — only session model works)
+- ❌ Fire-and-forget Scribe on VS Code (must batch as last subagent)
 - ❌ Showing launch table on VS Code (results already inline)
 - ❌ Apologizing or explaining platform limitations to the user
 - ❌ Using `task` when only `runSubagent` is available

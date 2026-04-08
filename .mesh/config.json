@@ -2,32 +2,6 @@
   "version": 2,
   "orgMode": true,
   "halted": false,
-  "allowedModels": [
-    "gpt-5.4",
-    "claude-opus-4.6"
-  ],
-  "modelRouting": {
-    "default": "gpt-5.4",
-    "taskTypes": {
-      "code": "gpt-5.4",
-      "prompts": "gpt-5.4",
-      "docs": "gpt-5.4",
-      "lead": "claude-opus-4.6",
-      "visual": "claude-opus-4.6"
-    },
-    "fallbacks": {
-      "premium": [
-        "claude-opus-4.6",
-        "gpt-5.4"
-      ],
-      "standard": [
-        "gpt-5.4"
-      ],
-      "fast": [
-        "gpt-5.4"
-      ]
-    }
-  },
   "orgConfig": {
     "autonomyMode": "autonomous",
     "crossDeptStrategy": "ad-hoc",
@@ -66,6 +40,7 @@
     "embeddingModel": "openai/text-embedding-3-small",
     "embeddingEndpoint": "https://openrouter.ai/api/v1/embeddings",
     "embeddingAppName": "Mercury Mesh",
+    "embeddingAppUrl": null,
     "gravimetry": {
       "minimumGravity": 0.15,
       "airbridgeThreshold": 0.70,
@@ -78,18 +53,56 @@
     },
     "ghostWings": {
       "enabled": true,
-      "autoMaterialize": false,
+      "autoMaterialize": true,
       "solidificationThreshold": 3,
       "dissolutionThreshold": 2,
-      "maxLifespanHours": 72
+      "maxLifespanHours": 72,
+      "coalescence": {
+        "enabled": true,
+        "autoCoalesce": false,
+        "autoThreshold": 0.65,
+        "flagThreshold": 0.35
+      }
     },
     "constellation": {
       "enabled": true,
+      "provider": "json",
       "ragMaxEntries": 5,
       "ragMinSimilarity": 0.15
+    },
+    "peers": {
+      "enabled": false,
+      "heartbeatOnPulse": true,
+      "syncOnPulse": false,
+      "heartbeatTTLMinutes": 30
     }
   },
   "vanguard": {
-    "enabled": false
+    "enabled": true,
+    "outrider": {
+      "scanIntervalHours": 24,
+      "minimumAdjacencyScore": 0.40,
+      "maxCandidates": 20
+    },
+    "skunkworks": {
+      "maxConcurrentExperiments": 2,
+      "tokenBudgetPerExperiment": 50000,
+      "maxLifespanHours": 168
+    },
+    "horizonDeck": {
+      "maxStagedItems": 10,
+      "decayDays": 30,
+      "decayWarningDays": 7
+    },
+    "speculativeSortie": {
+      "minimumAdjacencyScore": 0.55,
+      "idleThresholdMinutes": 120,
+      "cadence": null,
+      "autoApprove": false,
+      "maxDraftsPerCycle": 2
+    },
+    "genesis": {
+      "cooldownHours": 48
+    }
   }
 }
