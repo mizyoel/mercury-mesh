@@ -4,7 +4,9 @@ All notable changes to this package will be documented in this file.
 
 ## [Unreleased]
 
-- Bump the package version to `1.3.5-local.0` for local npm testing.
+## [1.3.5] - 2026-04-10
+
+- Promote the Mercury Mesh package version to 1.3.5.
 - Restore the exact 1.2 VS Code delegation semantics across prompts, skills, docs, and tests: use `runSubagent` directly, allow multiple subagents in one turn, and accept the current session model instead of coordinator-inline fallback batches.
 
 ## [1.3.4] - 2026-04-07

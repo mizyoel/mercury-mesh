@@ -1,6 +1,6 @@
 {
   "name": "@mizyoel/mercury-mesh",
-  "version": "1.3.5-local.0",
+  "version": "1.3.5",
   "description": "Mercury Mesh runtime templates, prompts, workflows, and skills for Fluid OS autonomous operations.",
   "repository": {
     "type": "git",
