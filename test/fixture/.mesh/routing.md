@@ -2,6 +2,8 @@
 
 How to decide who handles what.
 
+Every user prompt enters the Lead first. The tables below describe the delegation map the Lead uses after first-pass review.
+
 ## Routing Table
 
 | Work Type | Route To | Examples |
@@ -34,17 +36,20 @@ How to decide who handles what.
 
 ## Rules
 
-1. **Eager by default** — spawn all agents who could usefully start work, including anticipatory downstream work.
-2. **Scribe always runs** after substantial work, always as `mode: "background"`. Never blocks.
-3. **Quick facts → coordinator answers directly.** Don't spawn an agent for "what port does the server run on?"
-4. **When two agents could handle it**, pick the one whose domain is the primary concern.
-5. **"Team, ..." → fan-out.** Spawn all relevant agents in parallel as `mode: "background"`.
-6. **Anticipate downstream work.** If a feature is being built, spawn the tester to write test cases from requirements simultaneously.
-7. **Issue-labeled work** — when a `mesh:{member}` label is applied to an issue, route to that member. The Lead handles all `mesh` (base label) triage, while `mesh` labels remain compatible.
+1. **Lead-first intake** — every fresh user prompt routes to the Lead for review before any specialist receives it.
+2. **Eager by default** — once the Lead delegates, spawn all agents who could usefully start work, including anticipatory downstream work.
+3. **Scribe always runs** after substantial work, always as `mode: "background"`. Never blocks.
+4. **Quick facts can return to the coordinator** — but only after the Lead decides no specialist or department work is needed.
+5. **When two agents could handle it**, the Lead picks the one whose domain is the primary concern.
+6. **"Team, ..." → fan-out.** The Lead decomposes the mission, then all relevant agents spawn in parallel as `mode: "background"`.
+7. **Anticipate downstream work.** If a feature is being built, the Lead should also route the tester to write test cases from requirements simultaneously.
+8. **Issue-labeled work** — when a `mesh:{member}` label is applied to an issue, route to that member. The Lead handles all `mesh` (base label) triage, while `mesh` labels remain compatible.
 
 ## Hierarchical Routing (Org Mode)
 
 Active when `orgMode: true` in `.mesh/config.json`. If the runtime still lives under `.mesh/config.json`, the same rules apply through the compatibility layer. When disabled, all routing falls back to the flat rules above.
+
+Department members do not receive first-touch user prompts directly. The Lead reviews the request, chooses the department path, and only then delegates into the org.
 
 ### Department Routing
 
@@ -63,10 +68,11 @@ Active when `orgMode: true` in `.mesh/config.json`. If the runtime still lives u
 ### Cross-Department Work
 
 When work touches multiple departments:
-1. The coordinator matches all relevant departments from `.mesh/org/structure.json`.
-2. Members from each matched department are spawned in parallel.
-3. Leads are only spawned when conventions conflict or an escalation rule triggers.
-4. `mesh:{member}` is the primary assignment trigger. `mesh:{member}` remains a compatibility alias, and `dept:{department}` labels are routing metadata only.
+1. The coordinator sends the prompt to the Lead for first-pass review.
+2. The Lead matches all relevant departments from `.mesh/org/structure.json` and decides whether department leads or individual members should take first touch.
+3. Members from each matched department are spawned in parallel only after that delegation plan is set.
+4. Department leads join whenever decomposition, contract alignment, or escalation is needed.
+5. `mesh:{member}` is the primary assignment trigger. `mesh:{member}` remains a compatibility alias, and `dept:{department}` labels are routing metadata only.
 
 ## Work Type → Agent
 

@@ -2,6 +2,8 @@
 
 How the Mesh decides who handles what. Missions act as gravity wells — the routing table pulls the right Wings into orbit.
 
+Every user prompt enters the Lead first. The routing rules below describe the delegation map the Lead uses after first-pass review.
+
 ## Nervous System Routing (Primary)
 
 When the nervous system is online (`config.json` → `nervousSystem.enabled: true`), triage uses **Semantic Gravimetry** — intent-based gravitational routing that replaces keyword matching.
@@ -90,17 +92,20 @@ Legacy label note: the bridge keeps `Mercury Mesh` and `Mercury Mesh:{member}` l
 
 ## Rules
 
-1. **Eager by default** — spawn all agents who could usefully start work, including anticipatory downstream work.
-2. **Scribe always runs** after substantial work, always as `mode: "background"`. Never blocks.
-3. **Quick facts → Ship's Computer answers directly.** Don't spawn an agent for "what port does the server run on?"
-4. **When two agents could handle it**, pick the one whose domain is the primary concern.
-5. **"Team, ..." → fan-out.** Spawn all relevant agents in parallel as `mode: "background"`.
-6. **Anticipate downstream work.** If a feature is being built, spawn the tester to write test cases from requirements simultaneously.
-7. **Issue-labeled work** — when a `Mercury Mesh:{member}` label is applied to an issue, route to that member. The Lead handles all `Mercury Mesh` (base label) triage.
+1. **Lead-first intake** — every fresh user prompt routes to the Lead for review before any specialist receives it.
+2. **Eager by default** — once the Lead delegates, spawn all agents who could usefully start work, including anticipatory downstream work.
+3. **Scribe always runs** after substantial work, always as `mode: "background"`. Never blocks.
+4. **Quick facts can return to the Ship's Computer** — but only after the Lead decides no specialist or department work is needed.
+5. **When two agents could handle it**, the Lead picks the one whose domain is the primary concern.
+6. **"Team, ..." → fan-out.** The Lead decomposes the mission, then all relevant agents spawn in parallel as `mode: "background"`.
+7. **Anticipate downstream work.** If a feature is being built, the Lead should also route the tester to write test cases from requirements simultaneously.
+8. **Issue-labeled work** — when a `Mercury Mesh:{member}` label is applied to an issue, route to that member. The Lead handles all `Mercury Mesh` (base label) triage.
 
 ## Hierarchical Routing (Org Mode)
 
 Active when `orgMode: true` in `.mesh/config.json`. When disabled, all routing falls back to the flat rules above.
+
+Department members do not receive first-touch user prompts directly. The Lead reviews the request, chooses the department path, and only then delegates into the org.
 
 ### Department Routing
 
@@ -119,8 +124,8 @@ Active when `orgMode: true` in `.mesh/config.json`. When disabled, all routing f
 
 ### Autonomous Department Loop
 
-1. Coordinator routes the mission to the relevant Wing or Deck lead.
-2. Lead decomposes it into local packets — the Burn begins.
-3. Coordinator fans out independent packets to eligible members in parallel.
+1. Coordinator sends the prompt to the Lead for first-pass review.
+2. Lead chooses the relevant Wing or Deck path and decomposes work into local packets when needed — the Burn begins.
+3. Coordinator fans out independent packets to eligible members in parallel only after that delegation plan is set.
 4. Members update backlog and state via the drop-box pattern and department state files.
 5. Lead resolves local blockers; unresolved blockers escalate to coordinator via Airbridge.

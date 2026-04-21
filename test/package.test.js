@@ -66,6 +66,36 @@ test("resolves known docs", () => {
   );
 });
 
+test("agent prompt enforces lead-first intake", () => {
+  const leadFirstRule = "Every non-init user prompt in Team Mode enters the Lead/Architect first.";
+  const agentPrompt = fs.readFileSync(mercuryMesh.agentPromptPath, "utf8");
+  const templateAgentPrompt = fs.readFileSync(
+    mercuryMesh.resolveTemplatePath("mercury-mesh.agent.md"),
+    "utf8"
+  );
+  const fixtureAgentPrompt = fs.readFileSync(
+    path.join(PACKAGE_ROOT, "test", "fixture", ".github", "agents", "mercury-mesh.agent.md"),
+    "utf8"
+  );
+
+  assert.ok(
+    agentPrompt.includes(leadFirstRule),
+    "live agent prompt should require lead-first review"
+  );
+  assert.ok(
+    templateAgentPrompt.includes(leadFirstRule),
+    "template agent prompt should require lead-first review"
+  );
+  assert.ok(
+    fixtureAgentPrompt.includes(leadFirstRule),
+    "fixture agent prompt should require lead-first review"
+  );
+  assert.ok(
+    agentPrompt.includes("Quick factual question | Send to the Lead/Architect for triage; if no specialist is needed, the coordinator answers directly |"),
+    "routing table should send quick facts through lead triage"
+  );
+});
+
 test("client compatibility docs describe VS Code spawn adaptations", () => {
   const agentPrompt = fs.readFileSync(mercuryMesh.agentPromptPath, "utf8");
   const clientCompatibilityDoc = fs.readFileSync(
