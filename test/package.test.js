@@ -178,6 +178,121 @@ test("model routing guidance stays config-driven", () => {
   );
 });
 
+test("release workflows preserve publishable .mesh assets", () => {
+  const previewWorkflow = fs.readFileSync(
+    path.join(PACKAGE_ROOT, ".github", "workflows", "mesh-preview.yml"),
+    "utf8"
+  );
+  const fixturePreviewWorkflow = fs.readFileSync(
+    path.join(PACKAGE_ROOT, "test", "fixture", ".github", "workflows", "mesh-preview.yml"),
+    "utf8"
+  );
+  const promoteWorkflow = fs.readFileSync(
+    path.join(PACKAGE_ROOT, ".github", "workflows", "mesh-promote.yml"),
+    "utf8"
+  );
+  const fixturePromoteWorkflow = fs.readFileSync(
+    path.join(PACKAGE_ROOT, "test", "fixture", ".github", "workflows", "mesh-promote.yml"),
+    "utf8"
+  );
+
+  for (const workflow of [previewWorkflow, fixturePreviewWorkflow, promoteWorkflow, fixturePromoteWorkflow]) {
+    assert.ok(
+      workflow.includes("^\\.mesh/(manifesto\\.md|nervous-system/|templates/)"),
+      "release workflows should allow published .mesh assets"
+    );
+  }
+
+  assert.ok(
+    !previewWorkflow.includes("Check no .ai-team/ or .mesh/ files are tracked"),
+    "preview validation should not reject the entire .mesh tree"
+  );
+  assert.ok(
+    promoteWorkflow.includes("preserve packaged .mesh assets"),
+    "promote workflow should preserve the published .mesh allowlist"
+  );
+});
+
+test("prompt and skill docs avoid unsupported plugin and personal CLI claims", () => {
+  const agentPrompt = fs.readFileSync(mercuryMesh.agentPromptPath, "utf8");
+  const templateAgentPrompt = fs.readFileSync(
+    mercuryMesh.resolveTemplatePath("mercury-mesh.agent.md"),
+    "utf8"
+  );
+  const fixtureAgentPrompt = fs.readFileSync(
+    path.join(PACKAGE_ROOT, "test", "fixture", ".github", "agents", "mercury-mesh.agent.md"),
+    "utf8"
+  );
+  const pluginMarketplaceTemplate = fs.readFileSync(
+    mercuryMesh.resolveTemplatePath("plugin-marketplace.md"),
+    "utf8"
+  );
+  const personalSkill = fs.readFileSync(
+    path.join(PACKAGE_ROOT, ".copilot", "skills", "personal-mesh", "SKILL.md"),
+    "utf8"
+  );
+  const templatePersonalSkill = fs.readFileSync(
+    mercuryMesh.resolveTemplatePath("skills", "personal-mesh", "SKILL.md"),
+    "utf8"
+  );
+  const fixturePersonalSkill = fs.readFileSync(
+    path.join(PACKAGE_ROOT, "test", "fixture", ".copilot", "skills", "personal-mesh", "SKILL.md"),
+    "utf8"
+  );
+
+  for (const prompt of [agentPrompt, templateAgentPrompt, fixtureAgentPrompt]) {
+    assert.ok(
+      !prompt.includes("resolvePersonalMeshDir()"),
+      "agent prompts should not require an unshipped personal-mesh helper"
+    );
+    assert.ok(
+      !prompt.includes("Mercury Mesh plugin marketplace browse"),
+      "agent prompts should not require an unshipped plugin marketplace browse command"
+    );
+    assert.ok(
+      !prompt.includes("Mercury Mesh CLI (`Mercury Mesh plugin marketplace`)"),
+      "agent prompts should not claim a shipped plugin marketplace CLI owner"
+    );
+    assert.ok(
+      prompt.includes("Do not assume a dedicated Mercury Mesh plugin marketplace CLI exists in this package."),
+      "agent prompts should explain the plugin marketplace limitation"
+    );
+  }
+
+  assert.ok(
+    pluginMarketplaceTemplate.includes("does not currently ship dedicated `mercury-mesh plugin marketplace` commands"),
+    "plugin marketplace template should not advertise missing CLI commands"
+  );
+
+  for (const skill of [personalSkill, templatePersonalSkill, fixturePersonalSkill]) {
+    assert.ok(
+      skill.includes("does not currently ship personal-mesh discovery helpers or `mercury-mesh personal ...` / `mercury-mesh cast` CLI commands"),
+      "personal-mesh skills should describe current support accurately"
+    );
+    assert.ok(
+      !skill.includes("Mercury Mesh personal init"),
+      "personal-mesh skills should not advertise missing personal CLI commands"
+    );
+    assert.ok(
+      !skill.includes("Mercury Mesh cast"),
+      "personal-mesh skills should not advertise a missing cast command"
+    );
+  }
+});
+
+test("README does not claim seeded model defaults", () => {
+  const readme = fs.readFileSync(path.join(PACKAGE_ROOT, "README.md"), "utf8");
+
+  assert.ok(
+    !readme.includes("New installs seed `gpt-5.4` and `claude-opus-4.6`"),
+    "README should not claim seeded allowlist defaults"
+  );
+  assert.ok(
+    !readme.includes("New installs seed this to `gpt-5.4`"),
+    "README should not claim a seeded default model"
+  );
+});
+
 test("npm pack includes CLI runtime dependencies", () => {
   const packOutput = runNpm(["pack", "--json", "--dry-run"]);
 
@@ -195,6 +310,26 @@ test("npm pack includes CLI runtime dependencies", () => {
   assert.ok(
     packedPaths.has("lib/profile-resolver.cjs"),
     "packed tarball should include profile-resolver.cjs"
+  );
+  assert.ok(
+    packedPaths.has(".mesh/nervous-system/index.js"),
+    "packed tarball should include the nervous-system entrypoint"
+  );
+  assert.ok(
+    packedPaths.has(".mesh/nervous-system/worktree-manager.js"),
+    "packed tarball should include worktree-manager.js"
+  );
+  assert.ok(
+    packedPaths.has(".mesh/nervous-system/ghost-coalescence.js"),
+    "packed tarball should include ghost-coalescence.js"
+  );
+  assert.ok(
+    packedPaths.has(".mesh/nervous-system/mesh-peer.js"),
+    "packed tarball should include mesh-peer.js"
+  );
+  assert.ok(
+    packedPaths.has(".mesh/nervous-system/vanguard/index.js"),
+    "packed tarball should include the vanguard runtime"
   );
 });
 

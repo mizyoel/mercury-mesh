@@ -1,6 +1,6 @@
 {
   "name": "@mizyoel/mercury-mesh",
-  "version": "1.3.6-local.1",
+  "version": "1.3.6",
   "description": "Mercury Mesh runtime templates, prompts, workflows, and skills for Fluid OS autonomous operations.",
   "repository": {
     "type": "git",
@@ -28,6 +28,7 @@
     ".copilot/",
     ".github/agents/",
     ".mesh/manifesto.md",
+    ".mesh/nervous-system/",
     ".mesh/templates/"
   ],
   "scripts": {

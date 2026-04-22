@@ -18,20 +18,18 @@ Registered marketplace sources are stored in `.mesh/plugins/marketplaces.json`:
 }
 ```
 
-## CLI Commands
+## Registry Management
 
-Users manage marketplaces via the CLI:
-- `Mercury Mesh plugin marketplace add {owner/repo}` — Register a GitHub repo as a marketplace source
-- `Mercury Mesh plugin marketplace remove {name}` — Remove a registered marketplace
-- `Mercury Mesh plugin marketplace list` — List registered marketplaces
-- `Mercury Mesh plugin marketplace browse {name}` — List available plugins in a marketplace
+This package does not currently ship dedicated `mercury-mesh plugin marketplace` commands.
+
+Manage `.mesh/plugins/marketplaces.json` directly or via repo-specific automation. Each entry should include a stable `name`, a `source` repository reference, and an `added_at` timestamp.
 
 ## When to Browse
 
 During the **Adding Team Members** flow, AFTER allocating a name but BEFORE generating the charter:
 
 1. Read `.mesh/plugins/marketplaces.json`. If the file doesn't exist or `marketplaces` is empty, skip silently.
-2. For each registered marketplace, search for plugins whose name or description matches the new member's role or domain keywords.
+2. For each registered marketplace, browse the source repository directly and search for plugins whose name or description matches the new member's role or domain keywords.
 3. Present matching plugins to the user: *"Found '{plugin-name}' in {marketplace} marketplace — want me to install it as a skill for {CastName}?"*
 4. If the user accepts, install the plugin (see below). If they decline or skip, proceed without it.
 

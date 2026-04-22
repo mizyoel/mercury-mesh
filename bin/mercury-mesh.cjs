@@ -156,6 +156,12 @@ const SCAFFOLD_MANIFEST = [
     dest: ".mesh/manifesto.md",
     type: "file",
   },
+  // Nervous system runtime
+  {
+    src: ".mesh/nervous-system",
+    dest: ".mesh/nervous-system",
+    type: "dir",
+  },
   // Mesh routing rules
   {
     src: ".mesh/templates/routing.md",

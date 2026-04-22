@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 
 ## [Unreleased]
 
+## [1.3.6] - 2026-04-22
+
+- Promote the Mercury Mesh package version to 1.3.6.
+- Ship `.mesh/nervous-system/` in the npm tarball and scaffold it during `init`/`update`, so packaged CLI/runtime commands and newly initialized repos both have the local nervous-system modules they expect.
+
 ## [1.3.6-local.1] - 2026-04-10
 
 - Promote the Mercury Mesh package version to 1.3.6-local.1 for local test distribution.

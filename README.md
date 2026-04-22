@@ -81,6 +81,7 @@ There is no org chart here. Structure is a responsive medium. Wings drift toward
 │  .mesh/config.json           │  Bridge parameters (defaults)               │
 │  .mesh/local.json            │  Git-ignored secrets & local overrides      │
 │  .mesh/manifesto.md          │  The Flight Path                            │
+│  .mesh/nervous-system/       │  Local runtime modules for CLI + mesh ops   │
 │  .mesh/routing.md            │  Mission routing rules                      │
 │  .mesh/ceremonies.md         │  Review & retro rituals                     │
 └──────────────────────────────┴──────────────────────────────────────────────┘
@@ -93,7 +94,7 @@ Refresh the hull without touching your config or state files.
 ```sh
 npm update @mizyoel/mercury-mesh
 npx mercury-mesh update          # refreshes managed scaffold assets
-                                 # agent, instructions, skills, runtime docs, workflows
+                                 # agent, instructions, skills, nervous-system runtime, workflows
                                  # preserves config, local overrides, MCP config, and state files
 ```
 
@@ -237,10 +238,12 @@ Your control surface, Commander. Every flag is a dial on the console. Stored in 
 | `version` | `number` | Schema version. Current: `2`. |
 | `orgMode` | `boolean` | Wing/Deck departmental structure (`true`) or flat team (`false`). |
 | `halted` | `boolean` | **HALT Sentinel** — freezes all spawns and writes. |
-| `allowedModels` | `string[]` | Model allowlist. New installs seed `gpt-5.4` and `claude-opus-4.6`; expand or clear it to change routing policy. |
-| `modelRouting.default` | `string` | Default model for auto-selection. New installs seed this to `gpt-5.4`. |
-| `modelRouting.taskTypes` | `object` | Per-category routing: `code`, `prompts`, `docs`, `lead`, `visual`. |
-| `modelRouting.fallbacks` | `object` | Fallback chains: `premium`, `standard`, `fast`. |
+| `allowedModels` | `string[]` | Optional model allowlist. If present and non-empty, it restricts routing policy. |
+| `defaultModel` | `string` | Optional global model preference applied before task-aware routing. |
+| `agentModelOverrides` | `object` | Optional per-agent model overrides keyed by agent name. |
+| `modelRouting.default` | `string` | Optional default model for task-aware auto-selection when no category-specific route matches. |
+| `modelRouting.taskTypes` | `object` | Optional per-category routing: `code`, `prompts`, `docs`, `lead`, `visual`. |
+| `modelRouting.fallbacks` | `object` | Optional fallback chains: `premium`, `standard`, `fast`. |
 | `orgConfig.autonomyMode` | `string` | `"delegated"` (bridge assigns) or `"autonomous"` (Wings self-select). |
 | `orgConfig.crossDeptStrategy` | `string` | `"contract-first"` or `"ad-hoc"` Airbridges. |
 | `orgConfig.escalationBehavior` | `string` | `"advisory"` or `"blocking"`. |

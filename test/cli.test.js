@@ -137,6 +137,16 @@ test("cli: init scaffolds expected files", () => {
     "manifesto missing"
   );
 
+  assert.ok(
+    fs.existsSync(path.join(FIXTURE_DIR, ".mesh", "nervous-system", "index.js")),
+    "nervous-system runtime missing"
+  );
+
+  assert.ok(
+    fs.existsSync(path.join(FIXTURE_DIR, ".mesh", "nervous-system", "vanguard", "index.js")),
+    "vanguard runtime missing"
+  );
+
   // .gitignore patched
   const gi = fs.readFileSync(
     path.join(FIXTURE_DIR, ".gitignore"),
@@ -221,6 +231,9 @@ test("cli: update refreshes managed scaffold assets and preserves user-owned fil
   const workflowPath = path.join(FIXTURE_DIR, ".github", "workflows", "mesh-release.yml");
   fs.writeFileSync(workflowPath, "stale: true\n");
 
+  const nervousSystemPath = path.join(FIXTURE_DIR, ".mesh", "nervous-system", "index.js");
+  fs.writeFileSync(nervousSystemPath, "STALE NERVOUS SYSTEM\n");
+
   // Update
   const out = runCLI("update");
   assert.ok(out.includes("Update Complete"));
@@ -256,6 +269,10 @@ test("cli: update refreshes managed scaffold assets and preserves user-owned fil
   assert.equal(
     fs.readFileSync(workflowPath, "utf-8"),
     fs.readFileSync(path.join(PACKAGE_ROOT, ".mesh", "templates", "workflows", "mesh-release.yml"), "utf-8")
+  );
+  assert.equal(
+    fs.readFileSync(nervousSystemPath, "utf-8"),
+    fs.readFileSync(path.join(PACKAGE_ROOT, ".mesh", "nervous-system", "index.js"), "utf-8")
   );
 
   // Update should still patch gitignore with any required runtime ignores.

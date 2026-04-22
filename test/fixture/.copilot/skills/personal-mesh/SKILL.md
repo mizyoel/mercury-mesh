@@ -4,6 +4,12 @@
 
 A personal Mercury Mesh is a user-level collection of AI agents that travel with you across projects. Unlike project agents (defined in a project's `.mesh/` directory), personal agents live in your global config directory and are automatically discovered when you start a Mercury Mesh session.
 
+## Current Status
+
+This package does not currently ship personal-mesh discovery helpers or `mercury-mesh personal ...` / `mercury-mesh cast` CLI commands.
+
+Treat personal meshes as an optional compatibility pattern for surfaces that already provide a resolved personal-agent directory or explicit personal-agent manifest.
+
 ## Directory Structure
 
 ```
@@ -24,13 +30,12 @@ A personal Mercury Mesh is a user-level collection of AI agents that travel with
 3. **Ghost Protocol:** Personal agents can read project state but not write to it
 4. **Kill Switch:** Set `MESH_NO_PERSONAL=1` to disable ambient discovery
 
-## Commands
+## Compatibility Pattern
 
-- `Mercury Mesh personal init` — Bootstrap a personal Mercury Mesh directory
-- `Mercury Mesh personal list` — List your personal agents
-- `Mercury Mesh personal add {name} --role {role}` — Add a personal agent
-- `Mercury Mesh personal remove {name}` — Remove a personal agent
-- `Mercury Mesh cast` — Show the current session cast (project + personal)
+1. Only load personal agents when the active Mercury Mesh surface explicitly provides personal-agent input.
+2. Merge personal agents additively with project agents.
+3. Apply Ghost Protocol to every personal agent.
+4. Skip silently when no personal-agent input exists.
 
 ## Ghost Protocol
 
@@ -53,5 +58,4 @@ Optional `config.json` in the personal Mercury Mesh directory:
 
 ## Environment Variables
 
-- `MESH_NO_PERSONAL` — Set to any value to disable personal Mercury Mesh discovery
-- `MESH_PERSONAL_DIR` — Override the default personal Mercury Mesh directory path
+If a host surface implements personal-mesh support, it may honor environment variables such as `MESH_NO_PERSONAL` and `MESH_PERSONAL_DIR`. They are not wired by this package's CLI today.
